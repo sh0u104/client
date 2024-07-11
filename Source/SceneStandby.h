@@ -71,7 +71,7 @@ private:
         const DirectX::XMFLOAT4X4& projection
     );
 
-    void RenderFlag(ID3D11DeviceContext* dc);
+    void RenderTeam(ID3D11DeviceContext* dc);
     void RenderTeamSelect(ID3D11DeviceContext* dc);
     void RenderTeamJoin(ID3D11DeviceContext* dc);
  
