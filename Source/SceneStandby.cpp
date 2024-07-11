@@ -12,6 +12,7 @@
 #include "SceneGame.h"
 void SceneStandby::Initialize()
 {
+	
 	StageManager& stageManager = StageManager::instance();
 	StageMain* stageMain = new StageMain();
 	stageManager.Register(stageMain);
@@ -748,17 +749,10 @@ void SceneStandby::RenderTeamNumber(ID3D11DeviceContext* dc, const DirectX::XMFL
 	}
 }
 
-void SceneStandby::RenderFlag(ID3D11DeviceContext* dc)
+void SceneStandby::RenderTeam(ID3D11DeviceContext* dc)
 {
 	float positionX = 10;
 	float positionY = 10;
-	//sprites[static_cast<int>(Spritenumber::Flag)]->Render(dc,
-	//	positionX, positionY, //描画位置
-	//	30,45,                //表示サイズ
-	//	0,0,                  //切り取りはじめ位置
-	//	825, 1135,            //画像サイズ
-	//	0.0f,
-	//	1, 1, 1, 1);
 
 	sprites[static_cast<int>(Spritenumber::Team)]->Render(dc,
 		positionX, positionY,             //描画位置
