@@ -313,7 +313,7 @@ void SceneStandby::Render()
 
 		if (!teamscreenflag)
 		{
-			RenderFlag(dc);
+			RenderTeam(dc);
 		}
 		else
 		{
