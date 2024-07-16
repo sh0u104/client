@@ -76,6 +76,10 @@ private:
     void RenderTeamJoin(ID3D11DeviceContext* dc);
  
     char input[32];
+
+    bool Uiclick(float posX,float posY,float sizeX,float sizeY);
+    std::vector<int>numbers;
+    int posxy[12][2];
 public:
     //int guimyid;
     //int guiteamnumber;
@@ -95,5 +99,7 @@ public:
    
     bool teamscreenflag = false;
     bool numberinputflag = false;
+
+   
 };
 

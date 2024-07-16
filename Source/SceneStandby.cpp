@@ -146,9 +146,7 @@ void SceneStandby::Finalize()
 
 void SceneStandby::Update(float elapsedTime)
 {
-	std::string str[3];
-	str[0] = "as";
-	auto a = str[0].at(0);
+	
 	
 	//シーン遷移
 	if (playerManager->GetGameStart())
@@ -308,6 +306,10 @@ void SceneStandby::Render()
 
 	// 2Dスプライト描画
 	{
+		if (numberinputflag)
+	    {
+	    	RenderTeamJoin(dc);
+	    }
 		if (playerManager->GetMyPlayerID() != 0)
 		RenderID(dc, rc.view, rc.projection);
 
@@ -319,10 +321,7 @@ void SceneStandby::Render()
 		{
 			RenderTeamSelect(dc);
 		}
-		if (!numberinputflag)
-		{
-		   RenderTeamJoin(dc);
-		}
+		
 	
 		if (teamcreate)
 		{
@@ -753,16 +752,20 @@ void SceneStandby::RenderTeam(ID3D11DeviceContext* dc)
 {
 	float positionX = 10;
 	float positionY = 10;
-
+	float sizeX = 100;
+	float sizeY = 30;
 	sprites[static_cast<int>(Spritenumber::Team)]->Render(dc,
 		positionX, positionY,             //描画位置
-	    100, 30,             //表示サイズ
+		sizeX, sizeY,             //表示サイズ
 		0, 0,                //切り取りはじめ位置
 		243,100,             //画像サイズ
 		0.0f,
 		1, 1, 1, 1);
 
-
+	if (!teamscreenflag&&Uiclick(positionX, positionY, sizeX, sizeY))
+	{
+		teamscreenflag = true;
+	}
 }
 
 void SceneStandby::RenderTeamSelect(ID3D11DeviceContext* dc)
@@ -778,24 +781,39 @@ void SceneStandby::RenderTeamSelect(ID3D11DeviceContext* dc)
 		0.0f,
 		1, 1, 1, 1);
 
+
+	float sizeX = 200;
+	float sizeY = 150;
 	//チーム作成ボタン
 	sprites[static_cast<int>(Spritenumber::TeamCreate)]->Render(dc,
 		positionX + 70, positionY + 60, //描画位置
-		200, 150,               //表示サイズ
+		sizeX, sizeY,               //表示サイズ
 		0, 0,                 //切り取りはじめ位置
 		800, 600,           //画像サイズ
 		0.0f,
 		1, 1, 1, 1);
 
+		if (Uiclick(positionX + 70, positionY + 60, 200, 150))
+		{
+			teamscreenflag = false;
+			sendteamcreate = true;
+		}
+
 	//チーム加入ボタン
 	sprites[static_cast<int>(Spritenumber::TeamJoin)]->Render(dc,
 		positionX+320, positionY+60, //描画位置
-		200, 150,               //表示サイズ
+		sizeX, sizeY,               //表示サイズ
 		0, 0,                 //切り取りはじめ位置
 		800,600,           //画像サイズ
 		0.0f,
 		1, 1, 1, 1);
-
+	
+		if (Uiclick(positionX + 320, positionY + 60, sizeX, sizeY))
+		{
+			teamscreenflag = false;
+			numberinputflag = true;
+		}
+	
 	//閉じるボタン
 	sprites[static_cast<int>(Spritenumber::Close)]->Render(dc,
 		positionX + 565, positionY-5, //描画位置
@@ -804,6 +822,11 @@ void SceneStandby::RenderTeamSelect(ID3D11DeviceContext* dc)
 		100,100,           //画像サイズ
 		0.0f,
 		1, 1, 1, 1);
+
+	if (Uiclick(positionX + 565, positionY - 5, 40, 40))
+	{
+		teamscreenflag = false;
+	}
 }
 
 void SceneStandby::RenderTeamJoin(ID3D11DeviceContext* dc)
@@ -820,58 +843,101 @@ void SceneStandby::RenderTeamJoin(ID3D11DeviceContext* dc)
 		1, 1, 1, 1);
 
 	//ボタンを個数分
+	
+	int count = 0;
+	int sizeX = 90;
+	int sizeY = 30;
+	
 	for (int i = 0; i < 4; ++i)
 	{
 		for (int j = 0; j < 3; ++j)
 		{
+			++count;
 			sprites[static_cast<int>(Spritenumber::TeamjoinNumber)]->Render(dc,
 				positionX + 130 + (j * 100), positionY + 140+(i*40), //描画位置
-				90, 30,                      //表示サイズ
-				0 + (j * 300), 0+(i*100),                       //切り取りはじめ位置
+				sizeX, sizeY,                      //表示サイズ
+				0 + (j * 300), 0+(i*100),    //切り取りはじめ位置
 				300, 100,                    //画像サイズ
 				0.0f,
 				1, 1, 1, 1);
+
+			int posx = positionX + 130 + (j * 100);
+			int posy = positionY + 140 + (i * 40);
+			posxy[count-1][0] = posx;
+			posxy[count-1][1] = posy;
+			
 		}
 	}
-
-	// 画像の長さ
-	
-
-	// 入力したチームコード
-	int numDigits = 1;
-	int ID = 1234;
-	int tempID = ID;
-	while (tempID >= 10)
+	if (numbers.size() < 4)
 	{
-		tempID /= 10;
-		numDigits++;
+		if (Uiclick(posxy[0][0], posxy[0][1], sizeX, sizeY))numbers.push_back(1);
+		if (Uiclick(posxy[1][0], posxy[1][1], sizeX, sizeY))numbers.push_back(2);
+		if (Uiclick(posxy[2][0], posxy[2][1], sizeX, sizeY))numbers.push_back(3);
+		if (Uiclick(posxy[3][0], posxy[3][1], sizeX, sizeY))numbers.push_back(4);
+		if (Uiclick(posxy[4][0], posxy[4][1], sizeX, sizeY))numbers.push_back(5);
+		if (Uiclick(posxy[5][0], posxy[5][1], sizeX, sizeY))numbers.push_back(6);
+		if (Uiclick(posxy[6][0], posxy[6][1], sizeX, sizeY))numbers.push_back(7);
+		if (Uiclick(posxy[7][0], posxy[7][1], sizeX, sizeY))numbers.push_back(8);
+		if (Uiclick(posxy[8][0], posxy[8][1], sizeX, sizeY))numbers.push_back(9);
+		if (Uiclick(posxy[10][0], posxy[10][1], sizeX, sizeY))numbers.push_back(0);
+	}
+	if (numbers.size() > 0) 
+	{
+		if (Uiclick(posxy[9][0], posxy[9][1], sizeX, sizeY))numbers.pop_back();
+	}
+	if (numbers.size() ==4)
+	{
+		if (Uiclick(posxy[11][0], posxy[11][1], sizeX, sizeY))
+		{
+			sendteamjoin = true;
+		}
 	}
 
 	// 2Dスプライト描画
 	{
 		float numberposX = positionX + 188;
 		float numberposY = positionY + 80;
-		const float gaugeWidth = 25.0f;
+		const float gaugeWidth = 25.9f;
 		const float gaugeHeight = 33.0f;
 
 		// 各桁を描画するループ
-		for (int i = numDigits - 1; i >= 0; --i)
+		if (numbers.size() > 0)
 		{
-			// 各桁の数値を取得
-			int digit = (ID / static_cast<int>(pow(10, i))) % 10;
+			for (int i = 0; i < numbers.size(); ++i)
+			{
+				int number = numbers.at(i);
 
-			// スプライトを描画
-			sprites[static_cast<int>(Spritenumber::Number)]->Render(dc,
-				numberposX, numberposY,
-				30, 30,
-				gaugeWidth * digit + digit, 0,
-				gaugeWidth, gaugeHeight,
-				0.0f,
-				1, 1, 1, 1);
-
-			// 次の桁の位置に移動
-			numberposX += 51;
+				// スプライトを描画
+				sprites[static_cast<int>(Spritenumber::Number)]->Render(dc,
+					numberposX+(51*i), numberposY,
+					30, 30,
+					gaugeWidth * number, 0,
+					gaugeWidth, gaugeHeight,
+					0.0f,
+					1, 1, 1, 1);
+			}
 		}
 	}
 }
+
+bool SceneStandby::Uiclick(float posX, float posY, float sizeX, float sizeY)
+{
+	DirectX::XMFLOAT3 scereenPosition;
+
+	Mouse& mouse = Input::Instance().GetMouse();
+	if (mouse.GetButtonDown() & Mouse::BTN_LEFT)
+	{
+		scereenPosition.x = static_cast<float>(mouse.GetPositionX());
+		scereenPosition.y = static_cast<float>(mouse.GetPositionY());
+
+		if (posX < scereenPosition.x&& scereenPosition.x < posX+ sizeX
+			&& posY < scereenPosition.y && scereenPosition.y < posY+sizeY)
+		{
+			Sleep(10);
+			return true;
+		}
+	}
+	return false;
+}
+
 
