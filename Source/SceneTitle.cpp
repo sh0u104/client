@@ -1,11 +1,11 @@
 #include "Graphics/Graphics.h"
 #include "SceneTitle.h"
-#include "SceneGame.h"
 #include "SceneManager.h"
 #include "Input/Input.h"
 #include "SceneLoading.h"
 
 #include "SceneStandby.h"
+#include "SceneConnection.h"
 // èâä˙âª
 void SceneTitle::Initialize()
 {
@@ -39,7 +39,7 @@ void SceneTitle::Update(float elapsedTime)
        //SceneStandby
        //SceneGame
        //SceneManager::Instance().ChangeScene(new SceneLoading(new SceneGame));
-       SceneManager::Instance().ChangeScene(new SceneLoading(new SceneStandby));
+       SceneManager::Instance().ChangeScene(new SceneLoading(new SceneConnection));
         
 
 }

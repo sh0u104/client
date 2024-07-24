@@ -60,7 +60,7 @@ Player* PlayerManager::GetMyPlayer()
 }
 void PlayerManager::ErasePlayer(int id)
 {
-	int i = 0;
+	
 	for (Player* player : players)
 	{
 		if (player->GetPlayerID() == id)
@@ -69,7 +69,6 @@ void PlayerManager::ErasePlayer(int id)
 			deleteList.emplace_back(player);
 			break;
 		}
-		++i;
 	}
 }
 

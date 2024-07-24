@@ -17,65 +17,80 @@ void SceneStandby::Initialize()
 	StageMain* stageMain = new StageMain();
 	stageManager.Register(stageMain);
 
-	// カメラ初期設定 見える位置追いかけるものなど
-	Graphics& graphics = Graphics::Instance();
-	Camera& camera = Camera::Instance();
-	camera.SetLookAt(
-		DirectX::XMFLOAT3(0, 10, -10),
-		DirectX::XMFLOAT3(0, 0, 0),
-		DirectX::XMFLOAT3(0, 1, 0)
+	//カメラ
+	{
+		// カメラ初期設定 見える位置追いかけるものなど
+		Graphics& graphics = Graphics::Instance();
+		Camera& camera = Camera::Instance();
+		camera.SetLookAt(
+			DirectX::XMFLOAT3(0, 10, -10),
+			DirectX::XMFLOAT3(0, 0, 0),
+			DirectX::XMFLOAT3(0, 1, 0)
 
-	);
+		);
 
-	// どの範囲をどれだけ見るか奥行含め
-	camera.SetPerspedtiveFov(
-		DirectX::XMConvertToRadians(45),
-		graphics.GetScreenWidth() / graphics.GetScreenHeight(),
-		0.1f,
-		1000.0f
-	);
-	// カメラコントローラー初期化
-	cameraController = new CameraController();
-	DirectX::XMFLOAT3 target = { 0,0,0 };
-	target.y += 0.5f;// 足元から５０センチぐらい
-	cameraController->SetTarget(target);// プレイヤーの腰当たり
+		// どの範囲をどれだけ見るか奥行含め
+		camera.SetPerspedtiveFov(
+			DirectX::XMConvertToRadians(45),
+			graphics.GetScreenWidth() / graphics.GetScreenHeight(),
+			0.1f,
+			1000.0f
+		);
+		// カメラコントローラー初期化
+		cameraController = new CameraController();
+		DirectX::XMFLOAT3 target = { 0,0,0 };
+		target.y += 0.5f;// 足元から５０センチぐらい
+		cameraController->SetTarget(target);// プレイヤーの腰当たり
+	}
 
 	// スプライト表示するもの
-	//sprites[static_cast<int>(Spritenumber:)] = std::make_unique<Sprite>("Data/Sprite/");
-	//数字
-	sprites[static_cast<int>(Spritenumber::Number)] =std::make_unique<Sprite>("Data/Sprite/number.png");
-	//旗
-	sprites[static_cast<int>(Spritenumber::Flag)] = std::make_unique<Sprite>("Data/Sprite/flag.png");
-	//チーム
-	sprites[static_cast<int>(Spritenumber::Team)] = std::make_unique<Sprite>("Data/Sprite/team.png");
-	//チームセレクト
-	sprites[static_cast<int>(Spritenumber::TeamSelect)] = std::make_unique<Sprite>("Data/Sprite/teamselect.png");
-	//チーム作成
-	sprites[static_cast<int>(Spritenumber::TeamCreate)] = std::make_unique<Sprite>("Data/Sprite/teamcreate.png");
-	//加入
-	sprites[static_cast<int>(Spritenumber::TeamJoin)] = std::make_unique<Sprite>("Data/Sprite/teamjoin.png");
-	//チーム加入する時のクリックできないとこ
-	sprites[static_cast<int>(Spritenumber::TeamJoinFrame)] = std::make_unique<Sprite>("Data/Sprite/teamjoinframe.png");
-	//チーム加入する時のクリックするとこ
-	sprites[static_cast<int>(Spritenumber::TeamjoinNumber)] = std::make_unique<Sprite>("Data/Sprite/teamjoinnumber.png");
-	//チーム番号
-	sprites[static_cast<int>(Spritenumber::TeamNumber)] = std::make_unique<Sprite>("Data/Sprite/teamnumber.png");
-	//×ボタン
-	sprites[static_cast<int>(Spritenumber::Close)] = std::make_unique<Sprite>("Data/Sprite/close.png");
+	{
+		// スプライト表示するもの
+		//sprites[static_cast<int>(Spritenumber:)] = std::make_unique<Sprite>("Data/Sprite/");
+		//数字
+		sprites[static_cast<int>(Spritenumber::Number)] = std::make_unique<Sprite>("Data/Sprite/number.png");
+		//旗
+		sprites[static_cast<int>(Spritenumber::Flag)] = std::make_unique<Sprite>("Data/Sprite/flag.png");
+		//チーム
+		sprites[static_cast<int>(Spritenumber::Team)] = std::make_unique<Sprite>("Data/Sprite/team.png");
+		//チームセレクト
+		sprites[static_cast<int>(Spritenumber::TeamSelect)] = std::make_unique<Sprite>("Data/Sprite/teamselect.png");
+		//チーム作成
+		sprites[static_cast<int>(Spritenumber::TeamCreate)] = std::make_unique<Sprite>("Data/Sprite/teamcreate.png");
+		//加入
+		sprites[static_cast<int>(Spritenumber::TeamJoin)] = std::make_unique<Sprite>("Data/Sprite/teamjoin.png");
+		//チーム加入する時のクリックできないとこ
+		sprites[static_cast<int>(Spritenumber::TeamJoinFrame)] = std::make_unique<Sprite>("Data/Sprite/teamjoinframe.png");
+		//チーム加入する時のクリックするとこ
+		sprites[static_cast<int>(Spritenumber::TeamjoinNumber)] = std::make_unique<Sprite>("Data/Sprite/teamjoinnumber.png");
+		//チーム番号
+		sprites[static_cast<int>(Spritenumber::TeamNumber)] = std::make_unique<Sprite>("Data/Sprite/teamnumber.png");
+		//閉じるボタン
+		sprites[static_cast<int>(Spritenumber::Close)] = std::make_unique<Sprite>("Data/Sprite/close.png");
+		//準備完了
+		sprites[static_cast<int>(Spritenumber::Ready)] = std::make_unique<Sprite>("Data/Sprite/ready.png");
+		//準備キャンセル
+		sprites[static_cast<int>(Spritenumber::ReadyzCancel)] = std::make_unique<Sprite>("Data/Sprite/readycancel.png");
+		//ソロモード
+		sprites[static_cast<int>(Spritenumber::Solo)] = std::make_unique<Sprite>("Data/Sprite/solo.png");
+		//マルチモード
+		sprites[static_cast<int>(Spritenumber::Multi)] = std::make_unique<Sprite>("Data/Sprite/multi.png");
+
+	}
+
 
 	//初期化が一度目かどうか
 	if (!SceneManager::Instance().GetstandbyInitialized())
 	{
-		// プレイヤーマネジャー初期化
-		//playerManager = new PlayerManager();
-		SceneManager::Instance().PlayermanagerInitialize();
+		SceneManager::Instance().SetstandbyInitialized(true);
 		playerManager = SceneManager::Instance().GetPlayerManager();
+		connection = SceneManager::Instance().GetConnection();
 
 		//	サーバーとの接続前はID０
 		Player* player = new Player();
 		player->SetPlayerID(0);						//貰ったID情報をストック
 		player->Setoperation(false);
-		player->SetPosition(DirectX::XMFLOAT3(0, 0, 0));			//発生位置
+		player->SetPosition(DirectX::XMFLOAT3(0, 0, 0)); //発生位置
 		player->SetAngle({ 0.0f,3.0f,0.0f });
 
 		playerManager->SetMyPlayerID(0);
@@ -84,12 +99,9 @@ void SceneStandby::Initialize()
 
 		//生成したら
 		playerManager->AddPlayersGenerateCount();
+		connection->SetplayerManager(playerManager);
+		connectionflag = true;
 
-
-		SceneManager::Instance().ConnectionInitialize();
-		connection = SceneManager::Instance().GetConnection();
-
-		SceneManager::Instance().SetstandbyInitialized(true);
 	}
 	else
 	{
@@ -146,8 +158,6 @@ void SceneStandby::Finalize()
 
 void SceneStandby::Update(float elapsedTime)
 {
-	
-	
 	//シーン遷移
 	if (playerManager->GetGameStart())
 	{
@@ -157,25 +167,25 @@ void SceneStandby::Update(float elapsedTime)
 	}
 
 	//サーバにつなげるとき
-	if (connectionflag && !connection->isConnction)
-	{
-		connection->Initialize();
-		if(connection->isConnction)
-		connection->SetplayerManager(playerManager);
-		else
-		{
-			connectionflag = false;
-		}
-	}
+	//if (connectionflag && !connection->isConnction)
+	//{
+	//	connection->Initialize();
+	//	if(connection->isConnction)
+	//	connection->SetplayerManager(playerManager);
+	//	else
+	//	{
+	//		connectionflag = false;
+	//	}
+	//}
 
 	//チームを作る時
-	if (sendteamcreate&&!teamcreate)
-	{
-		sendteamcreate = false;
-		teamcreate = true;
-		connection->SendTeamcreate();
-		playerManager->SetteamLeader(true);
-	}
+	//if (sendteamcreate&&!teamcreate)
+	//{
+	//	sendteamcreate = false;
+	//	teamcreate = true;
+	//	connection->SendTeamcreate();
+	//	playerManager->SetteamLeader(true);
+	//}
 
 	//チームに参加するとき
 	if (sendteamjoin && !teamcreate && !teamjoin)
@@ -306,27 +316,38 @@ void SceneStandby::Render()
 
 	// 2Dスプライト描画
 	{
+		RenderMode(dc);
+
 		if (numberinputflag)
 	    {
 	    	RenderTeamJoin(dc);
 	    }
-		if (playerManager->GetMyPlayerID() != 0)
-		RenderID(dc, rc.view, rc.projection);
 
-		if (!teamscreenflag)
+		if (playerManager->GetMyPlayerID() != 0)
 		{
-			RenderTeam(dc);
+			RenderID(dc, rc.view, rc.projection);
+		}
+		
+
+		if (playerManager->GetMyPlayer()->Getteamnumber() > 0)
+		{
+			RenderTeamNumber(dc, rc.view, rc.projection);
+			if (!playerManager->GetteamLeader())
+			{
+				RenderReady(dc, playerManager->GetMyPlayer()->GetstartCheck());
+			}
+
 		}
 		else
 		{
-			RenderTeamSelect(dc);
-		}
-		
-	
-		if (teamcreate)
-		{
-			RenderTeamNumber(dc, rc.view, rc.projection);
-			
+			if (!teamscreenflag)
+			{
+				RenderTeam(dc);
+			}
+			else
+			{
+				RenderTeamSelect(dc);
+			}
 		}
 	}
 	
@@ -409,17 +430,17 @@ void SceneStandby::Render()
 			}
 			ImGui::InputInt4("TeamsID", guiteamsid);
 
-			if (ImGui::Button("FriendList Update"))
-			{
-				connection->SendSeeFriend();
-			}
-
-			ImGui::Text("FriendList");
-			for (int i = 0; i < playerManager->myFriendList.size(); ++i)
-			{
-				ImGui::Text("ID: %d", playerManager->myFriendList.at(i).ID);
-				ImGui::Text("Name: %s", playerManager->myFriendList.at(i).name);
-			}
+			//if (ImGui::Button("FriendList Update"))
+			//{
+			//	connection->SendSeeFriend();
+			//}
+			//
+			//ImGui::Text("FriendList");
+			//for (int i = 0; i < playerManager->myFriendList.size(); ++i)
+			//{
+			//	ImGui::Text("ID: %d", playerManager->myFriendList.at(i).ID);
+			//	ImGui::Text("Name: %s", playerManager->myFriendList.at(i).name);
+			//}
 
 			playerManager->DebugGUI();
 		}
@@ -796,7 +817,10 @@ void SceneStandby::RenderTeamSelect(ID3D11DeviceContext* dc)
 		if (Uiclick(positionX + 70, positionY + 60, 200, 150))
 		{
 			teamscreenflag = false;
-			sendteamcreate = true;
+			//sendteamcreate = true;
+			sendteamjoin = false;
+			teamjoin = true;
+			connection->SendTeamJoin(TeamNumber);
 		}
 
 	//チーム加入ボタン
@@ -918,6 +942,74 @@ void SceneStandby::RenderTeamJoin(ID3D11DeviceContext* dc)
 			}
 		}
 	}
+}
+
+void SceneStandby::RenderReady(ID3D11DeviceContext* dc, bool isready)
+{
+	float positionX = 10;
+	float positionY = 300;
+
+	//
+	if (!isready)
+	{
+		sprites[static_cast<int>(Spritenumber::Ready)]->Render(dc,
+			positionX, positionY, //描画位置
+			150, 50,               //表示サイズ
+			0, 0,                 //切り取りはじめ位置
+			500,184,           //画像サイズ
+			0.0f,
+			1, 1, 1, 1);
+
+		if (Uiclick(positionX, positionY, 150, 50))
+		{
+			playerManager->GetMyPlayer()->SetstartCheck(true);
+		}
+	}
+	else
+	{
+		sprites[static_cast<int>(Spritenumber::ReadyzCancel)]->Render(dc,
+			positionX, positionY, //描画位置
+			150, 50,             //表示サイズ
+			0, 0,                 //切り取りはじめ位置
+			500,184,           //画像サイズ
+			0.0f,
+			1, 1, 1, 1);
+
+		if (Uiclick(positionX, positionY, 150, 50))
+		{
+			playerManager->GetMyPlayer()->SetstartCheck(false);
+		}
+	}
+}
+
+void SceneStandby::RenderMode(ID3D11DeviceContext* dc)
+{
+	float positionX = 10;
+	float positionY = 200;
+
+	//
+	if (playerManager->GetMyPlayer()->Getteamnumber() > 0)
+	{
+		sprites[static_cast<int>(Spritenumber::Multi)]->Render(dc,
+			positionX, positionY, //描画位置
+			150, 50,               //表示サイズ
+			0, 0,                 //切り取りはじめ位置
+			500, 184,           //画像サイズ
+			0.0f,
+			1, 1, 1, 1);
+		
+	}
+	else
+	{
+		sprites[static_cast<int>(Spritenumber::Solo)]->Render(dc,
+			positionX, positionY, //描画位置
+			150, 50,               //表示サイズ
+			0, 0,                 //切り取りはじめ位置
+			500, 184,           //画像サイズ
+			0.0f,
+			1, 1, 1, 1);
+	}
+
 }
 
 bool SceneStandby::Uiclick(float posX, float posY, float sizeX, float sizeY)

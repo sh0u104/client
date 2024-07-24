@@ -43,6 +43,9 @@ public:
 
     void SetstandbyInitialized(bool flag) { this->standbyInitialized = flag; }
     bool GetstandbyInitialized() { return standbyInitialized; }
+
+    void SetconnectionInitialized(bool flag) { this->connectionInitialized = flag; }
+    bool GetconnectionInitialized() { return connectionInitialized; }
 private:
     Scene* currentScene = nullptr;
     Scene* nextScene = nullptr;
@@ -50,4 +53,5 @@ private:
     Connection* connection = nullptr;
     PlayerManager* playerManager = nullptr;
     bool standbyInitialized = false;
+    bool connectionInitialized = false;
 };

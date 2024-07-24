@@ -38,9 +38,14 @@ private:
         TeamjoinNumber,
         TeamNumber,
         Close,
+        Ready,
+        ReadyzCancel,
+        Solo,
+        Multi,
+      //ModeSelect,
         Max
     };
-    std::unique_ptr<Sprite> sprites[(int)Spritenumber::Max] = {};
+    std::unique_ptr<Sprite> sprites[static_cast<int>(Spritenumber::Max)] = {};
 
     CameraController* cameraController = nullptr;
 
@@ -74,7 +79,8 @@ private:
     void RenderTeam(ID3D11DeviceContext* dc);
     void RenderTeamSelect(ID3D11DeviceContext* dc);
     void RenderTeamJoin(ID3D11DeviceContext* dc);
- 
+    void RenderReady(ID3D11DeviceContext* dc,bool isready);
+    void RenderMode(ID3D11DeviceContext* dc);
     char input[32];
 
     bool Uiclick(float posX,float posY,float sizeX,float sizeY);

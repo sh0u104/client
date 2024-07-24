@@ -66,10 +66,7 @@ void SceneManager::ConnectionClear()
     {
         for (Player* player : playerManager->GetPlayers())
         {
-            if (player->GetReady())
-            {
-                playerManager->ErasePlayer(player->GetPlayerID());
-            }
+               playerManager->ErasePlayer(player->GetPlayerID());
         }
         playerManager->DeletePlayer();
         delete playerManager;

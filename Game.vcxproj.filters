@@ -195,6 +195,9 @@
     <ClInclude Include="Source\SceneStandby.h">
       <Filter>Source</Filter>
     </ClInclude>
+    <ClInclude Include="Source\SceneConnection.h">
+      <Filter>Source</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="External\imgui\imgui.cpp">
@@ -339,6 +342,9 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="Source\SceneStandby.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\SceneConnection.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>

@@ -235,6 +235,7 @@ public:
     const char* GetName() { return Name; }
     void SetName(char name[10]){ strcpy_s(this->Name, name); }
 
+   
 protected:
   
     int teamNumber = 0;

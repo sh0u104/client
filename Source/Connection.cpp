@@ -64,7 +64,7 @@ void Connection::Initialize()
 void Connection::Finalize()
 {
 	//接続してたら
-	if (isConnction)
+	if (isConnction )
 	{
 		// マルチスレッドのループフラグを下ろす
 		loop = false;
@@ -403,6 +403,7 @@ void Connection::recvThread()
 				memcpy_s(&logout, sizeof(logout), buffer, sizeof(PlayerLogout));
 				std::cout << " 退出id " << logout.id << std::endl;
 			
+				if(playerManager->GetMyPlayerID()!= logout.id)
 			    playerManager->ErasePlayer(logout.id);
 			}
 			break;
@@ -447,7 +448,6 @@ void Connection::recvThread()
 						
 						//チームのi番目が空席なら
 						{
-							
 							//ログイン者をチーム一覧にIDを登録
 							playerManager->GetMyPlayer()->Setteamsid(i, teamjoin.id);
 							//ログイン数を加算
