@@ -236,6 +236,8 @@ public:
     void SetName(char name[10]){ strcpy_s(this->Name, name); }
 
    
+    float mouseAngle = 0;
+    float mouselength = 0;
 protected:
   
     int teamNumber = 0;

@@ -20,6 +20,8 @@ public:
     void Render() override;
 
     void RenderNetError(ID3D11DeviceContext* dc);
+    void RenderLogin(ID3D11DeviceContext* dc);
+
     bool Uiclick(float posX, float posY, float sizeX, float sizeY);
 private:
     
@@ -29,9 +31,17 @@ private:
     {
         NetError,
         OK,
+        Guest,
+        Login,
+        NewLogin,
         Max
     };
     std::unique_ptr<Sprite> sprites[(int)Spritenumber::Max] = {};
 
+    bool isGuest = false;
+    bool isLogin = false;
+    bool isNewLogin = false;
+    char name[10];
+    char pass[10];
 };
 

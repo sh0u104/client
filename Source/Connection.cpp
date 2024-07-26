@@ -64,15 +64,26 @@ void Connection::Initialize()
 void Connection::Finalize()
 {
 	//接続してたら
-	if (isConnction )
+	if (isConnction)
 	{
 		// マルチスレッドのループフラグを下ろす
 		loop = false;
 		PlayerLogout logout{};
-		logout.cmd = NetworkTag::Logout;
-		logout.id = playerManager->GetMyPlayerID();
-		int s = send(sock, reinterpret_cast<char*>(&logout), sizeof(PlayerLogout), 0);
-
+		
+		
+			logout.cmd = NetworkTag::Logout;
+			//ログイン処理が終わってたら
+			if (playerManager != nullptr)
+			{
+				logout.id = playerManager->GetMyPlayerID();
+			}
+			//ログイン処理がまだなら
+			else
+			{
+				logout.id = -1;
+			}
+			int s = send(sock, reinterpret_cast<char*>(&logout), sizeof(PlayerLogout), 0);
+	
 
 		// スレッドの終了まで待機
 		th.join();

@@ -28,9 +28,17 @@ public:
 	// 描画処理
 	void Render() override;
 
-
+	void mouse(ID3D11DeviceContext* dc);
 	
 private:
+	DirectX::XMFLOAT3 clickpos;
+	DirectX::XMFLOAT3 oldmousepos;
+	float mouseangle,playerangle;
+	float length;
+
+	// ラジアンから度に変換
+	float mouseangleDegrees,playerangleDegrees;
+
 	// エネミーHPゲージ描画
 	void RenderNumber(
 	ID3D11DeviceContext* dc,
@@ -45,7 +53,14 @@ private:
 	Player* player = nullptr;
 	CameraController* cameraController = nullptr;
 
-	Sprite* spriteNumber = nullptr;
+	enum class Spritenumber : int
+	{
+		Number,
+		BigCircle,
+		SmallCircle,
+		Max
+	};
+	std::unique_ptr<Sprite> sprites[static_cast<int>(Spritenumber::Max)] = {};
 
 
 

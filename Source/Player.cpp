@@ -10,6 +10,7 @@
 #include "Graphics/Model.h"
 
 #include "PlayerManager.h"
+#include <DirectXMath.h>
 static Player* instance = nullptr;
 
 // インスタンス取得
@@ -239,9 +240,9 @@ DirectX::XMFLOAT3 Player::GetMoveVec() const
    
     // 入力情報を取得
     GamePad& gamePad = Input::Instance().GetGamePad();
-    float ax = gamePad.GetAxisLX();
-    float ay = gamePad.GetAxisLY();
-
+    //float ax = gamePad.GetAxisLX();
+    float ay = mouselength / 50;
+    float ax = 0;
     // カメラ方向とスティックの入力値によって進行方向を計算する
     Camera& camera = Camera::Instance();
     const DirectX::XMFLOAT3& cameraRight = camera.GetRight();
@@ -249,28 +250,32 @@ DirectX::XMFLOAT3 Player::GetMoveVec() const
 
     // 移動ベクトルはXZ平面に水平なベクトルになるようにする
 
-    // カメラ右方向ベクトルはＸＺ平面に水平なベクトルに変換
-    float cameraRightX = cameraRight.x;
-    float cameraRightZ = cameraRight.z;
-    // y成分を取らずに　矢印の長さを取得
-    float cameraRightLength = sqrtf(cameraRightX * cameraRightX + cameraRightZ * cameraRightZ);
-    // 何故Y方向を消してるか　右方向が斜めでも真っ直ぐ進んでほしいYを０
-    //　にする少し距離が変わるだから単位ベクトルにする１．０に
-    if (cameraRightLength > 0.0f)
-    {
-        // 単位ベクトル化
-        // 右方向の単位ベクトル 
-        cameraRightX = cameraRightX / cameraRightLength;
-        cameraRightZ = cameraRightZ / cameraRightLength;
-
-        /*        if (cameraRightLength > DirectX::XM_PI)cameraRightLength -= DirectX::XM_PI * 2;
-                if (cameraRightLength < -DirectX::XM_PI)cameraRightLength += DirectX::XM_PI * 2;
-          */
-    }
-
+   // // カメラ右方向ベクトルはＸＺ平面に水平なベクトルに変換
+   // float cameraRightX = cameraRight.x;
+   // float cameraRightZ = cameraRight.z;
+   // // y成分を取らずに　矢印の長さを取得
+   // float cameraRightLength = sqrtf(cameraRightX * cameraRightX + cameraRightZ * cameraRightZ);
+   // // 何故Y方向を消してるか　右方向が斜めでも真っ直ぐ進んでほしいYを０
+   // //　にする少し距離が変わるだから単位ベクトルにする１．０に
+   // if (cameraRightLength > 0.0f)
+   // {
+   //     // 単位ベクトル化
+   //     // 右方向の単位ベクトル 
+   //     cameraRightX = cameraRightX / cameraRightLength;
+   //     cameraRightZ = cameraRightZ / cameraRightLength;
+   //
+   //     /*        if (cameraRightLength > DirectX::XM_PI)cameraRightLength -= DirectX::XM_PI * 2;
+   //             if (cameraRightLength < -DirectX::XM_PI)cameraRightLength += DirectX::XM_PI * 2;
+   //       */
+   // }
+ 
+    DirectX::XMVECTOR forward = DirectX::XMVectorSet(cos(mouseAngle), 0, sin(mouseAngle), 0);
     // カメラ前方向ベクトルをXZ単位ベクトルに変換
-    float cameraFrontX = cameraFront.x;
-    float cameraFrontZ = cameraFront.z;
+    //float cameraFrontX = cameraFront.x;
+    float cameraFrontX = DirectX::XMVectorGetX(forward);
+    //float cameraFrontZ = cameraFront.z;
+    float cameraFrontZ = DirectX::XMVectorGetZ(forward);
+    cameraFrontX *= -1;
     float cameraFrontLength = sqrtf(cameraFrontX * cameraFrontX + cameraFrontZ * cameraFrontZ);
     if (cameraFrontLength > 0.0f)
     {
@@ -294,8 +299,8 @@ DirectX::XMFLOAT3 Player::GetMoveVec() const
     // ax,ayスティックの具合　cameraRightX（カメラ）
     // (cameraRightX* ax) + (cameraFrontX * ay)これは上の進方向を真っ直ぐにする奴
     // 
-    vec.x = (cameraRightX * ax) + (cameraFrontX * ay);// 右方向
-    vec.z = (cameraRightZ * ax) + (cameraFrontZ * ay);// ますっぐ
+    vec.x = (cameraFrontX * ay);// (cameraRightX * ax) + (cameraFrontX * ay);// 右方向
+    vec.z = (cameraFrontZ * ay);// (cameraRightZ * ax) + (cameraFrontZ * ay);// ますっぐ
     // Y軸方向には移動しない
     vec.y = 0.0f;
     return vec;

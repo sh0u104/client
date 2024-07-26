@@ -41,7 +41,7 @@ void SceneGame::Initialize()
 		DirectX::XMFLOAT3(0, 10, -10),
 		DirectX::XMFLOAT3(0, 0, 0),
 		DirectX::XMFLOAT3(0, 1, 0)
-
+		
 	);
 	// どの範囲をどれだけ見るか奥行含め
 	camera.SetPerspedtiveFov(
@@ -52,9 +52,18 @@ void SceneGame::Initialize()
 	);
 	// カメラコントローラー初期化
 	cameraController = new CameraController();
-	// ゲージスプライト
-	spriteNumber = new Sprite(("Data/Sprite/number.png"));
 
+    //スプライト
+	{
+		//sprites[static_cast<int>(Spritenumber:)] = std::make_unique<Sprite>("Data/Sprite/");
+		//数字
+		sprites[static_cast<int>(Spritenumber::Number)] = std::make_unique<Sprite>("Data/Sprite/number.png");
+
+		sprites[static_cast<int>(Spritenumber::BigCircle)] = std::make_unique<Sprite>("Data/Sprite/bigcircle.png");
+
+		sprites[static_cast<int>(Spritenumber::SmallCircle)] = std::make_unique<Sprite>("Data/Sprite/smallcircle.png");
+
+	}
 
 	// プレイヤー初期化
 	//player = new Player();
@@ -101,12 +110,6 @@ void SceneGame::Initialize()
 // 終了化
 void SceneGame::Finalize()
 {
-	// ゲージスプライト
-	if (this->spriteNumber)
-	{
-		delete spriteNumber;
-		spriteNumber = nullptr;
-	}
 
 	// エネミー終了化
 	EnemyManager::Instance().Clear();
@@ -126,7 +129,8 @@ void SceneGame::Finalize()
 // 更新処理
 void SceneGame::Update(float elapsedTime)
 {
-	timer -= elapsedTime;
+	
+	//timer -= elapsedTime;
 	if (timer < 0)
 	{
 		//ゲーム終了を送る
@@ -233,7 +237,7 @@ void SceneGame::Render()
 	//	DirectX::XMMATRIX Projection = DirectX::XMMatrixPerspectiveFovLH(fovY, aspectRatio, nearZ, farZ);
 	//	DirectX::XMStoreFloat4x4(&rc.projection, Projection);
 	//}
-
+	
 	// 3Dモデル描画
 	{
 		Shader* shader = graphics.GetShader();
@@ -249,6 +253,7 @@ void SceneGame::Render()
 
 		shader->End(dc);
 	}
+	mouse(dc);
 
 	// 3Dエフェクト描画
 	{
@@ -262,6 +267,15 @@ void SceneGame::Render()
 		// beginからendまでの内容が出来る
 		if (ImGui::Begin("Player", nullptr, ImGuiWindowFlags_None))
 		{
+			if (ImGui::CollapsingHeader("Mouse", ImGuiTreeNodeFlags_DefaultOpen))
+			{
+				ImGui::InputFloat("length", &length);
+				ImGui::InputFloat3("clickpos", &clickpos.x);
+				ImGui::InputFloat3("pos", &oldmousepos.x);
+				ImGui::Text("angle : %.2f", &playerManager->GetMyPlayer()->GetAngle().y);
+				ImGui::InputFloat("angle", &mouseangle);
+				ImGui::InputFloat("angleDegrees", &mouseangleDegrees);
+			}
 			// トランスフォーム
 			if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
 			{
@@ -325,11 +339,122 @@ void SceneGame::Render()
 				// 
 				//EnemyManager::Instance().Register(enemySlime);
 				//EnemyManager::Instance().DrawDebugGUI();
-
+				cameraController->DrawDebugGUI();
 			}
 		}
 	}
 	
+
+	
+}
+
+void SceneGame::mouse(ID3D11DeviceContext* dc)
+{
+	Mouse& mouse = Input::Instance().GetMouse();
+
+	//押してたら
+	if (mouse.GetButton() & Mouse::BTN_LEFT)
+	{
+		oldmousepos.x = static_cast<float>(mouse.GetOldPositionX());
+		oldmousepos.y = static_cast<float>(mouse.GetOldPositionY());
+
+		
+	}
+	else
+	{
+		length = 0.0f;
+		playerManager->GetMyPlayer()->mouselength = length;
+		return;
+	}
+	//クリック時
+	if (mouse.GetButtonDown() & Mouse::BTN_LEFT)
+	{
+		
+		clickpos.x = static_cast<float>(mouse.GetPositionX());
+		clickpos.y = static_cast<float>(mouse.GetPositionY());
+
+		
+	}
+
+	DirectX::XMVECTOR vec, OldPos, Pos;
+    OldPos = XMLoadFloat3(&oldmousepos);
+    Pos = XMLoadFloat3(&clickpos);
+    vec = XMVectorSubtract(Pos, OldPos);
+
+	length = XMVectorGetX(XMVector3Length(vec));
+	float deltaX = XMVectorGetX(vec);
+	float deltaY = XMVectorGetY(vec);
+	
+
+	mouseangle = atan2(deltaY, deltaX);
+	playerangle = mouseangle;
+	// ラジアンから度に変換
+	mouseangleDegrees = XMConvertToDegrees(mouseangle);
+	playerangleDegrees = mouseangleDegrees;
+
+	// 0度を上方向にするために90度を追加
+	playerangleDegrees = 90.0f - playerangleDegrees;
+
+	// 角度を0-360度の範囲に調整
+	if (playerangleDegrees < 0) {
+		playerangleDegrees += 360.0f;
+	}
+	if (mouseangleDegrees < 0) {
+		mouseangleDegrees += 360.0f;
+	}
+
+	//逆回転のため補正
+	playerangleDegrees -= 360;
+	playerangleDegrees *= -1;
+
+	//if (playerangleDegrees > 180)
+	//{
+	//	playerangleDegrees -= 360;
+	//}
+	//角度を度からラジアンに戻す
+	mouseangle = XMConvertToRadians(mouseangleDegrees);
+	playerangle = XMConvertToRadians(playerangleDegrees);
+
+	if (length < 0.2f) {
+		playerangle = playerManager->GetMyPlayer()->GetAngle().y;
+	}
+
+
+	playerManager->GetMyPlayer()->mouseAngle = mouseangle;
+	playerManager->GetMyPlayer()->SetAngle({ 0, playerangle, 0 });
+	
+
+	
+	
+	sprites[static_cast<int>(Spritenumber::BigCircle)]->Render(dc,
+		clickpos.x - 50, clickpos.y - 50, //描画位置
+		100, 100,             //表示サイズ
+		0, 0,                 //切り取りはじめ位置
+		300, 300,           //画像サイズ
+		0.0f,
+		1, 1, 1, 1);
+
+	//小さい円が大きい円から出ないように補正
+	if (length > 50.0f)
+	{
+		float scaleFactor = 50.0f / length;
+		vec = DirectX::XMVectorScale(vec, scaleFactor);
+		DirectX::XMFLOAT3 correctedOldPos;
+		DirectX::XMStoreFloat3(&correctedOldPos, DirectX::XMVectorSubtract(Pos, vec));
+		oldmousepos.x = correctedOldPos.x;
+		oldmousepos.y = correctedOldPos.y;
+
+		length = 50.0f;
+		
+	}
+	playerManager->GetMyPlayer()->mouselength = length;
+	sprites[static_cast<int>(Spritenumber::SmallCircle)]->Render(dc,
+		oldmousepos.x - 15, oldmousepos.y - 15, //描画位置
+		30, 30,             //表示サイズ
+		0, 0,                 //切り取りはじめ位置
+		100, 100,           //画像サイズ
+		0.0f,
+		1, 1, 1, 1);
 }
 
 // プレイヤーID描画
@@ -381,13 +506,12 @@ void SceneGame::RenderNumber(ID3D11DeviceContext* dc,
 
 
 	// 画像の長さ
-	const float gaugeWidth = 64.0f;
-	const float gaugeHeight = 96.0f;
-	int hei;
-	int ID = playerManager->GetMyPlayerID();
+	const float gaugeWidth = 25.0f;
+	const float gaugeHeight = 33.0f;
 
 	// プレイヤーIDの桁数を求める
 	int numDigits = 1;
+	int ID = playerManager->GetMyPlayer()->Getteamnumber();
 	int tempID = ID;
 	while (tempID >= 10)
 	{
@@ -395,20 +519,11 @@ void SceneGame::RenderNumber(ID3D11DeviceContext* dc,
 		numDigits++;
 	}
 
-	// プレイヤーIDが4桁以上の場合、heiを1に設定
-	if (numDigits >= 4)
+	
+	
 	{
-		hei = 1;
-	}
-	else
-	{
-		hei = 0;
-	}
-
-	// 2Dスプライト描画
-	{
-		float positionX = scereenPosition.x - 7;
-		float positionY = scereenPosition.y;
+		float numberposX = scereenPosition.x;
+		float numberposY = scereenPosition.y;
 		int digit = 0;
 
 		// 各桁を描画するループ
@@ -418,16 +533,16 @@ void SceneGame::RenderNumber(ID3D11DeviceContext* dc,
 			digit = (ID / static_cast<int>(pow(10, i))) % 10;
 
 			// スプライトを描画
-			spriteNumber->Render(dc,
-				positionX, positionY,
-				15, 15,
-				gaugeWidth * digit, gaugeHeight * hei,
+			sprites[static_cast<int>(Spritenumber::Number)]->Render(dc,
+				numberposX, numberposY,
+				30, 30,
+				gaugeWidth * digit + digit, 0,
 				gaugeWidth, gaugeHeight,
 				0.0f,
-				1, 0, 0, 1);
+				1, 1, 1, 1);
 
 			// 次の桁の位置に移動
-			positionX += gaugeWidth;
+			numberposX += 20;
 		}
 	}
 }
@@ -435,9 +550,8 @@ void SceneGame::RenderNumber(ID3D11DeviceContext* dc,
 void SceneGame::RenderTimer(ID3D11DeviceContext* dc, int timer)
 {
 	// 画像の長さ
-	const float gaugeWidth = 64.0f;
-	const float gaugeHeight = 96.0f;
-	int hei;
+	const float gaugeWidth = 25.0f;
+	const float gaugeHeight = 33.0f;
 	int ID = timer;
 
 	// プレイヤーIDの桁数を求める
@@ -463,23 +577,14 @@ void SceneGame::RenderTimer(ID3D11DeviceContext* dc, int timer)
 			// 各桁の数値を取得
 			digit = (ID / static_cast<int>(pow(10, i))) % 10;
 
-			if (digit >= 5)
-			{
-				hei = 1;
-			}
-			else
-			{
-				hei = 0;
-			}
-
 			// スプライトを描画
-			spriteNumber->Render(dc,
+			sprites[static_cast<int>(Spritenumber::Number)]->Render(dc,
 				positionX, positionY,
 				15, 15,
-				gaugeWidth * digit, gaugeHeight * hei,
+				gaugeWidth * digit,0,
 				gaugeWidth, gaugeHeight,
 				0.0f,
-				1, 0, 0, 1);
+				1, 1, 1, 1);
 
 			// 次の桁の位置に移動
 			positionX += 15;

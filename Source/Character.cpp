@@ -204,6 +204,7 @@ void Character::Jump(float speed)
     velocity.y = speed /*/ 60.0f*/;
     //position.y = (std::min)(position.y, speed);
 }
+
 // ‘¬—Íˆ—
 //elapsedTime€60‚±‚ê‚ª   elapsedTimeŒo‰ßŠÔ
 void Character::UpdateVelocity(float elapsedTime)

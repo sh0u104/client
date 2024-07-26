@@ -106,6 +106,6 @@ public:
     bool teamscreenflag = false;
     bool numberinputflag = false;
 
-   
+    bool debugGameStart = false;
 };
 

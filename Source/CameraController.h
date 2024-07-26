@@ -17,6 +17,7 @@ public:
     // ターゲット位置設定 ちゃんと変数を入れる
     void SetTarget(const DirectX::XMFLOAT3& target) { this->target = target; }
 
+    void SetangleY(float angle) { this->angle.y = angle; }
     // デバッグ用GUI描画
     void DrawDebugGUI();
 

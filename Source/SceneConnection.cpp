@@ -8,28 +8,33 @@
 // 初期化
 void SceneConnection::Initialize()
 {
-       
-       //ネットワーク接続失敗
-     // スプライト初期化
-        sprites[static_cast<int>(Spritenumber::NetError)] = std::make_unique<Sprite>("Data/Sprite/neterror.png");
-        //OKボタン
-        sprites[static_cast<int>(Spritenumber::OK)] = std::make_unique<Sprite>("Data/Sprite/OK.png");
 
+    //ネットワーク接続失敗
+  // スプライト初期化
+    sprites[static_cast<int>(Spritenumber::NetError)] = std::make_unique<Sprite>("Data/Sprite/neterror.png");
+    //OKボタン
+    sprites[static_cast<int>(Spritenumber::OK)] = std::make_unique<Sprite>("Data/Sprite/OK.png");
+    //
+    sprites[static_cast<int>(Spritenumber::Guest)] = std::make_unique<Sprite>("Data/Sprite/guest.png");
+    //
+    sprites[static_cast<int>(Spritenumber::Login)] = std::make_unique<Sprite>("Data/Sprite/login.png");
+    //
+    sprites[static_cast<int>(Spritenumber::NewLogin)] = std::make_unique<Sprite>("Data/Sprite/newlogin.png");
 
-        //一度だけ
-        if (!SceneManager::Instance().GetconnectionInitialized())
-        {
-            SceneManager::Instance().SetconnectionInitialized(true);
-            //初期化
-            SceneManager::Instance().PlayermanagerInitialize();
-            SceneManager::Instance().ConnectionInitialize();
-        }
-       
-        // プレイヤーマネジャー初期化
-        playerManager = SceneManager::Instance().GetPlayerManager();
-    
-        connection = SceneManager::Instance().GetConnection();
-       
+    //一度だけ
+    if (!SceneManager::Instance().GetconnectionInitialized())
+    {
+        SceneManager::Instance().SetconnectionInitialized(true);
+        //初期化
+        SceneManager::Instance().PlayermanagerInitialize();
+        SceneManager::Instance().ConnectionInitialize();
+    }
+
+    // プレイヤーマネジャー初期化
+    playerManager = SceneManager::Instance().GetPlayerManager();
+
+    connection = SceneManager::Instance().GetConnection();
+
     //接続処理
     if (!connection->isConnction)
     {
@@ -46,8 +51,9 @@ void SceneConnection::Finalize()
 // 更新処理
 void SceneConnection::Update(float elapsedTime)
 {
+ 
     //接続成功
-    if (connection->isConnction)
+    if (connection->isConnction && isLogin)
     {
         // connection->SetplayerManager(playerManager);
         SceneManager::Instance().ChangeScene(new SceneLoading(new SceneStandby));
@@ -73,6 +79,44 @@ void SceneConnection::Render()
         RenderNetError(dc);
     }
 
+    if (connection->isConnction && !isLogin)
+    {
+        RenderLogin(dc);
+    }
+
+    ImGui::SetNextWindowPos(ImVec2(500, 200), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
+    // beginからendまでの内容が出来る
+    if (ImGui::Begin("login", nullptr, ImGuiWindowFlags_None))
+    {
+        if (isGuest)
+        {
+           
+        }
+        if (isLogin)
+        {
+            ImGui::Text("login");
+            ImGui::InputText("Name", name, sizeof(name));
+            ImGui::InputText("password", pass, sizeof(pass));
+            if (strcmp(name, "") != 0 && strcmp(pass, "") != 0)
+                if (ImGui::Button("Decision"))
+                {
+                    connection->SendSignUp(name, pass);
+                }
+        }
+        if (isNewLogin)
+        {
+            ImGui::Text("Newlogin");
+            ImGui::InputText("Name", name, sizeof(name));
+            ImGui::InputText("password", pass, sizeof(pass));
+            if (strcmp(pass, "") != 0)
+            {
+                if (ImGui::Button("Decision"))
+                    connection->SendSignIn(name, pass);
+            }
+        }
+        ImGui::End();
+    }
 
 }
 
@@ -105,11 +149,12 @@ void SceneConnection::RenderNetError(ID3D11DeviceContext* dc)
        if (!connection->isConnction)
        {
            connection->Initialize();
+         
            //接続成功
            if (connection->isConnction)
            {
               // connection->SetplayerManager(playerManager);
-               SceneManager::Instance().ChangeScene(new SceneLoading(new SceneStandby));
+               //SceneManager::Instance().ChangeScene(new SceneLoading(new SceneStandby));
            }
            //失敗
            else
@@ -117,7 +162,55 @@ void SceneConnection::RenderNetError(ID3D11DeviceContext* dc)
                SceneManager::Instance().ChangeScene(new SceneLoading(new SceneConnection));
            }
        }
-       
+    }
+}
+
+void SceneConnection::RenderLogin(ID3D11DeviceContext* dc)
+{
+    float positionX = 20;
+    float positionY = 150;
+
+    float sizeX = 200;
+    float sizeY = 100;
+
+    //枠組み
+    sprites[static_cast<int>(Spritenumber::Guest)]->Render(dc,
+        positionX, positionY, //描画位置
+        sizeX,sizeY,              //表示サイズ
+        0, 0,                 //切り取りはじめ位置
+        500,200,               //画像サイズ
+        0.0f,
+        1, 1, 1, 1);
+
+    if (Uiclick(positionX, positionY, sizeX, sizeY))
+    {
+        isGuest = true;
+    }
+
+    sprites[static_cast<int>(Spritenumber::Login)]->Render(dc,
+        positionX+250, positionY, //描画位置
+        sizeX, sizeY,                 //表示サイズ
+        0, 0,                     //切り取りはじめ位置
+        500, 200,                 //画像サイズ
+        0.0f,
+        1, 1, 1, 1);
+
+    if (Uiclick(positionX+250, positionY, sizeX, sizeY))
+    {
+        isLogin = true;
+    }
+
+    sprites[static_cast<int>(Spritenumber::NewLogin)]->Render(dc,
+        positionX + 500, positionY, //描画位置
+        sizeX, sizeY,                  //表示サイズ
+        0, 0,                      //切り取りはじめ位置
+        500, 200,                  //画像サイズ
+        0.0f,
+        1, 1, 1, 1);
+
+    if (Uiclick(positionX+500, positionY, sizeX, sizeY))
+    {
+        isNewLogin = true;
     }
 }
 

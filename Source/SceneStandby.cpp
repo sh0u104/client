@@ -129,12 +129,7 @@ void SceneStandby::Initialize()
 
 void SceneStandby::Finalize()
 {
-	//// ナンバースプライト
-	//if (this->spriteNumber)
-	//{
-	//	delete spriteNumber;
-	//	spriteNumber = nullptr;
-	//}
+	
 
 	// カメラコントーラー終了化
 	if (this->cameraController)
@@ -196,11 +191,11 @@ void SceneStandby::Update(float elapsedTime)
 	}
 	
 	//準備OK
-	if (startcheck != sendstartcheck)
-	{
-		sendstartcheck = !sendstartcheck;
-		connection->SendStartCheck(sendstartcheck);
-	}
+	//if (startcheck != sendstartcheck)
+	//{
+	//	sendstartcheck = !sendstartcheck;
+	//	connection->SendStartCheck(sendstartcheck);
+	//}
 
 	//ゲームスタート申請
 	if(sendgamestart)
@@ -275,6 +270,27 @@ void SceneStandby::Update(float elapsedTime)
 			guiteamsid[i]= playerManager->GetMyPlayer()->Getteamsid(i);
 		}
 	}
+
+	//デバッグ用
+	if (debugGameStart)
+	{
+		if (!geustloginflag)
+		{
+			geustloginflag = true;
+			connection->SendGeustLogin();
+		}
+		if (playerManager->GetMyPlayerID() > 0&&!teamcreate)
+		{
+			sendteamcreate = false;
+			teamcreate = true;
+			connection->SendTeamcreate();
+		}
+		if (playerManager->GetMyPlayer()->Getteamnumber() > 0)
+		{
+			playerManager->SetteamLeader(true);
+			sendgamestart = true;
+		}
+	}
 }
 
 void SceneStandby::Render()
@@ -340,13 +356,16 @@ void SceneStandby::Render()
 		}
 		else
 		{
-			if (!teamscreenflag)
+			if (playerManager->GetMyPlayerID() > 0)
 			{
-				RenderTeam(dc);
-			}
-			else
-			{
-				RenderTeamSelect(dc);
+				if (!teamscreenflag)
+				{
+					RenderTeam(dc);
+				}
+				else
+				{
+					RenderTeamSelect(dc);
+				}
 			}
 		}
 	}
@@ -360,44 +379,28 @@ void SceneStandby::Render()
 		// beginからendまでの内容が出来る
 		if (ImGui::Begin("Player", nullptr, ImGuiWindowFlags_None))
 		{
+			if (ImGui::Button("debugGameStart"))
+			{
+				debugGameStart = true;
+				
+			}
 				//ImGui::Text("LoginCount: %d", playerManager->GetLoginCount());
 				//ImGui::Text("GenerateCount: %d", playerManager->GetPlayersGenerateCount());
 			if (playerManager->GetMyPlayerID() != 0)
 			{
-
+				
 				ImGui::Text("Name: %s", playerManager->GetMyPlayer()->GetName());
 				ImGui::Text("ID: %d", playerManager->GetMyPlayerID());
 				ImGui::InputInt("SendTeamNumber: %d", &TeamNumber);
 				ImGui::Text("RecvTeamNumber: %d", playerManager->GetMyPlayer()->Getteamnumber());
 			}
-			if (!connectionflag)
-			{
-				if (ImGui::Button("Connection"))
-				{
-					connectionflag = true;
-				}
-				/*if (connection->connctionflag)
-				{
-					ImGui::Text("true");
-				}
-				else
-				{
-					ImGui::Text("false");
-				}*/
-			}
+			
 
 			if (playerManager->GetMyPlayerID() != 0)
 			{
 				if (!teamcreate && !teamjoin)
 				{
-					if (TeamNumber == 0)
-					{
-						if (ImGui::Button("Team Creation"))
-						{
-							sendteamcreate = true;
-						}
-					}
-					else
+					if (TeamNumber != 0)
 					{
 						if (ImGui::Button("Team Join"))
 						{
@@ -816,11 +819,16 @@ void SceneStandby::RenderTeamSelect(ID3D11DeviceContext* dc)
 
 		if (Uiclick(positionX + 70, positionY + 60, 200, 150))
 		{
-			teamscreenflag = false;
-			//sendteamcreate = true;
-			sendteamjoin = false;
-			teamjoin = true;
-			connection->SendTeamJoin(TeamNumber);
+			//teamscreenflag = false;
+			////sendteamcreate = true;
+			//sendteamjoin = false;
+			//teamjoin = true;
+			//connection->SendTeamJoin(TeamNumber);
+
+		sendteamcreate = false;
+	    teamcreate = true;
+	    connection->SendTeamcreate();
+	    playerManager->SetteamLeader(true);
 		}
 
 	//チーム加入ボタン
@@ -963,6 +971,7 @@ void SceneStandby::RenderReady(ID3D11DeviceContext* dc, bool isready)
 		if (Uiclick(positionX, positionY, 150, 50))
 		{
 			playerManager->GetMyPlayer()->SetstartCheck(true);
+			connection->SendStartCheck(true);
 		}
 	}
 	else
@@ -978,6 +987,7 @@ void SceneStandby::RenderReady(ID3D11DeviceContext* dc, bool isready)
 		if (Uiclick(positionX, positionY, 150, 50))
 		{
 			playerManager->GetMyPlayer()->SetstartCheck(false);
+			connection->SendStartCheck(false);
 		}
 	}
 }
