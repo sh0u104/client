@@ -177,27 +177,27 @@ private:
     float         turnSpeed = DirectX::XMConvertToRadians(720);
 
     float          jumpSpeed = 20.0f;
-    int                     jumpCount = 0;
-    int                     jumpLimit = 2;
+    int            jumpCount = 0;
+    int            jumpLimit = 2;
 
     //ProjectileManager projectileManager;
 
     Effect* hitEffect = nullptr;
     Effect* desEffect = nullptr;
 
-    State                   state = State::Idle;
-    State                   stated;
+    State   state = State::Idle;
+    State   stated;
 
 
 
     // ’…’nêŠ‚Ü‚Å‚Ì‹——£@ \•ª‚È‘¬“x‚Å—Ž‚Æ‚·d—Í‚Ì‚T”{‚QA‚R•bŒã‚É’…’nƒ‚[ƒVƒ‡ƒ“‚ð‚·‚éB
     int jumpfliptime =  grabity * 5;
 
-    float            leftHandRadius = 0.4f;
+    float  leftHandRadius = 0.4f;
+           
+    bool   attackCollisionFlag = false;
 
-    bool             attackCollisionFlag = false;
-
-    int   healse  = 10;
+    int    healse  = 10;
 
 public:
     // ID
@@ -226,8 +226,8 @@ public:
     int Getteamnumber() { return teamNumber; }
     void Setteamnumber(int number) { teamNumber = number; }
 
-    int Getteamsid(int number) { return teamsid[number]; }
-    void Setteamsid(int number, int id) { this->teamsid[number] = id; }
+    int Getteamsid(int number) { return teamsId[number]; }
+    void Setteamsid(int number, int id) { this->teamsId[number] = id; }
 
     bool GetstartCheck() { return startCheck; }
     void SetstartCheck(bool check) { this->startCheck = check; }
@@ -241,7 +241,7 @@ public:
 protected:
   
     int teamNumber = 0;
-    int teamsid[4] = {};
+    int teamsId[4] = {};
     bool operation = false;
     int playerID;
     bool ready = false;

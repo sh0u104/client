@@ -13,17 +13,17 @@ void SceneConnection::Initialize()
 
     //ネットワーク接続失敗
   // スプライト初期化
-    sprites[static_cast<int>(Spritenumber::NetError)] = std::make_unique<Sprite>("Data/Sprite/neterror.png");
+    sprites[static_cast<int>(SpriteNumber::NetError)] = std::make_unique<Sprite>("Data/Sprite/neterror.png");
     //OKボタン
-    sprites[static_cast<int>(Spritenumber::OK)] = std::make_unique<Sprite>("Data/Sprite/OK.png");
+    sprites[static_cast<int>(SpriteNumber::OK)] = std::make_unique<Sprite>("Data/Sprite/OK.png");
     //
-    sprites[static_cast<int>(Spritenumber::Guest)] = std::make_unique<Sprite>("Data/Sprite/guest.png");
+    sprites[static_cast<int>(SpriteNumber::Guest)] = std::make_unique<Sprite>("Data/Sprite/guest.png");
     //
-    sprites[static_cast<int>(Spritenumber::Login)] = std::make_unique<Sprite>("Data/Sprite/login.png");
+    sprites[static_cast<int>(SpriteNumber::Login)] = std::make_unique<Sprite>("Data/Sprite/login.png");
     //
-    sprites[static_cast<int>(Spritenumber::NewLogin)] = std::make_unique<Sprite>("Data/Sprite/newlogin.png");
+    sprites[static_cast<int>(SpriteNumber::NewLogin)] = std::make_unique<Sprite>("Data/Sprite/newlogin.png");
 
-    sprites[static_cast<int>(Spritenumber::Name)] = std::make_unique<Sprite>("Data/Sprite/font1.png");
+    sprites[static_cast<int>(SpriteNumber::Name)] = std::make_unique<Sprite>("Data/Sprite/font1.png");
 
     //一度だけ
     if (!SceneManager::Instance().GetconnectionInitialized())
@@ -51,7 +51,7 @@ void SceneConnection::Initialize()
 
         //生成したら
         playerManager->AddPlayersGenerateCount();
-        connection->SetplayerManager(playerManager);
+        connection->SetPlayerManager(playerManager);
     }
     else
     {
@@ -64,7 +64,7 @@ void SceneConnection::Initialize()
   
 
     //接続処理
-    if (!connection->isConnction)
+    if (!connection->isConnection)
     {
         connection->Initialize();
     }
@@ -84,7 +84,7 @@ void SceneConnection::Update(float elapsedTime)
   
     //接続成功
     //サインインサインアップで受け取りが終わったらに変更する
-    if (connection->isConnction && playerManager->GetMyPlayerID()>0)
+    if (connection->isConnection && playerManager->GetMyPlayerID()>0)
     {
         SceneManager::Instance().ChangeScene(new SceneLoading(new SceneStandby));
     }
@@ -111,12 +111,12 @@ void SceneConnection::Render()
 
     // 2Dスプライト描画
     RenderName(dc);
-    if (!connection->isConnction)
+    if (!connection->isConnection)
     {
         RenderNetError(dc);
     }
 
-    if (connection->isConnction && !isLogin&&!isNewLogin)
+    if (connection->isConnection && !isLogin&&!isNewLogin)
     {
         RenderLogin(dc);
     }
@@ -172,7 +172,7 @@ void SceneConnection::RenderNetError(ID3D11DeviceContext* dc)
     float positionY = 0;
 
     //枠組み
-    sprites[static_cast<int>(Spritenumber::NetError)]->Render(dc,
+    sprites[static_cast<int>(SpriteNumber::NetError)]->Render(dc,
         positionX, positionY, //描画位置
         600, 350,               //表示サイズ
         0, 0,                 //切り取りはじめ位置
@@ -181,7 +181,7 @@ void SceneConnection::RenderNetError(ID3D11DeviceContext* dc)
         1, 1, 1, 1);
 
     //OKボタン
-    sprites[static_cast<int>(Spritenumber::OK)]->Render(dc,
+    sprites[static_cast<int>(SpriteNumber::OK)]->Render(dc,
         positionX + 190, positionY + 250, //描画位置
         150, 50,               //表示サイズ
         0, 0,                 //切り取りはじめ位置
@@ -189,15 +189,15 @@ void SceneConnection::RenderNetError(ID3D11DeviceContext* dc)
         0.0f,
         1, 1, 1, 1);
 
-    if (Uiclick(positionX + 190, positionY + 250, 150, 50))
+    if (UiClick(positionX + 190, positionY + 250, 150, 50))
     {
        
-       if (!connection->isConnction)
+       if (!connection->isConnection)
        {
            connection->Initialize();
          
            //接続成功
-           if (connection->isConnction)
+           if (connection->isConnection)
            {
               // connection->SetplayerManager(playerManager);
                //SceneManager::Instance().ChangeScene(new SceneLoading(new SceneStandby));
@@ -213,6 +213,7 @@ void SceneConnection::RenderNetError(ID3D11DeviceContext* dc)
 
 void SceneConnection::RenderLogin(ID3D11DeviceContext* dc)
 {
+    Mouse& mouse = Input::Instance().GetMouse();
     float positionX = 20;
     float positionY = 150;
 
@@ -220,7 +221,7 @@ void SceneConnection::RenderLogin(ID3D11DeviceContext* dc)
     float sizeY = 100;
 
     //枠組み
-    sprites[static_cast<int>(Spritenumber::Guest)]->Render(dc,
+    sprites[static_cast<int>(SpriteNumber::Guest)]->Render(dc,
         positionX, positionY, //描画位置
         sizeX,sizeY,              //表示サイズ
         0, 0,                 //切り取りはじめ位置
@@ -228,12 +229,12 @@ void SceneConnection::RenderLogin(ID3D11DeviceContext* dc)
         0.0f,
         1, 1, 1, 1);
 
-    if (Uiclick(positionX, positionY, sizeX, sizeY))
+    if (UiClick(positionX, positionY, sizeX, sizeY))
     {
         connection->SendGeustLogin();
     }
 
-    sprites[static_cast<int>(Spritenumber::Login)]->Render(dc,
+    sprites[static_cast<int>(SpriteNumber::Login)]->Render(dc,
         positionX+250, positionY, //描画位置
         sizeX, sizeY,                 //表示サイズ
         0, 0,                     //切り取りはじめ位置
@@ -241,12 +242,12 @@ void SceneConnection::RenderLogin(ID3D11DeviceContext* dc)
         0.0f,
         1, 1, 1, 1);
 
-    if (Uiclick(positionX+250, positionY, sizeX, sizeY))
+    if (UiClick(positionX+250, positionY, sizeX, sizeY))
     {
         isLogin = true;
     }
 
-    sprites[static_cast<int>(Spritenumber::NewLogin)]->Render(dc,
+    sprites[static_cast<int>(SpriteNumber::NewLogin)]->Render(dc,
         positionX + 500, positionY, //描画位置
         sizeX, sizeY,                  //表示サイズ
         0, 0,                      //切り取りはじめ位置
@@ -254,7 +255,7 @@ void SceneConnection::RenderLogin(ID3D11DeviceContext* dc)
         0.0f,
         1, 1, 1, 1);
 
-    if (Uiclick(positionX+500, positionY, sizeX, sizeY))
+    if (UiClick(positionX+500, positionY, sizeX, sizeY))
     {
         isNewLogin = true;
     }
@@ -275,11 +276,11 @@ void SceneConnection::RenderName(ID3D11DeviceContext* dc)
         int number = static_cast<int>(name[i]);
         int width = number % 16;
         int height = number / 16;
-        sprites[static_cast<int>(Spritenumber::Name)]->Render(dc,
-            positionX, positionY, //描画位置
+        sprites[static_cast<int>(SpriteNumber::Name)]->Render(dc,
+            positionX, positionY,      //描画位置
             sizeX, sizeY,              //表示サイズ
-            sizeX*width, sizeY*height,                 //切り取りはじめ位置
-            sizeX, sizeY,            //画像サイズ
+            sizeX*width, sizeY*height, //切り取りはじめ位置
+            sizeX, sizeY,              //画像サイズ
             0.0f,
             1, 1, 1, 1);
       
@@ -287,11 +288,11 @@ void SceneConnection::RenderName(ID3D11DeviceContext* dc)
     }
 }
 
-bool SceneConnection::Uiclick(float posX, float posY, float sizeX, float sizeY)
+bool SceneConnection::UiClick(float posX, float posY, float sizeX, float sizeY)
 {
     DirectX::XMFLOAT3 scereenPosition;
-
     Mouse& mouse = Input::Instance().GetMouse();
+
     if (mouse.GetButtonDown() & Mouse::BTN_LEFT)
     {
         scereenPosition.x = static_cast<float>(mouse.GetPositionX());

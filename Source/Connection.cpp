@@ -49,13 +49,13 @@ void Connection::Initialize()
 
 		// 受信スレッド実装
 		std::cout << "thread" << std::endl;
-		th = std::thread(&Connection::recvThread, this);
+		th = std::thread(&Connection::RecvThread, this);
 
-		isConnction = true;
+		isConnection = true;
 	}
 	else
 	{
-		isConnction = false;
+		isConnection = false;
 		closesocket(sock);
 		WSACleanup();
 	}
@@ -64,7 +64,7 @@ void Connection::Initialize()
 void Connection::Finalize()
 {
 	//接続してたら
-	if (isConnction)
+	if (isConnection)
 	{
 		// マルチスレッドのループフラグを下ろす
 		loop = false;
@@ -300,7 +300,7 @@ void Connection::SendSeeFriend()
 
 }
 
-void Connection::recvThread()
+void Connection::RecvThread()
 {
 	do {
 		char buffer[2048]{};

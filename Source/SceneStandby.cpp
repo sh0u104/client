@@ -80,13 +80,13 @@ void SceneStandby::Initialize()
 		sprites[static_cast<int>(Spritenumber::Start)] = std::make_unique<Sprite>("Data/Sprite/start.png");
 	}
 
-
+	SceneManager& sceneManager = SceneManager::Instance();
 	//初期化が一度目かどうか
-	if (!SceneManager::Instance().GetstandbyInitialized())
+	if (!sceneManager.GetstandbyInitialized())
 	{
-		SceneManager::Instance().SetstandbyInitialized(true);
-		playerManager = SceneManager::Instance().GetPlayerManager();
-		connection = SceneManager::Instance().GetConnection();
+		sceneManager.SetstandbyInitialized(true);
+		playerManager = sceneManager.GetPlayerManager();
+		connection = sceneManager.GetConnection();
 
 		////	サーバーとの接続前はID０
 		//Player* player = new Player();
@@ -106,14 +106,14 @@ void SceneStandby::Initialize()
 	}
 	else
 	{
-		playerManager = SceneManager::Instance().GetPlayerManager();
+		playerManager = sceneManager.GetPlayerManager();
 		for (int i = 0; i < playerManager->GetPlayers().size(); ++i)
 		{
 			int MYID = playerManager->GetMyPlayer()->Getteamsid(i);
 			playerManager->GetPlayer(MYID)->SetAngle({ 0.0f,3.0f,0.0f });
 			playerManager->GetPlayer(MYID)->SetPosition({ 1.0f * i,0.0f,0.0f });
 		}
-		connection = SceneManager::Instance().GetConnection();
+		connection = sceneManager.GetConnection();
 		if (playerManager->GetteamLeader())
 		{
 			teamcreate = true;

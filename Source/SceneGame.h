@@ -28,16 +28,18 @@ public:
 	// 描画処理
 	void Render() override;
 
-	void mouse(ID3D11DeviceContext* dc);
+	void MouseOpreration(ID3D11DeviceContext* dc);
 	
 private:
-	DirectX::XMFLOAT3 clickpos;
-	DirectX::XMFLOAT3 oldmousepos;
-	float mouseangle,playerangle;
-	float length;
+	DirectX::XMFLOAT3 clickPos;
+	DirectX::XMFLOAT3 oldMousePos;
+	float mouseAngle = 0.0f;
+	float playerAngle = 0.0f;
+	float length = 0.0f;
 
 	// ラジアンから度に変換
-	float mouseangleDegrees,playerangleDegrees;
+	float mouseAngleDegrees = 0.0f;
+	float playerAngleDegrees = 0.0f;
 
 	// エネミーHPゲージ描画
 	void RenderNumber(
@@ -53,14 +55,14 @@ private:
 	Player* player = nullptr;
 	CameraController* cameraController = nullptr;
 
-	enum class Spritenumber : int
+	enum class SpriteNumber : int
 	{
 		Number,
 		BigCircle,
 		SmallCircle,
 		Max
 	};
-	std::unique_ptr<Sprite> sprites[static_cast<int>(Spritenumber::Max)] = {};
+	std::unique_ptr<Sprite> sprites[static_cast<int>(SpriteNumber::Max)] = {};
 
 
 
@@ -68,15 +70,14 @@ private:
 	Connection* connection = nullptr;
 	PlayerManager* playerManager = nullptr;
 
-	DirectX::XMFLOAT3 guiposition;
-	DirectX::XMFLOAT3 guivelocity;
-	DirectX::XMFLOAT3 guirecvvelocity;
-	DirectX::XMFLOAT3 guiangle;
+	DirectX::XMFLOAT3 guiPosition;
+	DirectX::XMFLOAT3 guiVelocity;
+	DirectX::XMFLOAT3 guiRecvVelocity;
+	DirectX::XMFLOAT3 guiAngle;
 
 
-	bool  SendFlag = true;
-
-	int guiID;
+	bool  sendFlag = true;
+	int guiId;
 
 	enum class State
 	{
@@ -91,7 +92,7 @@ private:
 		Revive
 	};
 
-	int guiteamsid[4];
+	int guiTeamsId[4];
 
 	float timer = 10.0;
 };

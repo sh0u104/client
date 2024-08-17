@@ -23,12 +23,13 @@ public:
     void RenderLogin(ID3D11DeviceContext* dc);
     void RenderName(ID3D11DeviceContext* dc);
 
-    bool Uiclick(float posX, float posY, float sizeX, float sizeY);
+    bool UiClick(float posX, float posY, float sizeX, float sizeY);
 
 private:
     PlayerManager* playerManager = nullptr;
     Connection* connection = nullptr;
-    enum class Spritenumber : int
+
+    enum class SpriteNumber : int
     {
         NetError,
         OK,
@@ -38,7 +39,7 @@ private:
         Name,
         Max
     };
-    std::unique_ptr<Sprite> sprites[(int)Spritenumber::Max] = {};
+    std::unique_ptr<Sprite> sprites[(int)SpriteNumber::Max] = {};
 
     bool isGuest = false;
     bool isLogin = false;

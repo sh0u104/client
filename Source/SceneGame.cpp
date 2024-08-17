@@ -57,11 +57,11 @@ void SceneGame::Initialize()
 	{
 		//sprites[static_cast<int>(Spritenumber:)] = std::make_unique<Sprite>("Data/Sprite/");
 		//数字
-		sprites[static_cast<int>(Spritenumber::Number)] = std::make_unique<Sprite>("Data/Sprite/number.png");
+		sprites[static_cast<int>(SpriteNumber::Number)] = std::make_unique<Sprite>("Data/Sprite/number.png");
 
-		sprites[static_cast<int>(Spritenumber::BigCircle)] = std::make_unique<Sprite>("Data/Sprite/bigcircle.png");
+		sprites[static_cast<int>(SpriteNumber::BigCircle)] = std::make_unique<Sprite>("Data/Sprite/bigcircle.png");
 
-		sprites[static_cast<int>(Spritenumber::SmallCircle)] = std::make_unique<Sprite>("Data/Sprite/smallcircle.png");
+		sprites[static_cast<int>(SpriteNumber::SmallCircle)] = std::make_unique<Sprite>("Data/Sprite/smallcircle.png");
 
 	}
 
@@ -103,7 +103,7 @@ void SceneGame::Initialize()
 	//imgui用
 	for (int i = 0; i < 3; ++i)
 	{
-		guiteamsid[i] = playerManager->GetMyPlayer()->Getteamsid(i);
+		guiTeamsId[i] = playerManager->GetMyPlayer()->Getteamsid(i);
 	}
 }
 
@@ -140,7 +140,7 @@ void SceneGame::Update(float elapsedTime)
 
 	if (connection&& playerManager->GetPlayers().size()>0)
 	{
-		if (SendFlag)
+		if (sendFlag)
 		{
 			if (!playerManager->GetMyPlayer()->Getoperation())
 			{
@@ -165,11 +165,11 @@ void SceneGame::Update(float elapsedTime)
 		}
 
 		//imgui用
-		guiposition = playerManager->GetMyPlayer()->GetPosition();
-		guivelocity = playerManager->GetMyPlayer()->GetVelocity();
-		guirecvvelocity = playerManager->GetMyPlayer()->GetRecvVelocity();
-		guiID = playerManager->GetMyPlayer()->GetPlayerID();
-		guiangle = playerManager->GetMyPlayer()->GetAngle();
+		guiPosition = playerManager->GetMyPlayer()->GetPosition();
+		guiVelocity = playerManager->GetMyPlayer()->GetVelocity();
+		guiRecvVelocity = playerManager->GetMyPlayer()->GetRecvVelocity();
+		guiId = playerManager->GetMyPlayer()->GetPlayerID();
+		guiAngle = playerManager->GetMyPlayer()->GetAngle();
 
 		// カメラコントローラー更新処理
 		DirectX::XMFLOAT3 target = playerManager->GetMyPlayer()->GetPosition();
@@ -253,7 +253,7 @@ void SceneGame::Render()
 
 		shader->End(dc);
 	}
-	mouse(dc);
+	MouseOpreration(dc);
 
 	// 3Dエフェクト描画
 	{
@@ -270,11 +270,11 @@ void SceneGame::Render()
 			if (ImGui::CollapsingHeader("Mouse", ImGuiTreeNodeFlags_DefaultOpen))
 			{
 				ImGui::InputFloat("length", &length);
-				ImGui::InputFloat3("clickpos", &clickpos.x);
-				ImGui::InputFloat3("pos", &oldmousepos.x);
+				ImGui::InputFloat3("clickpos", &clickPos.x);
+				ImGui::InputFloat3("pos", &oldMousePos.x);
 				ImGui::Text("angle : %.2f", &playerManager->GetMyPlayer()->GetAngle().y);
-				ImGui::InputFloat("angle", &mouseangle);
-				ImGui::InputFloat("angleDegrees", &mouseangleDegrees);
+				ImGui::InputFloat("angle", &mouseAngle);
+				ImGui::InputFloat("angleDegrees", &mouseAngleDegrees);
 			}
 			// トランスフォーム
 			if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
@@ -284,9 +284,9 @@ void SceneGame::Render()
 				
 				if (ImGui::Button("Change Operation"))
 				{
-					SendFlag = !SendFlag;
+					sendFlag = !sendFlag;
 				}
-				if (SendFlag)
+				if (sendFlag)
 				{
 					ImGui::Text("true");
 				}
@@ -294,11 +294,11 @@ void SceneGame::Render()
 				{
 					ImGui::Text("false");
 				}
-				ImGui::InputFloat3("GUIVelocity", &guivelocity.x);
-				ImGui::InputFloat3("RecvVelocity", &guirecvvelocity.x);
-				ImGui::InputFloat3("GUIPosition", &guiposition.x);
+				ImGui::InputFloat3("GUIVelocity", &guiVelocity.x);
+				ImGui::InputFloat3("RecvVelocity", &guiRecvVelocity.x);
+				ImGui::InputFloat3("GUIPosition", &guiPosition.x);
 
-				ImGui::InputInt4("TeamsID", guiteamsid);
+				ImGui::InputInt4("TeamsID", guiTeamsId);
 			}
 		}
 		ImGui::End();
@@ -348,15 +348,15 @@ void SceneGame::Render()
 	
 }
 
-void SceneGame::mouse(ID3D11DeviceContext* dc)
+void SceneGame::MouseOpreration(ID3D11DeviceContext* dc)
 {
 	Mouse& mouse = Input::Instance().GetMouse();
 
 	//押してたら
 	if (mouse.GetButton() & Mouse::BTN_LEFT)
 	{
-		oldmousepos.x = static_cast<float>(mouse.GetOldPositionX());
-		oldmousepos.y = static_cast<float>(mouse.GetOldPositionY());
+		oldMousePos.x = static_cast<float>(mouse.GetOldPositionX());
+		oldMousePos.y = static_cast<float>(mouse.GetOldPositionY());
 
 		
 	}
@@ -370,15 +370,15 @@ void SceneGame::mouse(ID3D11DeviceContext* dc)
 	if (mouse.GetButtonDown() & Mouse::BTN_LEFT)
 	{
 		
-		clickpos.x = static_cast<float>(mouse.GetPositionX());
-		clickpos.y = static_cast<float>(mouse.GetPositionY());
+		clickPos.x = static_cast<float>(mouse.GetPositionX());
+		clickPos.y = static_cast<float>(mouse.GetPositionY());
 
 		
 	}
 
 	DirectX::XMVECTOR vec, OldPos, Pos;
-    OldPos = XMLoadFloat3(&oldmousepos);
-    Pos = XMLoadFloat3(&clickpos);
+    OldPos = XMLoadFloat3(&oldMousePos);
+    Pos = XMLoadFloat3(&clickPos);
     vec = XMVectorSubtract(Pos, OldPos);
 
 	length = XMVectorGetX(XMVector3Length(vec));
@@ -386,44 +386,44 @@ void SceneGame::mouse(ID3D11DeviceContext* dc)
 	float deltaY = XMVectorGetY(vec);
 	
 
-	mouseangle = atan2(deltaY, deltaX);
-	playerangle = mouseangle;
+	mouseAngle = atan2(deltaY, deltaX);
+	playerAngle = mouseAngle;
 	// ラジアンから度に変換
-	mouseangleDegrees = XMConvertToDegrees(mouseangle);
-	playerangleDegrees = mouseangleDegrees;
+	mouseAngleDegrees = XMConvertToDegrees(mouseAngle);
+	playerAngleDegrees = mouseAngleDegrees;
 
 	// 0度を上方向にするために90度を追加
-	playerangleDegrees = 90.0f - playerangleDegrees;
+	playerAngleDegrees = 90.0f - playerAngleDegrees;
 
 	// 角度を0-360度の範囲に調整
-	if (playerangleDegrees < 0) {
-		playerangleDegrees += 360.0f;
+	if (playerAngleDegrees < 0) {
+		playerAngleDegrees += 360.0f;
 	}
-	if (mouseangleDegrees < 0) {
-		mouseangleDegrees += 360.0f;
+	if (mouseAngleDegrees < 0) {
+		mouseAngleDegrees += 360.0f;
 	}
 
 	//逆回転のため補正
-	playerangleDegrees -= 360;
-	playerangleDegrees *= -1;
+	playerAngleDegrees -= 360;
+	playerAngleDegrees *= -1;
 
 	//角度を度からラジアンに戻す
-	mouseangle = XMConvertToRadians(mouseangleDegrees);
-	playerangle = XMConvertToRadians(playerangleDegrees);
+	mouseAngle = XMConvertToRadians(mouseAngleDegrees);
+	playerAngle = XMConvertToRadians(playerAngleDegrees);
 
 	if (length < 0.2f) {
-		playerangle = playerManager->GetMyPlayer()->GetAngle().y;
+		playerAngle = playerManager->GetMyPlayer()->GetAngle().y;
 	}
 
 
-	playerManager->GetMyPlayer()->mouseAngle = mouseangle;
-	playerManager->GetMyPlayer()->SetAngle({ 0, playerangle, 0 });
+	playerManager->GetMyPlayer()->mouseAngle = mouseAngle;
+	playerManager->GetMyPlayer()->SetAngle({ 0, playerAngle, 0 });
 	
 
 	
 	
-	sprites[static_cast<int>(Spritenumber::BigCircle)]->Render(dc,
-		clickpos.x - 50, clickpos.y - 50, //描画位置
+	sprites[static_cast<int>(SpriteNumber::BigCircle)]->Render(dc,
+		clickPos.x - 50, clickPos.y - 50, //描画位置
 		100, 100,             //表示サイズ
 		0, 0,                 //切り取りはじめ位置
 		300, 300,           //画像サイズ
@@ -437,15 +437,15 @@ void SceneGame::mouse(ID3D11DeviceContext* dc)
 		vec = DirectX::XMVectorScale(vec, scaleFactor);
 		DirectX::XMFLOAT3 correctedOldPos;
 		DirectX::XMStoreFloat3(&correctedOldPos, DirectX::XMVectorSubtract(Pos, vec));
-		oldmousepos.x = correctedOldPos.x;
-		oldmousepos.y = correctedOldPos.y;
+		oldMousePos.x = correctedOldPos.x;
+		oldMousePos.y = correctedOldPos.y;
 
 		length = 50.0f;
 		
 	}
 	playerManager->GetMyPlayer()->mouselength = length;
-	sprites[static_cast<int>(Spritenumber::SmallCircle)]->Render(dc,
-		oldmousepos.x - 15, oldmousepos.y - 15, //描画位置
+	sprites[static_cast<int>(SpriteNumber::SmallCircle)]->Render(dc,
+		oldMousePos.x - 15, oldMousePos.y - 15, //描画位置
 		30, 30,             //表示サイズ
 		0, 0,                 //切り取りはじめ位置
 		100, 100,           //画像サイズ
@@ -529,7 +529,7 @@ void SceneGame::RenderNumber(ID3D11DeviceContext* dc,
 			digit = (ID / static_cast<int>(pow(10, i))) % 10;
 
 			// スプライトを描画
-			sprites[static_cast<int>(Spritenumber::Number)]->Render(dc,
+			sprites[static_cast<int>(SpriteNumber::Number)]->Render(dc,
 				numberposX, numberposY,
 				30, 30,
 				gaugeWidth * digit + digit, 0,
@@ -574,7 +574,7 @@ void SceneGame::RenderTimer(ID3D11DeviceContext* dc, int timer)
 			digit = (ID / static_cast<int>(pow(10, i))) % 10;
 
 			// スプライトを描画
-			sprites[static_cast<int>(Spritenumber::Number)]->Render(dc,
+			sprites[static_cast<int>(SpriteNumber::Number)]->Render(dc,
 				positionX, positionY,
 				15, 15,
 				gaugeWidth * digit,0,

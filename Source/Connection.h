@@ -57,7 +57,7 @@ public:
 	// ネットワーク処理更新関数
 	void NetrowkUpdate(float elapsedTime);
 
-	void recvThread();
+	void RecvThread();
 
 
 
@@ -227,9 +227,9 @@ public:
 	
 
 	PlayerManager* GetPlayerManager() { return playerManager; }
-	void SetplayerManager(PlayerManager* playerManager) { this->playerManager = playerManager; }
+	void SetPlayerManager(PlayerManager* playerManager) { this->playerManager = playerManager; }
 
-	bool isConnction = false;
+	bool isConnection = false;
 	std::vector<int> deleteID;
 private:
 	PlayerManager* playerManager = nullptr;
