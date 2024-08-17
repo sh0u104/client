@@ -7,6 +7,7 @@
 #include <string>
 #include "PlayerManager.h" 
 #include "Player.h"
+
 using namespace DirectX;
 
 class Connection
@@ -34,7 +35,10 @@ public:
 
 	void SendTeamJoin(int teamnumber);
 
+	void SendTeamLeave(bool isLeader);
+
 	void SendGamestart(int teamnumber);
+
 
 	void SendMessages(char input[32]);
 
@@ -65,6 +69,7 @@ public:
 		Sync,			// 同期
 		TeamCreate,     //チーム作成
 		Teamjoin,       //チーム加入
+		Teamleave,      //チームを抜ける
 		Teamsync,       // 後に入った人にチームメンバーのIDをおくる
 		StartCheck,     //スタート準備ができてるか
 		Gamestart,      //ゲームを始めでいいか
@@ -154,6 +159,13 @@ public:
 		int number;
 	};
 
+	struct TeamLeave
+	{
+		NetworkTag cmd;
+		short id;
+		bool isLeader;
+	};
+
 	struct Teamsync
 	{
 		NetworkTag cmd;
@@ -218,6 +230,7 @@ public:
 	void SetplayerManager(PlayerManager* playerManager) { this->playerManager = playerManager; }
 
 	bool isConnction = false;
+	std::vector<int> deleteID;
 private:
 	PlayerManager* playerManager = nullptr;
 

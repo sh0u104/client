@@ -407,10 +407,6 @@ void SceneGame::mouse(ID3D11DeviceContext* dc)
 	playerangleDegrees -= 360;
 	playerangleDegrees *= -1;
 
-	//if (playerangleDegrees > 180)
-	//{
-	//	playerangleDegrees -= 360;
-	//}
 	//角度を度からラジアンに戻す
 	mouseangle = XMConvertToRadians(mouseangleDegrees);
 	playerangle = XMConvertToRadians(playerangleDegrees);
@@ -511,7 +507,7 @@ void SceneGame::RenderNumber(ID3D11DeviceContext* dc,
 
 	// プレイヤーIDの桁数を求める
 	int numDigits = 1;
-	int ID = playerManager->GetMyPlayer()->Getteamnumber();
+	int ID = playerManager->GetMyPlayerID();
 	int tempID = ID;
 	while (tempID >= 10)
 	{
@@ -522,8 +518,8 @@ void SceneGame::RenderNumber(ID3D11DeviceContext* dc,
 	
 	
 	{
-		float numberposX = scereenPosition.x;
-		float numberposY = scereenPosition.y;
+		float numberposX = scereenPosition.x-10;
+		float numberposY = scereenPosition.y-10;
 		int digit = 0;
 
 		// 各桁を描画するループ

@@ -146,8 +146,6 @@ void Connection::SendMove(DirectX::XMFLOAT3 velocity, DirectX::XMFLOAT3 position
 	int s = send(sock, buffer, sizeof(buffer), 0);
 }
 
-
-
 void Connection::SendSync(DirectX::XMFLOAT3 position)
 {
 	PlayerSync sync;
@@ -183,6 +181,18 @@ void Connection::SendTeamJoin(int teamnumber)
 
 	char buffer[sizeof(Teamjoin)];
 	memcpy_s(buffer, sizeof(buffer), &teamjoin, sizeof(Teamjoin));
+	int s = send(sock, buffer, sizeof(buffer), 0);
+}
+
+void Connection::SendTeamLeave(bool isLeader)
+{
+	TeamLeave teamLeave;
+	teamLeave.cmd = NetworkTag::Teamleave;
+	teamLeave.id = playerManager->GetMyPlayerID();
+	teamLeave.isLeader = isLeader;
+
+	char buffer[sizeof(TeamLeave)];
+	memcpy_s(buffer, sizeof(buffer), &teamLeave, sizeof(TeamLeave));
 	int s = send(sock, buffer, sizeof(buffer), 0);
 }
 
@@ -440,11 +450,17 @@ void Connection::recvThread()
 				Teamjoin teamjoin;
 				memcpy_s(&teamjoin, sizeof(teamjoin), buffer, sizeof(Teamjoin));
 
+				//本人が加入失敗
+				if (teamjoin.number == -1)
+				{
+					break;
+				}
+
+				//本人がチームに入れたら
 				if (teamjoin.id == playerManager->GetMyPlayerID())
 				{
-					//本人がチームに入れたら
-					playerManager->GetMyPlayer()->Setteamnumber(teamjoin.number);
 					
+					playerManager->GetMyPlayer()->Setteamnumber(teamjoin.number);
 					break;
 				}
 			    //本人以外がチームに入って来たら
@@ -469,6 +485,26 @@ void Connection::recvThread()
 					}
 
 				}
+			}
+			break;
+			case NetworkTag::Teamleave:
+			{
+				TeamLeave teamLeave;
+				memcpy_s(&teamLeave, sizeof(teamLeave), buffer, sizeof(TeamLeave));
+				//自分じゃなかったら
+				if (playerManager->GetMyPlayerID() != teamLeave.id)
+				{
+					deleteID.push_back(teamLeave.id);
+					
+					for (int i = 0; i < 3; ++i)
+					{
+						if (playerManager->GetMyPlayer()->Getteamsid(i) == teamLeave.id)
+						{
+							playerManager->GetMyPlayer()->Setteamsid(i, 0);
+						}
+					}
+				}
+
 			}
 			break;
 			case NetworkTag::Teamsync:

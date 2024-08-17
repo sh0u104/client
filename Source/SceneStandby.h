@@ -42,6 +42,7 @@ private:
         ReadyzCancel,
         Solo,
         Multi,
+        Start,
       //ModeSelect,
         Max
     };
@@ -81,6 +82,7 @@ private:
     void RenderTeamJoin(ID3D11DeviceContext* dc);
     void RenderReady(ID3D11DeviceContext* dc,bool isready);
     void RenderMode(ID3D11DeviceContext* dc);
+    void RenderGameStart(ID3D11DeviceContext* dc);
     char input[32];
 
     bool Uiclick(float posX,float posY,float sizeX,float sizeY);

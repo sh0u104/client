@@ -10,6 +10,7 @@
 #include "SceneManager.h"
 #include "SceneLoading.h"
 #include "SceneGame.h"
+
 void SceneStandby::Initialize()
 {
 	
@@ -75,7 +76,8 @@ void SceneStandby::Initialize()
 		sprites[static_cast<int>(Spritenumber::Solo)] = std::make_unique<Sprite>("Data/Sprite/solo.png");
 		//マルチモード
 		sprites[static_cast<int>(Spritenumber::Multi)] = std::make_unique<Sprite>("Data/Sprite/multi.png");
-
+		//スタート
+		sprites[static_cast<int>(Spritenumber::Start)] = std::make_unique<Sprite>("Data/Sprite/start.png");
 	}
 
 
@@ -86,22 +88,21 @@ void SceneStandby::Initialize()
 		playerManager = SceneManager::Instance().GetPlayerManager();
 		connection = SceneManager::Instance().GetConnection();
 
-		//	サーバーとの接続前はID０
-		Player* player = new Player();
-		player->SetPlayerID(0);						//貰ったID情報をストック
-		player->Setoperation(false);
-		player->SetPosition(DirectX::XMFLOAT3(0, 0, 0)); //発生位置
-		player->SetAngle({ 0.0f,3.0f,0.0f });
-
-		playerManager->SetMyPlayerID(0);
-		playerManager->AddPlayer(player);
-		playerManager->GetPlayer(0)->SetReady(true);
-
-		//生成したら
-		playerManager->AddPlayersGenerateCount();
-		connection->SetplayerManager(playerManager);
-		connectionflag = true;
-
+		////	サーバーとの接続前はID０
+		//Player* player = new Player();
+		//player->SetPlayerID(0);						//貰ったID情報をストック
+		//player->Setoperation(false);
+		//player->SetPosition(DirectX::XMFLOAT3(0, 0, 0)); //発生位置
+		//player->SetAngle({ 0.0f,3.0f,0.0f });
+		//
+		//playerManager->SetMyPlayerID(0);
+		//playerManager->AddPlayer(player);
+		//playerManager->GetPlayer(0)->SetReady(true);
+		//
+		////生成したら
+		//playerManager->AddPlayersGenerateCount();
+		//connection->SetplayerManager(playerManager);
+		//
 	}
 	else
 	{
@@ -113,7 +114,6 @@ void SceneStandby::Initialize()
 			playerManager->GetPlayer(MYID)->SetPosition({ 1.0f * i,0.0f,0.0f });
 		}
 		connection = SceneManager::Instance().GetConnection();
-		connectionflag = true;
 		if (playerManager->GetteamLeader())
 		{
 			teamcreate = true;
@@ -158,20 +158,22 @@ void SceneStandby::Update(float elapsedTime)
 	{
 		playerManager->SetGameStart(false);
 		SceneManager::Instance().ChangeScene(new SceneLoading(new SceneGame));
-
 	}
 
-	//サーバにつなげるとき
-	//if (connectionflag && !connection->isConnction)
-	//{
-	//	connection->Initialize();
-	//	if(connection->isConnction)
-	//	connection->SetplayerManager(playerManager);
-	//	else
-	//	{
-	//		connectionflag = false;
-	//	}
-	//}
+	//デバッグ用
+	if (debugGameStart)
+	{
+		if (playerManager->GetMyPlayerID() > 0&&!teamcreate)
+		{
+			teamcreate = true;
+			connection->SendTeamcreate();
+		}
+		if (playerManager->GetMyPlayer()->Getteamnumber() > 0)
+		{
+			playerManager->SetteamLeader(true);
+			sendgamestart = true;
+		}
+	}
 
 	//チームを作る時
 	//if (sendteamcreate&&!teamcreate)
@@ -271,25 +273,12 @@ void SceneStandby::Update(float elapsedTime)
 		}
 	}
 
-	//デバッグ用
-	if (debugGameStart)
+	//消去リストのIDのプレイヤーを消す
+	for (int i = 0; i < connection->deleteID.size(); ++i)
 	{
-		if (!geustloginflag)
-		{
-			geustloginflag = true;
-			connection->SendGeustLogin();
-		}
-		if (playerManager->GetMyPlayerID() > 0&&!teamcreate)
-		{
-			sendteamcreate = false;
-			teamcreate = true;
-			connection->SendTeamcreate();
-		}
-		if (playerManager->GetMyPlayer()->Getteamnumber() > 0)
-		{
-			playerManager->SetteamLeader(true);
-			sendgamestart = true;
-		}
+		playerManager->ErasePlayer(connection->deleteID.at(i));
+		connection->deleteID.erase(connection->deleteID.begin() + i);
+		playerManager->DeletePlayer();
 	}
 }
 
@@ -332,25 +321,37 @@ void SceneStandby::Render()
 
 	// 2Dスプライト描画
 	{
+		//現在のモード
 		RenderMode(dc);
+
+		//ゲーム開始ボタン
+		if (playerManager->GetteamLeader() || (!teamcreate&&TeamNumber==0))
+		{
+			RenderGameStart(dc);
+		}
 
 		if (numberinputflag)
 	    {
 	    	RenderTeamJoin(dc);
 	    }
 
+		//ID表示
 		if (playerManager->GetMyPlayerID() != 0)
 		{
 			RenderID(dc, rc.view, rc.projection);
 		}
 		
-
+		//
 		if (playerManager->GetMyPlayer()->Getteamnumber() > 0)
 		{
 			RenderTeamNumber(dc, rc.view, rc.projection);
+
 			if (!playerManager->GetteamLeader())
 			{
 				RenderReady(dc, playerManager->GetMyPlayer()->GetstartCheck());
+			}
+			else
+			{
 			}
 
 		}
@@ -390,7 +391,6 @@ void SceneStandby::Render()
 			{
 				
 				ImGui::Text("Name: %s", playerManager->GetMyPlayer()->GetName());
-				ImGui::Text("ID: %d", playerManager->GetMyPlayerID());
 				ImGui::InputInt("SendTeamNumber: %d", &TeamNumber);
 				ImGui::Text("RecvTeamNumber: %d", playerManager->GetMyPlayer()->Getteamnumber());
 			}
@@ -407,28 +407,6 @@ void SceneStandby::Render()
 							sendteamjoin = true;
 						}
 					}
-				}
-				if (playerManager->GetMyPlayer()->Getteamnumber() != 0&& !teamcreate)
-				{
-					if (ImGui::Button("Start Check"))
-					{
-						startcheck = !startcheck;
-					}
-					if (playerManager->GetMyPlayer()->GetstartCheck())
-					{
-						ImGui::Text("true");
-					}
-					else
-					{
-						ImGui::Text("false");
-					}
-					
-				}
-
-				if(teamcreate)
-				if (ImGui::Button("GameStart"))
-				{
-					sendgamestart = true;
 				}
 			}
 			ImGui::InputInt4("TeamsID", guiteamsid);
@@ -479,153 +457,101 @@ void SceneStandby::Render()
 			ImGui::End();
 		}
 
-
-		if(connectionflag)
-		{
-			ImGui::SetNextWindowPos(ImVec2(500, 200), ImGuiCond_FirstUseEver);
-			ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
-			// beginからendまでの内容が出来る
-			if (ImGui::Begin("login", nullptr, ImGuiWindowFlags_None))
-			{
-				if (playerManager->GetMyPlayerID() == 0 && !signupflag && !signinflag)
-				{
-					if (ImGui::Button("sign up"))
-					{
-						signupflag = true;
-					}
-					if (ImGui::Button("sign in"))
-					{
-						signinflag = true;
-					}if (ImGui::Button("geustlogin"))
-					{
-						geustloginflag = true;
-						connection->SendGeustLogin();
-					}
-				}
-				else if(signupflag || signinflag)
-				{
-					if (ImGui::Button("back"))
-					{
-						memset(name, 0, sizeof(name));
-						memset(pass, 0, sizeof(pass));
-						signupflag = false;
-						signinflag = false;
-					}
-				}
-				if (signupflag && !playerManager->GetSignUp())
-				{
-					ImGui::Text("Sign Up");
-					ImGui::InputText("Name", name, sizeof(name));
-					ImGui::InputText("password", pass, sizeof(pass));
-					if (strcmp(name, "") != 0 && strcmp(pass, "") != 0)
-						if (ImGui::Button("Decision"))
-						{
-							connection->SendSignUp(name, pass);
-							signupflag = false;
-						}
-				}
-
-				if (signinflag&& !playerManager->GetSignIn())
-				{
-					ImGui::Text("Sign In");
-					ImGui::InputText("Name", name, sizeof(name));
-					ImGui::InputText("password", pass, sizeof(pass));
-					if (strcmp(pass, "") != 0)
-					{
-						if (ImGui::Button("Decision"))
-						connection->SendSignIn(name, pass);
-						
-					}
-				}
-				if (playerManager->GetMyPlayerID() > 0)
-				{
-					ImGui::Text("Login OK");
-					if (!searchflag)
-					{
-						ImGui::InputScalar("Input short", ImGuiDataType_S16, &searchId);
-						ImGui::Text("Current value: %d", searchId);
-						if (ImGui::Button("IDSerach"))
-						{
-							connection->SendIdSearch(searchId);
-							searchflag = true;
-						}
-					}
-					else
-					{
-						//検索結果
-						if (playerManager->GetSearchResult())
-						{
-							//成功
-							ImGui::Text("SearchName: %s", playerManager->GetSearchName());
-							ImGui::Text("MyID: %d", playerManager->GetMyPlayerID());
-							ImGui::Text("recvID: %d", playerManager->GetSearchId());
-							//自分のIDかどうか
-							if (playerManager->GetMyPlayerID() != playerManager->GetSearchId())
-							{
-								if (ImGui::Button("FriendRequest"))
-								{
-									connection->SendFriendRequest(playerManager->GetSearchId());
-									searchflag = false;
-									searchId = false;
-								}
-								if (ImGui::Button("Back"))
-								{
-									searchflag = false;
-									searchId = false;
-								}
-							}
-							else
-							{
-								ImGui::Text("My ID");
-								if (ImGui::Button("Back"))
-								{
-									searchflag = false;
-									searchId = false;
-								}
-							}
-						}
-						else
-						{
-							//失敗
-							ImGui::Text("SearchError");
-							if (ImGui::Button("Back"))
-							{
-								searchflag = false;
-								searchId = false;
-							}
-
-						}
-					}
-				}
-				if (playerManager->GetSendertId() > 0)
-				{
-					ImGui::Text("SendertName: %s", playerManager->GetSenderName());
-					ImGui::Text("SenderID: %d", playerManager->GetSendertId());
-					//承認
-					if (ImGui::Button("Approval"))
-					{
-						char myname[10],youname[10];
-
-						strcpy_s(myname, playerManager->GetMyPlayer()->GetName());
-						strcpy_s(youname, playerManager->GetSenderName());
-						connection->SendFriendApproval(
-							playerManager->GetSendertId(),
-							playerManager->GetMyPlayerID(),
-							myname,
-							youname);
-					}
-					ImGui::SameLine();
-					//否認
-					if (ImGui::Button("Denial"))
-					{
-						playerManager->ResetSenderName();
-						playerManager->SetSendertId(0);
-					}
-				}
-				
-			}
-			ImGui::End();
-		}
+		//if(connection->isConnction)
+		//{
+		//	ImGui::SetNextWindowPos(ImVec2(500, 200), ImGuiCond_FirstUseEver);
+		//	ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
+		//	// beginからendまでの内容が出来る
+		//	if (ImGui::Begin("login", nullptr, ImGuiWindowFlags_None))
+		//	{
+		//		if (playerManager->GetMyPlayerID() > 0)
+		//		{
+		//			ImGui::Text("Login OK");
+		//			if (!searchflag)
+		//			{
+		//				ImGui::InputScalar("Input short", ImGuiDataType_S16, &searchId);
+		//				ImGui::Text("Current value: %d", searchId);
+		//				if (ImGui::Button("IDSerach"))
+		//				{
+		//					connection->SendIdSearch(searchId);
+		//					searchflag = true;
+		//				}
+		//			}
+		//			else
+		//			{
+		//				//検索結果
+		//				if (playerManager->GetSearchResult())
+		//				{
+		//					//成功
+		//					ImGui::Text("SearchName: %s", playerManager->GetSearchName());
+		//					ImGui::Text("MyID: %d", playerManager->GetMyPlayerID());
+		//					ImGui::Text("recvID: %d", playerManager->GetSearchId());
+		//					//自分のIDかどうか
+		//					if (playerManager->GetMyPlayerID() != playerManager->GetSearchId())
+		//					{
+		//						if (ImGui::Button("FriendRequest"))
+		//						{
+		//							connection->SendFriendRequest(playerManager->GetSearchId());
+		//							searchflag = false;
+		//							searchId = false;
+		//						}
+		//						if (ImGui::Button("Back"))
+		//						{
+		//							searchflag = false;
+		//							searchId = false;
+		//						}
+		//					}
+		//					else
+		//					{
+		//						ImGui::Text("My ID");
+		//						if (ImGui::Button("Back"))
+		//						{
+		//							searchflag = false;
+		//							searchId = false;
+		//						}
+		//					}
+		//				}
+		//				else
+		//				{
+		//					//失敗
+		//					ImGui::Text("SearchError");
+		//					if (ImGui::Button("Back"))
+		//					{
+		//						searchflag = false;
+		//						searchId = false;
+		//					}
+		//				}
+		//			}
+		//		}
+		//		//if (playerManager->GetSendertId() > 0)
+		//		//{
+		//		//	ImGui::Text("SendertName: %s", playerManager->GetSenderName());
+		//		//	ImGui::Text("SenderID: %d", playerManager->GetSendertId());
+		//		//	//承認
+		//		//	if (ImGui::Button("Approval"))
+		//		//	{
+		//		//		char myname[10],youname[10];
+		//		//
+		//		//		strcpy_s(myname, playerManager->GetMyPlayer()->GetName());
+		//		//		strcpy_s(youname, playerManager->GetSenderName());
+		//		//		connection->SendFriendApproval(
+		//		//			playerManager->GetSendertId(),
+		//		//			playerManager->GetMyPlayerID(),
+		//		//			myname,
+		//		//			youname);
+		//		//	}
+		//		//	ImGui::SameLine();
+		//		//	//否認
+		//		//	if (ImGui::Button("Denial"))
+		//		//	{
+		//		//		playerManager->ResetSenderName();
+		//		//		playerManager->SetSendertId(0);
+		//		//	}
+		//		//}
+		//		
+		//	}
+		//	ImGui::End();
+		//}
 	}
 }
 
@@ -697,7 +623,8 @@ void SceneStandby::RenderID(ID3D11DeviceContext* dc,
 		float positionX = scereenPosition.x - 7;
 		float positionY = scereenPosition.y;
 		int digit = 0;
-
+		const float gaugeWidth = 25.0f;
+		const float gaugeHeight = 33.0f;
 		// 各桁を描画するループ
 		for (int i = numDigits - 1; i >= 0; --i)
 		{
@@ -707,10 +634,10 @@ void SceneStandby::RenderID(ID3D11DeviceContext* dc,
 			sprites[static_cast<int>(Spritenumber::Number)]->Render(dc,
 				positionX, positionY,
 				15, 15,
-				gaugeWidth * digit,gaugeHeight,
+				gaugeWidth * digit, 0,
 				gaugeWidth, gaugeHeight,
 				0.0f,
-				1, 0, 0, 1);
+				1, 1, 1, 1);
 
 			// 次の桁の位置に移動
 			positionX += 15;
@@ -745,31 +672,50 @@ void SceneStandby::RenderTeamNumber(ID3D11DeviceContext* dc, const DirectX::XMFL
 		numDigits++;
 	}
 
-	// 2Dスプライト描画
+	
+	
+	float numberposX = positionX +85;
+	float numberposY = positionY+7;
+	int digit = 0;
+
+	// 各桁を描画するループ
+	for (int i = numDigits - 1; i >= 0; --i)
 	{
-		float numberposX = positionX +90;
-		float numberposY = positionY+8;
-		int digit = 0;
+		// 各桁の数値を取得
+		digit = (ID / static_cast<int>(pow(10, i))) % 10;
 
-		// 各桁を描画するループ
-		for (int i = numDigits - 1; i >= 0; --i)
-		{
-			// 各桁の数値を取得
-			digit = (ID / static_cast<int>(pow(10, i))) % 10;
+		// スプライトを描画
+		sprites[static_cast<int>(Spritenumber::Number)]->Render(dc,
+			numberposX, numberposY,
+			30, 30,
+			gaugeWidth * digit+ digit, 0,
+			gaugeWidth, gaugeHeight,
+			0.0f,
+			1, 1, 1, 1);
 
-			// スプライトを描画
-			sprites[static_cast<int>(Spritenumber::Number)]->Render(dc,
-				numberposX, numberposY,
-				30, 30,
-				gaugeWidth * digit+ digit, 0,
-				gaugeWidth, gaugeHeight,
-				0.0f,
-				1, 1, 1, 1);
-
-			// 次の桁の位置に移動
-			numberposX += 20;
-		}
+		// 次の桁の位置に移動
+		numberposX += 20;
 	}
+	
+	//閉じるボタン
+	sprites[static_cast<int>(Spritenumber::Close)]->Render(dc,
+		positionX + 160, positionY, //描画位置
+		40, 40,               //表示サイズ
+		0, 0,                 //切り取りはじめ位置
+		100, 100,           //画像サイズ
+		0.0f,
+		1, 1, 1, 1);
+
+	if (Uiclick(positionX + 160, positionY, 40, 40))
+	{
+		playerManager->GetMyPlayer()->Setteamnumber(0);
+		teamcreate = false;
+		teamscreenflag = false;
+		connection->SendTeamLeave(playerManager->GetteamLeader());
+		playerManager->SetteamLeader(false);
+	}
+
+
 }
 
 void SceneStandby::RenderTeam(ID3D11DeviceContext* dc)
@@ -825,7 +771,6 @@ void SceneStandby::RenderTeamSelect(ID3D11DeviceContext* dc)
 			//teamjoin = true;
 			//connection->SendTeamJoin(TeamNumber);
 
-		sendteamcreate = false;
 	    teamcreate = true;
 	    connection->SendTeamcreate();
 	    playerManager->SetteamLeader(true);
@@ -913,15 +858,26 @@ void SceneStandby::RenderTeamJoin(ID3D11DeviceContext* dc)
 		if (Uiclick(posxy[8][0], posxy[8][1], sizeX, sizeY))numbers.push_back(9);
 		if (Uiclick(posxy[10][0], posxy[10][1], sizeX, sizeY))numbers.push_back(0);
 	}
+	//一桁消去
 	if (numbers.size() > 0) 
 	{
 		if (Uiclick(posxy[9][0], posxy[9][1], sizeX, sizeY))numbers.pop_back();
 	}
+	//送信
 	if (numbers.size() ==4)
 	{
 		if (Uiclick(posxy[11][0], posxy[11][1], sizeX, sizeY))
 		{
-			sendteamjoin = true;
+			int result = 0;
+			int size = numbers.size();
+			for (int i = 0; i < size; ++i) {
+				result += numbers[i] * std::pow(10, size - i - 1);
+			}
+			TeamNumber = result;
+			
+			connection->SendTeamJoin(TeamNumber);
+			numberinputflag = false;
+			numbers.erase(numbers.begin(), numbers.end());
 		}
 	}
 
@@ -949,6 +905,21 @@ void SceneStandby::RenderTeamJoin(ID3D11DeviceContext* dc)
 					1, 1, 1, 1);
 			}
 		}
+	}
+
+	//閉じるボタン
+	sprites[static_cast<int>(Spritenumber::Close)]->Render(dc,
+		positionX + 565, positionY - 5, //描画位置
+		40, 40,               //表示サイズ
+		0, 0,                 //切り取りはじめ位置
+		100, 100,           //画像サイズ
+		0.0f,
+		1, 1, 1, 1);
+
+	if (Uiclick(positionX + 565, positionY - 5, 40, 40))
+	{
+		numberinputflag = false;
+		numbers.erase(numbers.begin(), numbers.end());
 	}
 }
 
@@ -1020,6 +991,23 @@ void SceneStandby::RenderMode(ID3D11DeviceContext* dc)
 			1, 1, 1, 1);
 	}
 
+}
+
+void SceneStandby::RenderGameStart(ID3D11DeviceContext* dc)
+{
+	float positionX = 10;
+	float positionY = 300;
+	sprites[static_cast<int>(Spritenumber::Start)]->Render(dc,
+		positionX, positionY, //描画位置
+		150, 50,             //表示サイズ
+		0, 0,                 //切り取りはじめ位置
+		500, 184,           //画像サイズ
+		0.0f,
+		1, 1, 1, 1);
+	if (Uiclick(positionX, positionY, 150, 50))
+	{
+		debugGameStart = true;
+	}
 }
 
 bool SceneStandby::Uiclick(float posX, float posY, float sizeX, float sizeY)

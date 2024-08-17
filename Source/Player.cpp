@@ -241,15 +241,14 @@ DirectX::XMFLOAT3 Player::GetMoveVec() const
     // 入力情報を取得
     GamePad& gamePad = Input::Instance().GetGamePad();
     //float ax = gamePad.GetAxisLX();
-    float ay = mouselength / 50;
     float ax = 0;
+    float ay = mouselength / 50;
+
     // カメラ方向とスティックの入力値によって進行方向を計算する
-    Camera& camera = Camera::Instance();
-    const DirectX::XMFLOAT3& cameraRight = camera.GetRight();
-    const DirectX::XMFLOAT3& cameraFront = camera.GetFront();
-
+   //Camera& camera = Camera::Instance();
+   //const DirectX::XMFLOAT3& cameraRight = camera.GetRight();
+   //const DirectX::XMFLOAT3& cameraFront = camera.GetFront();
     // 移動ベクトルはXZ平面に水平なベクトルになるようにする
-
    // // カメラ右方向ベクトルはＸＺ平面に水平なベクトルに変換
    // float cameraRightX = cameraRight.x;
    // float cameraRightZ = cameraRight.z;
@@ -283,24 +282,15 @@ DirectX::XMFLOAT3 Player::GetMoveVec() const
 
         cameraFrontX = cameraFrontX / cameraFrontLength;
         cameraFrontZ = cameraFrontZ / cameraFrontLength;
-
-
-
-
-        /*        while (cameraFrontLength > DirectX::XM_PI)cameraFrontLength -= DirectX::XM_PI * 2;
-                while (cameraFrontLength < -DirectX::XM_PI)cameraFrontLength += DirectX::XM_PI * 2;
-            */
     }
 
-    // スティックの水平入力値をカメラ右方向に反映し、
-    // スティックの垂直入力値をカメラ前方向に反映し、
     // 進行ベクトルを計算する
     DirectX::XMFLOAT3 vec;// 移動方向進むべき方向進行ベクトル
     // ax,ayスティックの具合　cameraRightX（カメラ）
     // (cameraRightX* ax) + (cameraFrontX * ay)これは上の進方向を真っ直ぐにする奴
     // 
-    vec.x = (cameraFrontX * ay);// (cameraRightX * ax) + (cameraFrontX * ay);// 右方向
-    vec.z = (cameraFrontZ * ay);// (cameraRightZ * ax) + (cameraFrontZ * ay);// ますっぐ
+    vec.x = (cameraFrontX * ay);
+    vec.z = (cameraFrontZ * ay);
     // Y軸方向には移動しない
     vec.y = 0.0f;
     return vec;

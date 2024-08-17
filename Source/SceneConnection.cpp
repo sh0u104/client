@@ -5,6 +5,8 @@
 #include "SceneLoading.h"
 #include "SceneStandby.h"
 
+#include <thread>
+
 // 初期化
 void SceneConnection::Initialize()
 {
@@ -21,6 +23,8 @@ void SceneConnection::Initialize()
     //
     sprites[static_cast<int>(Spritenumber::NewLogin)] = std::make_unique<Sprite>("Data/Sprite/newlogin.png");
 
+    sprites[static_cast<int>(Spritenumber::Name)] = std::make_unique<Sprite>("Data/Sprite/font1.png");
+
     //一度だけ
     if (!SceneManager::Instance().GetconnectionInitialized())
     {
@@ -28,12 +32,36 @@ void SceneConnection::Initialize()
         //初期化
         SceneManager::Instance().PlayermanagerInitialize();
         SceneManager::Instance().ConnectionInitialize();
+
+
+        // プレイヤーマネジャー初期化
+        playerManager = SceneManager::Instance().GetPlayerManager();
+
+        connection = SceneManager::Instance().GetConnection();
+        //	サーバーとの接続前はID０
+        Player* player = new Player();
+        player->SetPlayerID(0);						//貰ったID情報をストック
+        player->Setoperation(false);
+        player->SetPosition(DirectX::XMFLOAT3(0, 0, 0)); //発生位置
+        player->SetAngle({ 0.0f,3.0f,0.0f });
+
+        playerManager->SetMyPlayerID(0);
+        playerManager->AddPlayer(player);
+        playerManager->GetPlayer(0)->SetReady(true);
+
+        //生成したら
+        playerManager->AddPlayersGenerateCount();
+        connection->SetplayerManager(playerManager);
+    }
+    else
+    {
+        // プレイヤーマネジャー初期化
+        playerManager = SceneManager::Instance().GetPlayerManager();
+
+        connection = SceneManager::Instance().GetConnection();
     }
 
-    // プレイヤーマネジャー初期化
-    playerManager = SceneManager::Instance().GetPlayerManager();
-
-    connection = SceneManager::Instance().GetConnection();
+  
 
     //接続処理
     if (!connection->isConnction)
@@ -51,12 +79,20 @@ void SceneConnection::Finalize()
 // 更新処理
 void SceneConnection::Update(float elapsedTime)
 {
- 
+    
+   
+  
     //接続成功
-    if (connection->isConnction && isLogin)
+    //サインインサインアップで受け取りが終わったらに変更する
+    if (connection->isConnction && playerManager->GetMyPlayerID()>0)
     {
-        // connection->SetplayerManager(playerManager);
         SceneManager::Instance().ChangeScene(new SceneLoading(new SceneStandby));
+    }
+   
+    if (isNewLogin || isLogin)
+    {
+        strcpy_s(name, "Alice");
+     
     }
 }
 // 描画処理
@@ -74,49 +110,59 @@ void SceneConnection::Render()
     dc->OMSetRenderTargets(1, &rtv, dsv);
 
     // 2Dスプライト描画
+    RenderName(dc);
     if (!connection->isConnction)
     {
         RenderNetError(dc);
     }
 
-    if (connection->isConnction && !isLogin)
+    if (connection->isConnction && !isLogin&&!isNewLogin)
     {
         RenderLogin(dc);
     }
 
-    ImGui::SetNextWindowPos(ImVec2(500, 200), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
-    // beginからendまでの内容が出来る
-    if (ImGui::Begin("login", nullptr, ImGuiWindowFlags_None))
-    {
-        if (isGuest)
-        {
-           
-        }
-        if (isLogin)
-        {
-            ImGui::Text("login");
-            ImGui::InputText("Name", name, sizeof(name));
-            ImGui::InputText("password", pass, sizeof(pass));
-            if (strcmp(name, "") != 0 && strcmp(pass, "") != 0)
-                if (ImGui::Button("Decision"))
-                {
-                    connection->SendSignUp(name, pass);
-                }
-        }
-        if (isNewLogin)
-        {
-            ImGui::Text("Newlogin");
-            ImGui::InputText("Name", name, sizeof(name));
-            ImGui::InputText("password", pass, sizeof(pass));
-            if (strcmp(pass, "") != 0)
-            {
-                if (ImGui::Button("Decision"))
-                    connection->SendSignIn(name, pass);
-            }
-        }
-        ImGui::End();
-    }
+   ImGui::SetNextWindowPos(ImVec2(500, 200), ImGuiCond_FirstUseEver);
+   ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
+   // beginからendまでの内容が出来る
+   if (ImGui::Begin("login", nullptr, ImGuiWindowFlags_None))
+   {
+       ImGui::Text("name: % s", name);
+      // if(ImGui::InputInt("ID",playerManager->get))
+       if (isNewLogin)
+       {
+           ImGui::Text("login");
+           ImGui::InputText("Name", name, sizeof(name));
+           ImGui::InputText("password", pass, sizeof(pass));
+           if (strcmp(name, "") != 0 && strcmp(pass, "") != 0)
+               if (ImGui::Button("Decision"))
+               {
+                   connection->SendSignUp(name, pass);
+               }
+       }
+       if (isLogin)
+       {
+           ImGui::Text("Newlogin");
+           ImGui::InputText("Name", name, sizeof(name));
+           ImGui::InputText("password", pass, sizeof(pass));
+           if (strcmp(pass, "") != 0)
+           {
+               if (ImGui::Button("Decision"))
+                   connection->SendSignIn(name, pass);
+           }
+       }
+
+       if (isLogin || isNewLogin)
+       {
+           if (ImGui::Button("back"))
+           {
+               memset(name, 0, sizeof(name));
+               memset(pass, 0, sizeof(pass));
+               isNewLogin = false;
+               isLogin = false;
+           }
+       }
+       ImGui::End();
+   }
 
 }
 
@@ -184,7 +230,7 @@ void SceneConnection::RenderLogin(ID3D11DeviceContext* dc)
 
     if (Uiclick(positionX, positionY, sizeX, sizeY))
     {
-        isGuest = true;
+        connection->SendGeustLogin();
     }
 
     sprites[static_cast<int>(Spritenumber::Login)]->Render(dc,
@@ -214,6 +260,33 @@ void SceneConnection::RenderLogin(ID3D11DeviceContext* dc)
     }
 }
 
+void SceneConnection::RenderName(ID3D11DeviceContext* dc)
+{
+    float positionX = 0;
+    float positionY = 0;
+
+    float sizeX = 32;
+    float sizeY = 32;
+ 
+    //枠組み
+    for (int i = 0; i < 9; ++i)
+    {
+        if (name[i] == '\0')break;
+        int number = static_cast<int>(name[i]);
+        int width = number % 16;
+        int height = number / 16;
+        sprites[static_cast<int>(Spritenumber::Name)]->Render(dc,
+            positionX, positionY, //描画位置
+            sizeX, sizeY,              //表示サイズ
+            sizeX*width, sizeY*height,                 //切り取りはじめ位置
+            sizeX, sizeY,            //画像サイズ
+            0.0f,
+            1, 1, 1, 1);
+      
+        positionX += sizeX/2;
+    }
+}
+
 bool SceneConnection::Uiclick(float posX, float posY, float sizeX, float sizeY)
 {
     DirectX::XMFLOAT3 scereenPosition;
@@ -233,3 +306,5 @@ bool SceneConnection::Uiclick(float posX, float posY, float sizeX, float sizeY)
     }
     return false;
 }
+
+
