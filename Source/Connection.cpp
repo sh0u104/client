@@ -489,13 +489,27 @@ void Connection::RecvThread()
 			break;
 			case NetworkTag::Teamleave:
 			{
+				//チーム抜けた人がいたら
 				TeamLeave teamLeave;
 				memcpy_s(&teamLeave, sizeof(teamLeave), buffer, sizeof(TeamLeave));
-				//自分じゃなかったら
-				if (playerManager->GetMyPlayerID() != teamLeave.id)
+
+				//リーダーの時または本人の場合
+				if (teamLeave.isLeader|| playerManager->GetMyPlayerID() == teamLeave.id)
+				{
+					for (int i = 0; i < 3; ++i)
+					{
+						int id = playerManager->GetMyPlayer()->Getteamsid(i);
+						playerManager->GetMyPlayer()->Setteamsid(i, 0);
+						//存在しないなら
+						if (id <= 0)continue;
+
+						deleteID.push_back(id);
+					}
+
+				}
+				else
 				{
 					deleteID.push_back(teamLeave.id);
-					
 					for (int i = 0; i < 3; ++i)
 					{
 						if (playerManager->GetMyPlayer()->Getteamsid(i) == teamLeave.id)
@@ -503,6 +517,7 @@ void Connection::RecvThread()
 							playerManager->GetMyPlayer()->Setteamsid(i, 0);
 						}
 					}
+
 				}
 
 			}
@@ -602,4 +617,19 @@ void Connection::RecvThread()
 			}
 		}
 	} while (loop);
+}
+
+void Connection::DeleteID()
+{
+	//消去リストのIDのプレイヤーを消す
+	for (int i = 0; i <deleteID.size(); ++i)
+	{
+		if (deleteID.at(i) != playerManager->GetMyPlayerID())
+		{
+			playerManager->ErasePlayer(deleteID.at(i));
+			playerManager->DeletePlayer();
+		}
+		deleteID.erase(deleteID.begin() + i);
+
+	}
 }

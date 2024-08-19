@@ -95,6 +95,7 @@ void SceneGame::Initialize()
 	//	slime->SetPosition(DirectX::XMFLOAT3(i * 2.0f, 0, 5));
 	//	// “ê’£‚è
 	//	slime->SetTerritory(slime->GetPosition(), 10.0f);
+	//	slime->IsEnemy();
 	//	enemyManager.Register(slime);
 	//
 	//}

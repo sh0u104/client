@@ -208,27 +208,33 @@ void Character::Jump(float speed)
 // 速力処理
 //elapsedTime÷60これが   elapsedTime経過時間
 void Character::UpdateVelocity(float elapsedTime)
-{ // 経過フレーム　フレームにはなってほしくはないが２倍３倍になってほしいから
-    // つまり辻褄合わせ　elapsedFrame
+{ 
     float elapsedFrame = 60.0f * elapsedTime;
 
-    // 垂直速力更新処理
-    UpdateVerticalVelocity(elapsedFrame);
+    //send前計算
+    {
+        // 垂直速力更新処理
+        UpdateVerticalVelocity(elapsedFrame);
 
-    // 水平速力更新処理
-    UpdateHorizontalVelocity(elapsedFrame);
+        // 水平速力更新処理
+        UpdateHorizontalVelocity(elapsedFrame);
+    }
 
 
-    // 垂直移動更新処理
-    UpdateVerticalMove(elapsedTime);
+    if (isEnemy)
+    {
+        EnemyVerticalMove(elapsedTime);
+       EnemyHorizontalMove(elapsedTime);
+    }
+    //recv後の値も使う
+    else
+    {
+        // 垂直移動更新処理
+        UpdateVerticalMove(elapsedTime);
 
-    // 水平移動更新処理
-    UpdateHorizontalMove(elapsedTime);
-
-    //if (isGround)
-    //{
-    //    velocity.y = 0;
-    //}
+        // 水平移動更新処理
+        UpdateHorizontalMove(elapsedTime);
+    }
 }
 
 // 無敵時間更新
@@ -243,10 +249,8 @@ void Character::UpdateInbincibleTimer(float elapsedTime)
 void Character::UpdateVerticalVelocity(float elapsedFrame)
 {
     // 重力処理
-     //    重力処理 // ちょっとずつ減るグラヴィティ　 
-     //秒間　秒単位になる
-    this->velocity.y += this->grabity * elapsedFrame /** elapsedTime*/;
-    //this->RecvVelocity.y += this->grabity * elapsedFrame /** elapsedTime*/;
+    this->velocity.y += this->grabity * elapsedFrame;
+  
     
 }
 
@@ -410,10 +414,7 @@ void Character::UpdateHorizontalVelocity(float elapsedFrame)
 
 void Character::UpdateHorizontalMove(float elapsedTime)
 {
-    //// 移動処理 1フレームでどれだけ動く
-    //position.x += velocity.x*elapsedTime;
-    //position.z += velocity.z*elapsedTime;
-
+   
     // 水平速力量計算
     float velocityLengthXZ = sqrtf(RecvVelocity.x* RecvVelocity.x+ RecvVelocity.z* RecvVelocity.z);
     if (velocityLengthXZ > 0.0f)
@@ -533,4 +534,152 @@ void Character::UpdateReflection(float elapsedTime)
         }
     }
 }
+
+void Character::EnemyVerticalMove(float elapsedTime)
+{
+    // 垂直方向の移動量
+    float my = velocity.y * elapsedTime;
+  
+    slopeRate = 0.0f;
+
+    // キャラクターのY軸方向となる法線ベクトル
+    DirectX::XMFLOAT3 normal = { 0,1,0 };
+
+    // 落下中
+    if (my < 0.0f)
+    {
+        // レイの開始位置は足元より少し上
+        DirectX::XMFLOAT3 start = { position.x, position.y + stepOffset, position.z };
+        // レイの終点位置は移動後の位置
+        DirectX::XMFLOAT3 end = { position.x, position.y + my , position.z };
+
+        // レイキャストによる地面判定
+        HitResult hit;
+        // レイキャストを呼ぶための関数
+        //if (StageManager::instance().RayCast(start, end, hit))
+        if (StageManager::instance().RayCast(start, end, hit))
+        {
+
+            // 法線ベクトル取得
+            normal = hit.normal;
+
+            //// レイキャストによる地面判定
+            //HitResult hit;
+
+            // 地面に設置している
+            //position.y = hit.position.y;
+            position = hit.position;
+
+            // 回転
+            // ｙだけな理由は角度が真横になった時にクモみたいにひっつかないように
+            angle.y += hit.rotation.y;
+
+            // 傾斜率の計算 法線とXZ平面に置けるベクトルとｙ軸のベクトルで傾きが求められる。
+            float normalLengthXZ = sqrtf(hit.normal.x * hit.normal.x + hit.normal.z * hit.normal.z);
+            slopeRate = 1.0f - (hit.normal.y / (normalLengthXZ + hit.normal.y));
+            // 着地
+            if (!isGround)
+            {
+                // 着地時に呼ぶ
+                OnLanding();
+            }
+            isGround = true;
+            velocity.y = 0.0f;
+            //RecvVelocity.y = 0.0f;
+
+        }
+        else
+        {
+            // 空中に浮いている
+            position.y += my;
+            isGround = false;
+        }
+
+    }
+
+    // 上昇中
+    else if (my > 0.0f)
+    {
+        position.y += my;
+        isGround = false;
+    }
+
+    // 地面の向きに沿うようにXZ軸回転
+    {
+        // Y軸が法線ベクトル方向に向くオイラー角回転を算出する
+
+        float storageAngleX = atan2f(normal.z, normal.y);
+
+        float storageAngleZ = -atan2f(normal.x, normal.y);
+
+        // 線形補完で滑らかに回転する
+        // (変化する値,最終的な値,これだけ進)
+        angle.x = Mathf::Lerp(angle.x, storageAngleX, 0.2f);
+        angle.z = Mathf::Lerp(angle.z, storageAngleZ, 0.2f);
+
+    }
+}
+
+void Character::EnemyHorizontalMove(float elapsedTime)
+{
+    // 水平速力量計算
+    float velocityLengthXZ = sqrtf(velocity.x * velocity.x + velocity.z * velocity.z);
+    if (velocityLengthXZ > 0.0f)
+    {
+        // 水平移動値
+        float mx = velocity.x * elapsedTime;
+        float mz = velocity.z * elapsedTime;
+
+        // レイの開始位置と終点位置
+        // 段差分高く
+        DirectX::XMFLOAT3 start = { position.x, position.y + stepOffset, position.z };
+        // 移動方向分足した奴
+        DirectX::XMFLOAT3 end = { position.x + mx, position.y + stepOffset, position.z + mz };
+
+        // レイキャストによる壁判定
+        HitResult hit;
+        if (StageManager::instance().RayCast(start, end, hit))
+        {
+            // 壁までのベクトル
+            DirectX::XMVECTOR Start = DirectX::XMLoadFloat3(&hit.position);
+            DirectX::XMVECTOR End = DirectX::XMLoadFloat3(&end);
+            DirectX::XMVECTOR Vec = DirectX::XMVectorSubtract(End, Start);
+
+            // 壁の法線
+            DirectX::XMVECTOR Normal = DirectX::XMLoadFloat3(&hit.normal);
+
+            // 入射ベクトルを法線に射影長 a
+            DirectX::XMVECTOR Dot = DirectX::XMVector3Dot(DirectX::XMVectorNegate(Vec), Normal);
+            Dot = DirectX::XMVectorScale(Dot, 1.1f); // 壁にめり込まないように少しだけ補正
+
+            // 補正位置の計算
+            DirectX::XMVECTOR CollectPosition = DirectX::XMVectorMultiplyAdd(Normal, Dot, End);
+            DirectX::XMFLOAT3 collectPosition;
+            DirectX::XMStoreFloat3(&collectPosition, CollectPosition);
+
+            // 壁ずり方向へレイキャスト
+            HitResult hit2;
+            if (!StageManager::instance().RayCast(hit.position, collectPosition, hit2))
+            {
+                // 壁ずり方向で壁に当たらなかったら補正位置に移動
+                position.x = collectPosition.x;
+                position.z = collectPosition.z;
+            }
+            else
+            {
+                position.x = hit2.position.x;
+                position.z = hit2.position.z;
+            }
+        }
+        else
+        {
+            // 移動
+            position.x += mx;
+            position.z += mz;
+        }
+    }
+
+}
+
+
 

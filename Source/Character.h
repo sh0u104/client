@@ -58,6 +58,7 @@ public:
     DirectX::XMFLOAT3 GetRecvPosition() { return this->RecvPosition; }
     void SetRecvPosition(DirectX::XMFLOAT3 position) { this->RecvPosition = position; }
 
+    void IsEnemy() { isEnemy = true; }
 protected:
     // 移動処理
     //void Move(float elapsedTime, float vx, float vz, float speed);
@@ -95,6 +96,11 @@ private:
     // 反射弾丸更新処理
     void UpdateReflection(float elapsedTime);
 
+    // 敵の垂直移動更新処理
+    void EnemyVerticalMove(float elapsedTime);
+    // 敵の水平移動更新処理
+    void EnemyHorizontalMove(float elapsedTime);
+   
 
 protected:// 継承先でも使える
     DirectX::XMFLOAT3             position = { 0, 0, 0 };
@@ -141,4 +147,6 @@ protected:// 継承先でも使える
     float stepOffset = 1.0f;
 
     float slopeRate = 1.0f;
+
+    bool isEnemy = false;
 };

@@ -153,6 +153,9 @@ void SceneStandby::Finalize()
 
 void SceneStandby::Update(float elapsedTime)
 {
+	playerManager->GetMyPlayer()->ChangeState(Player::State::Move);
+		
+
 	//シーン遷移
 	if (playerManager->GetGameStart())
 	{
@@ -274,12 +277,7 @@ void SceneStandby::Update(float elapsedTime)
 	}
 
 	//消去リストのIDのプレイヤーを消す
-	for (int i = 0; i < connection->deleteID.size(); ++i)
-	{
-		playerManager->ErasePlayer(connection->deleteID.at(i));
-		connection->deleteID.erase(connection->deleteID.begin() + i);
-		playerManager->DeletePlayer();
-	}
+	connection->DeleteID();
 }
 
 void SceneStandby::Render()
@@ -325,7 +323,7 @@ void SceneStandby::Render()
 		RenderMode(dc);
 
 		//ゲーム開始ボタン
-		if (playerManager->GetteamLeader() || (!teamcreate&&TeamNumber==0))
+		if (playerManager->GetteamLeader() || playerManager->GetMyPlayer()->Getteamnumber()<1)
 		{
 			RenderGameStart(dc);
 		}
@@ -380,6 +378,8 @@ void SceneStandby::Render()
 		// beginからendまでの内容が出来る
 		if (ImGui::Begin("Player", nullptr, ImGuiWindowFlags_None))
 		{
+		
+		    ImGui::Text("State: %d", static_cast<int>(playerManager->GetMyPlayer()->GetState()));
 			if (ImGui::Button("debugGameStart"))
 			{
 				debugGameStart = true;
@@ -457,101 +457,7 @@ void SceneStandby::Render()
 			ImGui::End();
 		}
 
-		//if(connection->isConnction)
-		//{
-		//	ImGui::SetNextWindowPos(ImVec2(500, 200), ImGuiCond_FirstUseEver);
-		//	ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
-		//	// beginからendまでの内容が出来る
-		//	if (ImGui::Begin("login", nullptr, ImGuiWindowFlags_None))
-		//	{
-		//		if (playerManager->GetMyPlayerID() > 0)
-		//		{
-		//			ImGui::Text("Login OK");
-		//			if (!searchflag)
-		//			{
-		//				ImGui::InputScalar("Input short", ImGuiDataType_S16, &searchId);
-		//				ImGui::Text("Current value: %d", searchId);
-		//				if (ImGui::Button("IDSerach"))
-		//				{
-		//					connection->SendIdSearch(searchId);
-		//					searchflag = true;
-		//				}
-		//			}
-		//			else
-		//			{
-		//				//検索結果
-		//				if (playerManager->GetSearchResult())
-		//				{
-		//					//成功
-		//					ImGui::Text("SearchName: %s", playerManager->GetSearchName());
-		//					ImGui::Text("MyID: %d", playerManager->GetMyPlayerID());
-		//					ImGui::Text("recvID: %d", playerManager->GetSearchId());
-		//					//自分のIDかどうか
-		//					if (playerManager->GetMyPlayerID() != playerManager->GetSearchId())
-		//					{
-		//						if (ImGui::Button("FriendRequest"))
-		//						{
-		//							connection->SendFriendRequest(playerManager->GetSearchId());
-		//							searchflag = false;
-		//							searchId = false;
-		//						}
-		//						if (ImGui::Button("Back"))
-		//						{
-		//							searchflag = false;
-		//							searchId = false;
-		//						}
-		//					}
-		//					else
-		//					{
-		//						ImGui::Text("My ID");
-		//						if (ImGui::Button("Back"))
-		//						{
-		//							searchflag = false;
-		//							searchId = false;
-		//						}
-		//					}
-		//				}
-		//				else
-		//				{
-		//					//失敗
-		//					ImGui::Text("SearchError");
-		//					if (ImGui::Button("Back"))
-		//					{
-		//						searchflag = false;
-		//						searchId = false;
-		//					}
-		//				}
-		//			}
-		//		}
-		//		//if (playerManager->GetSendertId() > 0)
-		//		//{
-		//		//	ImGui::Text("SendertName: %s", playerManager->GetSenderName());
-		//		//	ImGui::Text("SenderID: %d", playerManager->GetSendertId());
-		//		//	//承認
-		//		//	if (ImGui::Button("Approval"))
-		//		//	{
-		//		//		char myname[10],youname[10];
-		//		//
-		//		//		strcpy_s(myname, playerManager->GetMyPlayer()->GetName());
-		//		//		strcpy_s(youname, playerManager->GetSenderName());
-		//		//		connection->SendFriendApproval(
-		//		//			playerManager->GetSendertId(),
-		//		//			playerManager->GetMyPlayerID(),
-		//		//			myname,
-		//		//			youname);
-		//		//	}
-		//		//	ImGui::SameLine();
-		//		//	//否認
-		//		//	if (ImGui::Button("Denial"))
-		//		//	{
-		//		//		playerManager->ResetSenderName();
-		//		//		playerManager->SetSendertId(0);
-		//		//	}
-		//		//}
-		//		
-		//	}
-		//	ImGui::End();
-		//}
+		
 	}
 }
 

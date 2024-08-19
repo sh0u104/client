@@ -231,6 +231,7 @@ public:
 
 	bool isConnection = false;
 	std::vector<int> deleteID;
+	void DeleteID();
 private:
 	PlayerManager* playerManager = nullptr;
 

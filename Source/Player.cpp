@@ -43,7 +43,6 @@ Player::Player()
 
     // 待機ステートへ遷移
     TransitionIdleState();
-
 }
 
 // デストラクタ
@@ -52,7 +51,6 @@ Player::~Player()
     delete hitEffect;
     delete desEffect;
     delete model;
-
 
 }
 
@@ -782,9 +780,10 @@ void Player::TransitionIdleState()
     state = State::Idle;
 
     // 待機アニメーション再生
-    model->PlayAnimation(Anim_Idle, true);
+    //model->PlayAnimation(Anim_Idle, true);
 
-
+     // 走りアニメーション再生
+    model->PlayAnimation(Anim_Running, true);
 }
 
 // 待機ステート更新処理
