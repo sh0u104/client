@@ -954,8 +954,6 @@ void Player::TransitionLandState()
 
 void Player::UpdateLandState(float elapsedTime)
 {
-   
-
     // ‚à‚µI‚í‚Á‚½‚ç‘Ò‹@‚É•ÏX
     if (!model->IsPlayAnimation())
     {
@@ -963,8 +961,6 @@ void Player::UpdateLandState(float elapsedTime)
         TransitionIdleState();
     }
 
-
- 
 }
 
 

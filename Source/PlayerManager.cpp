@@ -4,11 +4,14 @@
 
 void PlayerManager::Update(float elapsedTime)
 {
-	reduceMessageEraseTime(elapsedTime);
-	if (GetmessageEraseTime() < 0&&!messages.empty())
+	//チャット用
 	{
-		messages.erase(messages.begin());
-		SetmessageEraseTime(5.0f);
+		reduceMessageEraseTime(elapsedTime);
+		if (GetmessageEraseTime() < 0 && !messages.empty())
+		{
+			messages.erase(messages.begin());
+			SetmessageEraseTime(5.0f);
+		}
 	}
 
 	for (Player* player : players)

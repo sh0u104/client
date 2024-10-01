@@ -226,7 +226,7 @@ void Character::UpdateVelocity(float elapsedTime)
         EnemyVerticalMove(elapsedTime);
        EnemyHorizontalMove(elapsedTime);
     }
-    //recv後の値も使う
+    //recv後の値を使う
     else
     {
         // 垂直移動更新処理

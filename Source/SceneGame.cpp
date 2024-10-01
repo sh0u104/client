@@ -352,14 +352,13 @@ void SceneGame::Render()
 void SceneGame::MouseOpreration(ID3D11DeviceContext* dc)
 {
 	Mouse& mouse = Input::Instance().GetMouse();
-
+	
 	//‰Ÿ‚µ‚Ä‚½‚ç
 	if (mouse.GetButton() & Mouse::BTN_LEFT)
 	{
 		oldMousePos.x = static_cast<float>(mouse.GetOldPositionX());
 		oldMousePos.y = static_cast<float>(mouse.GetOldPositionY());
 
-		
 	}
 	else
 	{
