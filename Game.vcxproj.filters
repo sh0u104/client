@@ -198,6 +198,13 @@
     <ClInclude Include="Source\SceneConnection.h">
       <Filter>Source</Filter>
     </ClInclude>
+    <ClInclude Include="Source\StateDerived.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\StateMachine.h" />
+    <ClInclude Include="Source\StateBase.h">
+      <Filter>Source</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="External\imgui\imgui.cpp">
@@ -345,6 +352,12 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="Source\SceneConnection.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\StateDerived.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\StateMachine.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>

@@ -2,6 +2,7 @@
 #include "Player.h"
 #include "PlayerManager.h"
 #include "SceneManager.h"
+#include "StateMachine.h"
 #pragma comment(lib, "ws2_32.lib")
 Connection::Connection()
 {
@@ -340,15 +341,18 @@ void Connection::RecvThread()
 				memcpy_s(&input, sizeof(PlayerInput), buffer, sizeof(PlayerInput));
 				Player* player = playerManager->GetPlayer(input.id);
 				player->SetRecvVelocity(input.velocity);
+				player->SetAngle(input.angle);
 				
 				
 				if (playerManager->GetMyPlayerID()!= input.id)
 				{
 					//player->SetPosition(input.position);
 					player->SetPosition(input.position);
-					player->SetAngle(input.angle);
 					//アニメーションにいれる
-					player->ChangeState(input.state);
+					if (player->GetState() != input.state)
+					{
+						player->GetStateMachine()->ChangeState(static_cast<int>(input.state));
+					}
 				}
 			}
 			break;
@@ -391,7 +395,7 @@ void Connection::RecvThread()
 				}
 			}
 			break;
-			case NetworkTag::Sync:
+			/*case NetworkTag::Sync:
 			{
 				PlayerSync sync;
 				memcpy_s(&sync, sizeof(sync), buffer, sizeof(PlayerSync));
@@ -416,7 +420,7 @@ void Connection::RecvThread()
 				playerManager->GetPlayer(sync.id)->SetReady(true);
 
 				std::cout << "syncプレイヤー生成 " << std::endl;
-			}
+			}*/
 			break;
 			case NetworkTag::Logout:
 			{

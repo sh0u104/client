@@ -11,6 +11,8 @@
 
 #include "PlayerManager.h"
 #include <DirectXMath.h>
+
+#include "StateDerived.h"
 static Player* instance = nullptr;
 
 // インスタンス取得
@@ -42,7 +44,15 @@ Player::Player()
 
 
     // 待機ステートへ遷移
-    TransitionIdleState();
+    //TransitionIdleState();
+    stateMachine = new StateMachine();
+    stateMachine->RegisterState(new IdleState(this));
+    stateMachine->RegisterState(new MoveState(this));
+    stateMachine->RegisterState(new LandState(this));
+    stateMachine->RegisterState(new JumpState(this));
+    stateMachine->RegisterState(new JumpFlipState(this));
+   
+    stateMachine->SetState(static_cast<int>(State::Idle));
 }
 
 // デストラクタ
@@ -51,7 +61,7 @@ Player::~Player()
     delete hitEffect;
     delete desEffect;
     delete model;
-
+    delete stateMachine;
 }
 
 
@@ -61,39 +71,41 @@ Player::~Player()
 // elapsedTime(経過時間)
 void Player::Update(float elapsedTime)
 {
+    
     // ステート毎の処理
     if (Getoperation())
     {
-        switch (state)
-        {
-        case State::Idle:
-            UpdateIdleState(elapsedTime);
-            break;
-        case State::Move:
-            UpdateMoveState(elapsedTime);
-            break;
-        case State::Jump:
-            UpdateJumpState(elapsedTime);
-            break;
-        case State::Land:
-            UpdateLandState(elapsedTime);
-            break;
-        case State::JumpFlip:
-            UpdatejumpFlipState(elapsedTime);
-            break;
-        case State::Attack:
-            UpdateAttackState(elapsedTime);
-            break;
-        case State::Damage:
-            UpdateDamageState(elapsedTime);
-            break;
-        case State::Death:
-            UpdateDeathState(elapsedTime);
-            break;
-        case State::Revive:
-            UpdateReviveState(elapsedTime);
-            break;
-        }
+        stateMachine->Update(elapsedTime);
+       // switch (state)
+       // {
+       // case State::Idle:
+       //     UpdateIdleState(elapsedTime);
+       //     break;
+       // case State::Move:
+       //     UpdateMoveState(elapsedTime);
+       //     break;
+       // case State::Jump:
+       //     UpdateJumpState(elapsedTime);
+       //     break;
+       // case State::Land:
+       //     UpdateLandState(elapsedTime);
+       //     break;
+       // case State::JumpFlip:
+       //     UpdatejumpFlipState(elapsedTime);
+       //     break;
+       // case State::Attack:
+       //     UpdateAttackState(elapsedTime);
+       //     break;
+       // case State::Damage:
+       //     UpdateDamageState(elapsedTime);
+       //     break;
+       // case State::Death:
+       //     UpdateDeathState(elapsedTime);
+       //     break;
+       // case State::Revive:
+       //     UpdateReviveState(elapsedTime);
+       //     break;
+       // }
     }
 
 
@@ -197,16 +209,6 @@ void Player::DrawDebugPrimitive()
 }
 
 
-
-
-
-
-
-
-
-
-
-
 // 移動入力処理
 bool Player::InputMove(float elapsedTime)
 {
@@ -306,12 +308,7 @@ void Player::Render(ID3D11DeviceContext* dc, Shader* shader)
    // projectileManager.Render(dc, shader);
 }
 
-
-
-
-
 // 弾丸と敵の衝突処理
-
 void Player::CollisionProjectilesVsEnemies()
 {
     //EnemyManager& enemyManager = EnemyManager::Instance();
@@ -563,8 +560,6 @@ void Player::CollisionNodeVsEnemies(const char* nodeName, float nodeRadius)
  
 }
 
-
-
 // デバッグ用GUI描画
 void Player::DrawDebugGUI()
 {   
@@ -583,26 +578,23 @@ void Player::OnLanding()
     //    TransitionLandState();
     //}
 
-    if (state != State::Damage && state != State::Death)
-    {
-        // 着地ステートへ遷移
-        TransitionLandState();
-    }
+    //if (state != State::Damage && state != State::Death)
+    //{
+    //    // 着地ステートへ遷移
+    //    TransitionLandState();
+    //}
 
 }
 
 void Player::OnDead()
 {
-
-
     // 死亡ステート遷移
     TransitionDeathState();
 }
 
 void Player::OnDamaged()
 {
-    
-        // ダメージステートへ遷移
+    // ダメージステートへ遷移
     TransitionDamageState();
 }
 
@@ -761,13 +753,11 @@ bool Player::InputProjectile()
 bool Player::InputAttack()
 {
     // 攻撃入力処理
-
     GamePad& gamePad = Input::Instance().GetGamePad();
 
     // 直進弾丸発射　xボタンを押したら
     if (gamePad.GetButtonDown() & GamePad::BTN_B)
     {
-  
         return true;
     }
 
@@ -792,14 +782,12 @@ void Player::UpdateIdleState(float elapsedTime)
     // 移動入力処理
     if (InputMove(elapsedTime))
     {
-       
         TransitionMoveState();
     }
 
     // ジャンプ入力処理
     if (InputJump())
     {
-        
         TransitionJumpState();
     }
 
@@ -815,11 +803,8 @@ void Player::UpdateIdleState(float elapsedTime)
         TransitionAttackState();
     }
 
-
     // 移動入力処理
     //InputMove(elapsedTime);
-
-
 }
 
 void Player::TransitionMoveState()
@@ -861,15 +846,13 @@ void Player::UpdateMoveState(float elapsedTime)
     // 移動入力処理
     if (!InputMove(elapsedTime))
     {
-        
         TransitionIdleState();
     }
 
 
     // ジャンプ入力処理
     if (InputJump())
-    {
-        
+    {   
         TransitionJumpState();
     }
 
@@ -894,9 +877,6 @@ void Player::UpdateMoveState(float elapsedTime)
     //InputMove(elapsedTime);
 
 }
-
-
-
 
 void Player::TransitionJumpState()
 {
@@ -932,15 +912,6 @@ void Player::UpdateJumpState(float elapsedTime)
     // }
     // 
     //
-  
-
-    // 弾丸入力処理
-    if (InputProjectile())
-    {
-        TransitionAttackState();
-    }
-
-
 
 }
 
@@ -962,10 +933,6 @@ void Player::UpdateLandState(float elapsedTime)
     }
 
 }
-
-
-
-
 
 void Player::TransitionJumpFlipState()
 {
@@ -993,10 +960,10 @@ void Player::UpdatejumpFlipState(float elapsedTime)
 
 void Player::TransitionAttackState()
 {
-    state = State::Attack;
-
-    // 走りアニメーション再生
-    model->PlayAnimation(Anim_Attack, false);
+    //state = State::Attack;
+    //
+    //// 走りアニメーション再生
+    //model->PlayAnimation(Anim_Attack, false);
 }
 
 void Player::UpdateAttackState(float elapsedTime)
@@ -1031,10 +998,10 @@ void Player::UpdateAttackState(float elapsedTime)
 
 void Player::TransitionDamageState()
 {
-    state = State::Damage;
-
-    // ダメージアニメーション再生
-    model->PlayAnimation(Anim_GetHit1, false);
+   // state = State::Damage;
+   //
+   // // ダメージアニメーション再生
+   // model->PlayAnimation(Anim_GetHit1, false);
 }
 
 void Player::UpdateDamageState(float elapsedTime)
@@ -1042,19 +1009,16 @@ void Player::UpdateDamageState(float elapsedTime)
     // ダメージアニメーション終わったら待機ステートへ
     if (!model->IsPlayAnimation())
     {
-
             TransitionIdleState();
-
-
     }
 }
 
 void Player::TransitionDeathState()
 {
-    state = State::Death;
-
-    // ダメージアニメーション再生
-    model->PlayAnimation(Anim_Death, false);
+   // state = State::Death;
+   //
+   // // ダメージアニメーション再生
+   // model->PlayAnimation(Anim_Death, false);
 }
 
 void Player::UpdateDeathState(float elapsedTime)
@@ -1062,28 +1026,25 @@ void Player::UpdateDeathState(float elapsedTime)
     
     if (!model->IsPlayAnimation())
     {
-
        // ボタンを押したら復活ステートへ遷移
         GamePad& gamePad = Input::Instance().GetGamePad();
         if (gamePad.GetButtonDown() & GamePad::BTN_A)
         {
             TransitionReviveState();
         }
-
-
     }
 
 }
 // 復活ステート遷移
 void Player::TransitionReviveState()
 {
-    state = State::Revive;
-
-    // 体力回復
-    health = maxHealth;
-
-    // ダメージアニメーション再生
-    model->PlayAnimation(Anim_Revive, false);
+    //state = State::Revive;
+    //
+    //// 体力回復
+    //health = maxHealth;
+    //
+    //// ダメージアニメーション再生
+    //model->PlayAnimation(Anim_Revive, false);
 }
 
 void Player::UpdateReviveState(float elapsedTime)

@@ -7,7 +7,23 @@
 #include "Collision.h"
 #include "ProjectileManager.h"
 
-
+#include "StateMachine.h"
+// アニメーション
+enum class Animation
+{
+    Anim_Attack,
+    Anim_Death,
+    Anim_Falling,
+    Anim_GetHit1,
+    Anim_GetHit2,
+    Anim_Idle,
+    Anim_Jump,
+    Anim_Jump_Flip,
+    Anim_Landing,
+    Anim_Revive,
+    Anim_Running,
+    Anim_Walking
+};
 // プレイヤー
 class Player : public Character
 {
@@ -18,9 +34,7 @@ public:
     // インスタンス取得
     static Player& Instance();
 
-
-    // アニメーション
-    enum Animation
+    enum  Animation
     {
         Anim_Attack,
         Anim_Death,
@@ -35,7 +49,6 @@ public:
         Anim_Running,
         Anim_Walking
     };
-
      
 
 
@@ -68,30 +81,36 @@ protected:
     // ダメージを受けた時に呼ばれる
     void OnDamaged() override;
 public:
-    // ステート
     enum class State
     {
         Idle,
         Move,
-        Jump,
         Land,
+        Jump,
         JumpFlip,
-        Attack,
-        Damage,
-        Death,
-        Revive,
-        None,
     };
-
-private:
+    // ステート
+    //enum class State
+    //{
+    //    Idle,
+    //    Move,
+    //    Jump,
+    //    Land,
+    //    JumpFlip,
+    //    Attack,
+    //    Damage,
+    //    Death,
+    //    Revive,
+    //    None,
+    //};
+    StateMachine* GetStateMachine() { return stateMachine; }
+    Model* GetModel() { return model; }
+public:
     // スティック入力値から移動ベクトルを取得 進行ベクトルを取る進むべき方向
     DirectX::XMFLOAT3 GetMoveVec() const;
 
-
     // 移動入力処理
     bool InputMove(float elapsedTime);
-
-
 
     // プレイヤーとエネミーとの衝突処理
     void CollisionPlayerVsEnemies();
@@ -113,13 +132,9 @@ private:
     // 待機ステート更新
     void UpdateIdleState(float elapsedTime);
 
-   
-
     // 移動ステートへ更新
     void UpdateMoveState(float elapsedTime);
 
-
-    
     // ジャンプステート更新処理
     void UpdateJumpState(float elapsedTime);
 
@@ -128,8 +143,6 @@ private:
 
     // 着地ステージ更新処理
     void UpdateLandState(float elapsedTime);
-
-    
 
     // 二段ジャンプステート更新
     void UpdatejumpFlipState(float elapsedTime);
@@ -168,16 +181,19 @@ private:
     // 移動ステートへ遷移    
     void TransitionMoveState();
 
-private:
-    
+    int            jumpCount = 0;
 
+    void SetState(State state) { this->state = state; }
+private:
+    StateMachine* stateMachine = nullptr;
     Model* model = nullptr;
+
     float          moveSpeed = 5.0f;
 
     float         turnSpeed = DirectX::XMConvertToRadians(720);
 
     float          jumpSpeed = 20.0f;
-    int            jumpCount = 0;
+   
     int            jumpLimit = 2;
 
     //ProjectileManager projectileManager;
@@ -248,4 +264,5 @@ protected:
     bool startCheck = false;
 
     char Name[10];
+
 };

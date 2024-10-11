@@ -129,8 +129,6 @@ void SceneStandby::Initialize()
 
 void SceneStandby::Finalize()
 {
-	
-
 	// カメラコントーラー終了化
 	if (this->cameraController)
 	{
@@ -153,9 +151,8 @@ void SceneStandby::Finalize()
 
 void SceneStandby::Update(float elapsedTime)
 {
-	playerManager->GetMyPlayer()->ChangeState(Player::State::Move);
+	playerManager->GetMyPlayer()->ChangeState(Player::State::Idle);
 		
-
 	//シーン遷移
 	if (playerManager->GetGameStart())
 	{

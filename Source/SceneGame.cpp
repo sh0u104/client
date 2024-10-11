@@ -166,12 +166,13 @@ void SceneGame::Update(float elapsedTime)
 		}
 
 		//imgui用
-		guiPosition = playerManager->GetMyPlayer()->GetPosition();
-		guiVelocity = playerManager->GetMyPlayer()->GetVelocity();
-		guiRecvVelocity = playerManager->GetMyPlayer()->GetRecvVelocity();
-		guiId = playerManager->GetMyPlayer()->GetPlayerID();
-		guiAngle = playerManager->GetMyPlayer()->GetAngle();
-
+		{
+			guiPosition = playerManager->GetMyPlayer()->GetPosition();
+			guiVelocity = playerManager->GetMyPlayer()->GetVelocity();
+			guiRecvVelocity = playerManager->GetMyPlayer()->GetRecvVelocity();
+			guiId = playerManager->GetMyPlayer()->GetPlayerID();
+			guiAngle = playerManager->GetMyPlayer()->GetAngle();
+		}
 		// カメラコントローラー更新処理
 		DirectX::XMFLOAT3 target = playerManager->GetMyPlayer()->GetPosition();
 		target.y += 0.5f;// 足元から５０センチぐらい
@@ -189,6 +190,9 @@ void SceneGame::Update(float elapsedTime)
 
 	// エフェクト更新処理
 	EffectManager::Instance().Update(elapsedTime);
+
+	
+	
 }
 
 
@@ -263,19 +267,22 @@ void SceneGame::Render()
 
 	// 3Dデバッグ描画
 	{
+	
+
 		ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_FirstUseEver);
 		ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
 		// beginからendまでの内容が出来る
 		if (ImGui::Begin("Player", nullptr, ImGuiWindowFlags_None))
 		{
+			//ImGui::Text("State: %d", static_cast<int>(playerManager->GetMyPlayer()->GetState()));
 			if (ImGui::CollapsingHeader("Mouse", ImGuiTreeNodeFlags_DefaultOpen))
 			{
-				ImGui::InputFloat("length", &length);
-				ImGui::InputFloat3("clickpos", &clickPos.x);
-				ImGui::InputFloat3("pos", &oldMousePos.x);
-				ImGui::Text("angle : %.2f", &playerManager->GetMyPlayer()->GetAngle().y);
-				ImGui::InputFloat("angle", &mouseAngle);
-				ImGui::InputFloat("angleDegrees", &mouseAngleDegrees);
+				//ImGui::InputFloat("length", &length);
+				//ImGui::InputFloat3("clickpos", &clickPos.x);
+				//ImGui::InputFloat3("pos", &oldMousePos.x);
+				//ImGui::Text("angle : %.2f", &playerManager->GetMyPlayer()->GetAngle().y);
+				//ImGui::InputFloat("angle", &mouseAngle);
+				//ImGui::InputFloat("angleDegrees", &mouseAngleDegrees);
 			}
 			// トランスフォーム
 			if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
@@ -369,11 +376,8 @@ void SceneGame::MouseOpreration(ID3D11DeviceContext* dc)
 	//クリック時
 	if (mouse.GetButtonDown() & Mouse::BTN_LEFT)
 	{
-		
 		clickPos.x = static_cast<float>(mouse.GetPositionX());
 		clickPos.y = static_cast<float>(mouse.GetPositionY());
-
-		
 	}
 
 	DirectX::XMVECTOR vec, OldPos, Pos;
