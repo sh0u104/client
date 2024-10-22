@@ -97,7 +97,9 @@ bool Connection::UDPInitialize()
 		WSACleanup();
 		return false;
 	}
-
+	//// ノンブロッキングの設定
+	u_long mode = 1; // ノンブロッキングモードを有効にするために1を設定
+	ioctlsocket(uSock, FIONBIO, &mode);
 	char buffer[256]{ "" };
 	strcpy_s(buffer, "ACCESS");
 	int addrSize = sizeof(struct sockaddr_in);
@@ -122,7 +124,7 @@ void Connection::Finalize()
 		PlayerLogout logout{};
 		
 		
-			logout.cmd = NetworkTag::Logout;
+			logout.cmd = TcpTag::Logout;
 			//ログイン処理が終わってたら
 			if (playerManager != nullptr)
 			{
@@ -177,59 +179,36 @@ void Connection::RecvThread()
 				short type = 0;
 				memcpy_s(&type, sizeof(short), buffer, sizeof(short));
 				std::cout << "recv cmd　：　" << type << std::endl;
-				switch (static_cast<NetworkTag>(type))
+				switch (static_cast<TcpTag>(type))
 				{
-				case NetworkTag::Login:
+				case TcpTag::SignIn:
 				{
-					PlayerLogin login;
-					std::cout << "login " << std::endl;
-					memcpy_s(&login, sizeof(PlayerLogin), buffer, sizeof(PlayerLogin));
-					std::cout << " id " << login.id << std::endl;
+					SignIn signIn;
+					memcpy_s(&signIn, sizeof(SignIn), buffer, sizeof(SignIn));
 
-					if (playerManager->GetMyPlayerID() == 0)
+					//サーバーに送信したアカウントの情報があれば
+					if (signIn.result)
 					{
-						//自分のプレイヤーに受信したIDを乗せる
-						playerManager->GetMyPlayer()->SetPlayerID(login.id);
-						playerManager->SetMyPlayerID(login.id);
-						//ログイン数を加算
-						playerManager->AddLoginCount();
-
-
-						std::cout << std::endl;
+						playerManager->GetMyPlayer()->SetName(signIn.name);
+						playerManager->SetSignIn(true);
 					}
+					//なかったら
 					else
 					{
-						//
+
 					}
 				}
 				break;
-				/*case NetworkTag::Sync:
+				case TcpTag::SignUp:
 				{
-					PlayerSync sync;
-					memcpy_s(&sync, sizeof(sync), buffer, sizeof(PlayerSync));
-					std::cout << " cmd sync " << std::endl;
-					std::cout << " id " << sync.id << std::endl;
+					SignUp signUp;
+					memcpy_s(&signUp, sizeof(SignUp), buffer, sizeof(SignUp));
 
-					std::vector<Player*> players = playerManager->GetPlayers();
-					for (Player* player : players)
-					{
-						if (sync.id == player->GetPlayerID())
-						{
-							player->SetPosition(sync.position);
-							player->SetRecvVelocity(sync.velocity);
-						}
-					}
-					Player* player = new Player();
-					player->SetPlayerID(sync.id);
-					player->SetPosition(sync.position);
-					player->Setoperation(false);
-					player->SetAngle(sync.angle);
-					playerManager->AddPlayer(player);
-					playerManager->GetPlayer(sync.id)->SetReady(true);
-
-					std::cout << "syncプレイヤー生成 " << std::endl;
-				}*/
-				case NetworkTag::Logout:
+					playerManager->GetMyPlayer()->SetName(signUp.name);
+					playerManager->SetSignUp(true);
+				}
+				break;
+				case TcpTag::Logout:
 				{
 					PlayerLogout logout;
 					memcpy_s(&logout, sizeof(logout), buffer, sizeof(PlayerLogout));
@@ -239,7 +218,7 @@ void Connection::RecvThread()
 						playerManager->ErasePlayer(logout.id);
 				}
 				break;
-				case NetworkTag::TeamCreate:
+				case TcpTag::TeamCreate:
 				{
 					TeamCreate teamcreate;
 					memcpy_s(&teamcreate, sizeof(teamcreate), buffer, sizeof(TeamCreate));
@@ -256,7 +235,7 @@ void Connection::RecvThread()
 
 				}
 				break;
-				case NetworkTag::Teamjoin:
+				case TcpTag::Teamjoin:
 				{
 					Teamjoin teamjoin;
 					memcpy_s(&teamjoin, sizeof(teamjoin), buffer, sizeof(Teamjoin));
@@ -298,7 +277,7 @@ void Connection::RecvThread()
 					}
 				}
 				break;
-				case NetworkTag::Teamleave:
+				case TcpTag::Teamleave:
 				{
 					//チーム抜けた人がいたら
 					TeamLeave teamLeave;
@@ -333,7 +312,7 @@ void Connection::RecvThread()
 
 				}
 				break;
-				case NetworkTag::Teamsync:
+				case TcpTag::Teamsync:
 				{
 					Teamsync teamsync;
 					memcpy_s(&teamsync, sizeof(teamsync), buffer, sizeof(Teamsync));
@@ -356,55 +335,74 @@ void Connection::RecvThread()
 					}
 				}
 				break;
-				case NetworkTag::StartCheck:
+				case TcpTag::StartCheck:
 				{
 					StartCheck startcheck;
 					memcpy_s(&startcheck, sizeof(startcheck), buffer, sizeof(StartCheck));
 					playerManager->GetMyPlayer()->SetstartCheck(startcheck.check);
 				}
 				break;
-				case NetworkTag::Gamestart:
+				case TcpTag::Gamestart:
 				{
 					//ゲーム開始許可が下りた
 					playerManager->SetGameStart(true);
 				}
 				break;
-				case NetworkTag::SignIn:
-				{
-					SignIn signIn;
-					memcpy_s(&signIn, sizeof(SignIn), buffer, sizeof(SignIn));
 
-					//サーバーに送信したアカウントの情報があれば
-					if (signIn.result)
+				case TcpTag::Login:
+				{
+					PlayerLogin login;
+					std::cout << "login " << std::endl;
+					memcpy_s(&login, sizeof(PlayerLogin), buffer, sizeof(PlayerLogin));
+					std::cout << " id " << login.id << std::endl;
+					if (playerManager->GetMyPlayerID() == 0)
 					{
-						playerManager->GetMyPlayer()->SetName(signIn.name);
-						playerManager->SetSignIn(true);
+						//自分のプレイヤーに受信したIDを乗せる
+						playerManager->GetMyPlayer()->SetPlayerID(login.id);
+						playerManager->SetMyPlayerID(login.id);
+						//ログイン数を加算
+						playerManager->AddLoginCount();
+						std::cout << std::endl;
 					}
-					//なかったら
 					else
 					{
-
+						//
 					}
 				}
 				break;
-				case NetworkTag::SignUp:
+				/*case NetworkTag::Sync:
 				{
-					SignUp signUp;
-					memcpy_s(&signUp, sizeof(SignUp), buffer, sizeof(SignUp));
+					PlayerSync sync;
+					memcpy_s(&sync, sizeof(sync), buffer, sizeof(PlayerSync));
+					std::cout << " cmd sync " << std::endl;
+					std::cout << " id " << sync.id << std::endl;
 
-					playerManager->GetMyPlayer()->SetName(signUp.name);
-					playerManager->SetSignUp(true);
-				}
-				break;
-				case NetworkTag::Move:
+					std::vector<Player*> players = playerManager->GetPlayers();
+					for (Player* player : players)
+					{
+						if (sync.id == player->GetPlayerID())
+						{
+							player->SetPosition(sync.position);
+							player->SetRecvVelocity(sync.velocity);
+						}
+					}
+					Player* player = new Player();
+					player->SetPlayerID(sync.id);
+					player->SetPosition(sync.position);
+					player->Setoperation(false);
+					player->SetAngle(sync.angle);
+					playerManager->AddPlayer(player);
+					playerManager->GetPlayer(sync.id)->SetReady(true);
+
+					std::cout << "syncプレイヤー生成 " << std::endl;
+				}*/
+				case TcpTag::Move:
 				{
 					PlayerInput input;
 					memcpy_s(&input, sizeof(PlayerInput), buffer, sizeof(PlayerInput));
 					Player* player = playerManager->GetPlayer(input.id);
 					player->SetRecvVelocity(input.velocity);
 					player->SetAngle(input.angle);
-
-
 					if (playerManager->GetMyPlayerID() != input.id)
 					{
 						//player->SetPosition(input.position);
@@ -417,30 +415,25 @@ void Connection::RecvThread()
 					}
 				}
 				break;
-				case NetworkTag::Attack:
-				{
-					PlayerInput input;
-					memcpy_s(&input, sizeof(PlayerInput), buffer, sizeof(PlayerInput));
-
-					Player* player = playerManager->GetPlayer(input.id);
-
-
-
-					std::cout << "受信 Attack " << std::endl;
-					std::cout << "id " << input.id << std::endl;
-
-					std::cout << std::endl;
-				}
-				break;
-				case NetworkTag::Message:
-				{
-					Message message;
-					memcpy_s(&message, sizeof(Message), buffer, sizeof(Message));
-					//メッセージがきたら
-					playerManager->Setmessages(message.text);
-					playerManager->SetmessageEraseTime(5.0f);
-				}
-				break;
+				//case TcpTag::Attack:
+				//{
+				//	PlayerInput input;
+				//	memcpy_s(&input, sizeof(PlayerInput), buffer, sizeof(PlayerInput));
+				//	Player* player = playerManager->GetPlayer(input.id);
+				//	std::cout << "受信 Attack " << std::endl;
+				//	std::cout << "id " << input.id << std::endl;
+				//	std::cout << std::endl;
+				//}
+				//break;
+				//case TcpTag::Message:
+				//{
+				//	Message message;
+				//	memcpy_s(&message, sizeof(Message), buffer, sizeof(Message));
+				//	//メッセージがきたら
+				//	playerManager->Setmessages(message.text);
+				//	playerManager->SetmessageEraseTime(5.0f);
+				//}
+				//break;
 				}
 			}
 		}
@@ -470,7 +463,7 @@ void Connection::DeleteID()
 void Connection::SendSignIn(char name[10], char password[10])
 {
 	SignIn signin;
-	signin.cmd = NetworkTag::SignIn;
+	signin.cmd = TcpTag::SignIn;
 	strcpy_s(signin.name, name);
 	strcpy_s(signin.pass, password);
 
@@ -482,7 +475,7 @@ void Connection::SendSignIn(char name[10], char password[10])
 void Connection::SendSignUp(char name[10], char password[10])
 {
 	SignUp signup;
-	signup.cmd = NetworkTag::SignUp;
+	signup.cmd = TcpTag::SignUp;
 	strcpy_s(signup.name, name);
 	strcpy_s(signup.pass, password);
 
@@ -494,7 +487,7 @@ void Connection::SendSignUp(char name[10], char password[10])
 void Connection::SendGeustLogin()
 {
 	GeustLogin geustlogin;
-	geustlogin.cmd = NetworkTag::GeustLogin;
+	geustlogin.cmd = TcpTag::GeustLogin;
 
 	char buffer[sizeof(GeustLogin)];
 	memcpy_s(buffer, sizeof(buffer), &geustlogin, sizeof(GeustLogin));
@@ -505,7 +498,7 @@ void Connection::SendMove(DirectX::XMFLOAT3 velocity, DirectX::XMFLOAT3 position
 	Player::State state, DirectX::XMFLOAT3 angle)
 {
 	PlayerInput input;
-	input.cmd = NetworkTag::Move;
+	input.cmd = TcpTag::Move;
 	input.id = playerManager->GetMyPlayerID();
 	input.velocity = velocity;
 	input.position = position;
@@ -520,7 +513,7 @@ void Connection::SendMove(DirectX::XMFLOAT3 velocity, DirectX::XMFLOAT3 position
 void Connection::SendSync(DirectX::XMFLOAT3 position)
 {
 	PlayerSync sync;
-	sync.cmd = NetworkTag::Sync;
+	sync.cmd = TcpTag::Sync;
 	sync.id = playerManager->GetMyPlayerID();
 	sync.velocity = { 0,0,0 };
 	sync.position = position;
@@ -533,7 +526,7 @@ void Connection::SendSync(DirectX::XMFLOAT3 position)
 void Connection::SendTeamcreate()
 {
 	TeamCreate teamcreate;
-	teamcreate.cmd = NetworkTag::TeamCreate;
+	teamcreate.cmd = TcpTag::TeamCreate;
 	teamcreate.id = playerManager->GetMyPlayerID();
 	teamcreate.number = 0;
 	teamcreate.Permission = false;
@@ -546,7 +539,7 @@ void Connection::SendTeamcreate()
 void Connection::SendTeamJoin(int teamnumber)
 {
 	Teamjoin teamjoin;
-	teamjoin.cmd = NetworkTag::Teamjoin;
+	teamjoin.cmd = TcpTag::Teamjoin;
 	teamjoin.id = playerManager->GetMyPlayerID();
 	teamjoin.number = teamnumber;
 
@@ -558,7 +551,7 @@ void Connection::SendTeamJoin(int teamnumber)
 void Connection::SendTeamLeave(bool isLeader)
 {
 	TeamLeave teamLeave;
-	teamLeave.cmd = NetworkTag::Teamleave;
+	teamLeave.cmd = TcpTag::Teamleave;
 	teamLeave.id = playerManager->GetMyPlayerID();
 	teamLeave.isLeader = isLeader;
 
@@ -570,7 +563,7 @@ void Connection::SendTeamLeave(bool isLeader)
 void Connection::SendGamestart(int teamnumber)
 {
 	GameStart gamestart;
-	gamestart.cmd = NetworkTag::Gamestart;
+	gamestart.cmd = TcpTag::Gamestart;
 	gamestart.id = playerManager->GetMyPlayerID();
 	gamestart.teamnunber = teamnumber;
 
@@ -582,7 +575,7 @@ void Connection::SendGamestart(int teamnumber)
 void Connection::SendMessages(char input[32])
 {
 	Message message;
-	message.cmd = NetworkTag::Message;
+	message.cmd = UdpTag::Message;
 	for (int i = 0; i < sizeof(input - 1); ++i)
 	{
 		message.text[i] = input[i];
@@ -596,7 +589,7 @@ void Connection::SendMessages(char input[32])
 void Connection::SendStartCheck(bool check)
 {
 	StartCheck startcheck;
-	startcheck.cmd = NetworkTag::StartCheck;
+	startcheck.cmd = TcpTag::StartCheck;
 	startcheck.id = playerManager->GetMyPlayerID();
 	startcheck.teamnunber = playerManager->GetMyPlayer()->Getteamnumber();
 	startcheck.check = check;
@@ -609,7 +602,7 @@ void Connection::SendStartCheck(bool check)
 void Connection::SendGameEnd(int teamnumber)
 {
 	GameEnd gameend;
-	gameend.cmd = NetworkTag::GameEnd;
+	gameend.cmd = TcpTag::GameEnd;
 	gameend.teamnunber = teamnumber;
 
 	char buffer[sizeof(GameEnd)];
@@ -617,56 +610,60 @@ void Connection::SendGameEnd(int teamnumber)
 	int s = send(sock, buffer, sizeof(buffer), 0);
 }
 
+
+
+
+
 void Connection::SendIdSearch(short id)
 {
-	IdSearch idSearch;
-
-	idSearch.cmd = NetworkTag::IdSearch;
-	idSearch.id = id;
-
-	char buffer[sizeof(IdSearch)];
-	memcpy_s(buffer, sizeof(IdSearch), &idSearch, sizeof(IdSearch));
-	int s = send(sock, buffer, sizeof(buffer), 0);
+	//IdSearch idSearch;
+	//
+	//idSearch.cmd = NetworkTag::IdSearch;
+	//idSearch.id = id;
+	//
+	//char buffer[sizeof(IdSearch)];
+	//memcpy_s(buffer, sizeof(IdSearch), &idSearch, sizeof(IdSearch));
+	//int s = send(sock, buffer, sizeof(buffer), 0);
 }
 
 void Connection::SendFriendRequest(short requestid)
 {
-	FriendRequest friendRequest;
-
-	friendRequest.cmd = NetworkTag::FriendRequest;
-	strcpy_s(friendRequest.name, playerManager->GetMyPlayer()->GetName());
-	friendRequest.senderid = playerManager->GetMyPlayerID();
-	friendRequest.requestid = requestid;
-
-	char buffer[sizeof(FriendRequest)];
-	memcpy_s(buffer, sizeof(FriendRequest), &friendRequest, sizeof(FriendRequest));
-	int s = send(sock, buffer, sizeof(buffer), 0);
+//	FriendRequest friendRequest;
+//
+//	friendRequest.cmd = NetworkTag::FriendRequest;
+//	strcpy_s(friendRequest.name, playerManager->GetMyPlayer()->GetName());
+//	friendRequest.senderid = playerManager->GetMyPlayerID();
+//	friendRequest.requestid = requestid;
+//
+//	char buffer[sizeof(FriendRequest)];
+//	memcpy_s(buffer, sizeof(FriendRequest), &friendRequest, sizeof(FriendRequest));
+//	int s = send(sock, buffer, sizeof(buffer), 0);
 }
 
 void Connection::SendFriendApproval(short youid, short myid, char myname[10], char youname[10])
 {
-	FriendApproval friendApproval;
-	friendApproval.cmd = NetworkTag::FriendApproval;
-	friendApproval.myid = myid;
-	friendApproval.youid = youid;
-	strcpy_s(friendApproval.myname, myname);
-	strcpy_s(friendApproval.youname, youname);
-
-	char buffer[sizeof(FriendApproval)];
-	memcpy_s(buffer, sizeof(FriendApproval), &friendApproval, sizeof(FriendApproval));
-	int s = send(sock, buffer, sizeof(buffer), 0);
+	//FriendApproval friendApproval;
+	//friendApproval.cmd = NetworkTag::FriendApproval;
+	//friendApproval.myid = myid;
+	//friendApproval.youid = youid;
+	//strcpy_s(friendApproval.myname, myname);
+	//strcpy_s(friendApproval.youname, youname);
+	//
+	//char buffer[sizeof(FriendApproval)];
+	//memcpy_s(buffer, sizeof(FriendApproval), &friendApproval, sizeof(FriendApproval));
+	//int s = send(sock, buffer, sizeof(buffer), 0);
 
 }
 
 void Connection::SendSeeFriend()
 {
-	SeeFriend seeFriend;
-	seeFriend.cmd = NetworkTag::SeeFriend;
-	seeFriend.myid = playerManager->GetMyPlayerID();
-
-	char buffer[sizeof(SeeFriend)];
-	memcpy_s(buffer, sizeof(SeeFriend), &seeFriend, sizeof(SeeFriend));
-	int s = send(sock, buffer, sizeof(buffer), 0);
+	//SeeFriend seeFriend;
+	//seeFriend.cmd = NetworkTag::SeeFriend;
+	//seeFriend.myid = playerManager->GetMyPlayerID();
+	//
+	//char buffer[sizeof(SeeFriend)];
+	//memcpy_s(buffer, sizeof(SeeFriend), &seeFriend, sizeof(SeeFriend));
+	//int s = send(sock, buffer, sizeof(buffer), 0);
 
 
 }

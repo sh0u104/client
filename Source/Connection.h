@@ -67,13 +67,12 @@ public:
 	void RecvThread();
 
 
-
-	enum class NetworkTag : unsigned short
+	enum class TcpTag : unsigned short
 	{
-		Message,		// チャットメッセージ
-		Move,			// 移動
-		Attack,			// 攻撃
-		Sync,			// 同期
+		SignUp,         //アカウント作成
+		SignIn,         //アカウントでログイン
+		GeustLogin,		// ゲストアカウントでログイン
+		Logout,			// サーバーからログアウト
 		TeamCreate,     //チーム作成
 		Teamjoin,       //チーム加入
 		Teamleave,      //チームを抜ける
@@ -81,28 +80,28 @@ public:
 		StartCheck,     //スタート準備ができてるか
 		Gamestart,      //ゲームを始めでいいか
 		GameEnd,        //ゲームが終わったら
-		SignUp,         //アカウント作成
-		SignIn,         //アカウントでログイン
-		GeustLogin,		// ゲストアカウントでログイン
-		Login,          //受信用
-		Logout,			// サーバーからログアウト
-		IdSearch,       //ID検索
-		FriendRequest,  //フレンド申請
-		FriendApproval, //フレンド承認
-		SeeFriend,      //自分のフレンドを見る
-
+		Move,
+		Sync,			// 同期
+		Login,
+	};
+	enum class UdpTag : unsigned short
+	{
+		Message,		// チャットメッセージ
+		//Move,			// 移動
+		Attack,			// 攻撃
+		
 	};
 	
 
 	struct Message
 	{
-		NetworkTag cmd;
+		UdpTag cmd;
 		char text[32];
 	};
 
 	struct PlayerInput
 	{
-		NetworkTag cmd;
+		TcpTag cmd;
 		short id;
 		DirectX::XMFLOAT3 velocity;
 		DirectX::XMFLOAT3 position;
@@ -112,18 +111,18 @@ public:
 	
 	struct PlayerLogin
 	{
-		NetworkTag cmd;
+		TcpTag cmd;
 		short id;
 	};
 	
 	struct GeustLogin
 	{
-		NetworkTag cmd;
+		TcpTag cmd;
 	};
 
 	struct SignIn
 	{
-		NetworkTag cmd;
+		TcpTag cmd;
 		char name[10];
 		char pass[10];
 		bool result;
@@ -131,19 +130,19 @@ public:
 
 	struct SignUp
 	{
-		NetworkTag cmd;
+		TcpTag cmd;
 		char name[10];
 		char pass[10];
 	};
 
 	struct PlayerLogout
 	{
-		NetworkTag cmd;
+		TcpTag cmd;
 		short id;
 	};
 	struct PlayerSync
 	{
-		NetworkTag cmd;
+		TcpTag cmd;
 		short id;
 		DirectX::XMFLOAT3 position;
 		DirectX::XMFLOAT3 velocity;
@@ -152,7 +151,7 @@ public:
 
 	struct TeamCreate
 	{
-		NetworkTag cmd;
+		TcpTag cmd;
 		short id;
 		int number;
 		bool Permission;
@@ -160,27 +159,27 @@ public:
 
 	struct Teamjoin
 	{
-		NetworkTag cmd;
+		TcpTag cmd;
 		short id;
 		int number;
 	};
 
 	struct TeamLeave
 	{
-		NetworkTag cmd;
+		TcpTag cmd;
 		short id;
 		bool isLeader;
 	};
 
 	struct Teamsync
 	{
-		NetworkTag cmd;
+		TcpTag cmd;
 		short id[4];
 	};
 
 	struct StartCheck
 	{
-		NetworkTag cmd;
+		TcpTag cmd;
 		short id;
 		short teamnunber;
 		bool check;
@@ -188,49 +187,50 @@ public:
 
 	struct GameStart
 	{
-		NetworkTag cmd;
+		TcpTag cmd;
 		short id;
 		short teamnunber;
 	};
 
 	struct GameEnd
 	{
-		NetworkTag cmd;
+		TcpTag cmd;
 		short teamnunber;
 	};
 
-	struct IdSearch
-	{
-		NetworkTag cmd;
-		short id;
-		bool result;
-		char name[10];
-	};
+	/*{
+		struct IdSearch
+		{
+			NetworkTag cmd;
+			short id;
+			bool result;
+			char name[10];
+		};
 
-	struct FriendRequest
-	{
-		NetworkTag cmd;
-		char name[10];
-		short senderid;
-		short requestid;
+		struct FriendRequest
+		{
+			NetworkTag cmd;
+			char name[10];
+			short senderid;
+			short requestid;
 
-	};
-	struct FriendApproval
-	{
-		NetworkTag cmd;
-		short myid;
-		short youid;
-		char myname[10];
-		char youname[10];
-	};
-	
-	struct SeeFriend
-	{
-		NetworkTag cmd;
-		short myid;
-		std::vector<PlayerManager::User>friendList;
-	};
-	
+		};
+		struct FriendApproval
+		{
+			NetworkTag cmd;
+			short myid;
+			short youid;
+			char myname[10];
+			char youname[10];
+		};
+
+		struct SeeFriend
+		{
+			NetworkTag cmd;
+			short myid;
+			std::vector<PlayerManager::User>friendList;
+		};
+	}*/
 
 	PlayerManager* GetPlayerManager() { return playerManager; }
 	void SetPlayerManager(PlayerManager* playerManager) { this->playerManager = playerManager; }
