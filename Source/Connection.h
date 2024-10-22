@@ -17,8 +17,15 @@ public:
 	~Connection();
 
 	void Initialize();
+	bool UDPInitialize();
+	struct Test
+	{
+		short id;
+	};
+
 	void Finalize();
 
+	
 	
 	void SendSignIn(char name[10], char password[10]);
 
@@ -102,7 +109,6 @@ public:
 		Player::State state;
 		DirectX::XMFLOAT3 angle;
 	};
-
 	
 	struct PlayerLogin
 	{
@@ -242,6 +248,9 @@ private:
 	bool loop = true;
 	std::mutex mutex;
 	
+
+	struct sockaddr_in uAddr;
+	SOCKET uSock{};
 	
 };
 

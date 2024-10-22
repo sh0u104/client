@@ -38,6 +38,7 @@ void MoveState::Execute(float elapsedTime)
     // ˆÚ“®“ü—Íˆ—
     if (!owner->InputMove(elapsedTime))
     {
+
         owner->GetStateMachine()->ChangeState(static_cast<int>(Player::State::Idle));
     }
     // ƒWƒƒƒ“ƒv“ü—Íˆ—

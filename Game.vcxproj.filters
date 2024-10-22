@@ -205,6 +205,7 @@
     <ClInclude Include="Source\StateBase.h">
       <Filter>Source</Filter>
     </ClInclude>
+    <ClInclude Include="ApiLogin.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="External\imgui\imgui.cpp">
@@ -358,6 +359,9 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="Source\StateMachine.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="ApiLogin.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>

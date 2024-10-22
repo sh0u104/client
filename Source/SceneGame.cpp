@@ -358,103 +358,108 @@ void SceneGame::Render()
 
 void SceneGame::MouseOpreration(ID3D11DeviceContext* dc)
 {
-	Mouse& mouse = Input::Instance().GetMouse();
 	
-	//押してたら
-	if (mouse.GetButton() & Mouse::BTN_LEFT)
+	HWND hwnd;
+	hwnd = GetActiveWindow();
+	if (hwnd != NULL)
 	{
-		oldMousePos.x = static_cast<float>(mouse.GetOldPositionX());
-		oldMousePos.y = static_cast<float>(mouse.GetOldPositionY());
+		Mouse& mouse = Input::Instance().GetMouse();
+		//押してたら
+		if (mouse.GetButton() & Mouse::BTN_LEFT)
+		{
+			oldMousePos.x = static_cast<float>(mouse.GetOldPositionX());
+			oldMousePos.y = static_cast<float>(mouse.GetOldPositionY());
 
-	}
-	else
-	{
-		length = 0.0f;
+		}
+		else
+		{
+			length = 0.0f;
+			playerManager->GetMyPlayer()->mouselength = length;
+			return;
+		}
+		//クリック時
+		if (mouse.GetButtonDown() & Mouse::BTN_LEFT)
+		{
+			clickPos.x = static_cast<float>(mouse.GetPositionX());
+			clickPos.y = static_cast<float>(mouse.GetPositionY());
+		}
+
+		DirectX::XMVECTOR vec, OldPos, Pos;
+		OldPos = XMLoadFloat3(&oldMousePos);
+		Pos = XMLoadFloat3(&clickPos);
+		vec = XMVectorSubtract(Pos, OldPos);
+
+		length = XMVectorGetX(XMVector3Length(vec));
+		float deltaX = XMVectorGetX(vec);
+		float deltaY = XMVectorGetY(vec);
+
+
+		mouseAngle = atan2(deltaY, deltaX);
+		playerAngle = mouseAngle;
+		// ラジアンから度に変換
+		mouseAngleDegrees = XMConvertToDegrees(mouseAngle);
+		playerAngleDegrees = mouseAngleDegrees;
+
+		// 0度を上方向にするために90度を追加
+		playerAngleDegrees = 90.0f - playerAngleDegrees;
+
+		// 角度を0-360度の範囲に調整
+		if (playerAngleDegrees < 0) {
+			playerAngleDegrees += 360.0f;
+		}
+		if (mouseAngleDegrees < 0) {
+			mouseAngleDegrees += 360.0f;
+		}
+
+		//逆回転のため補正
+		playerAngleDegrees -= 360;
+		playerAngleDegrees *= -1;
+
+		//角度を度からラジアンに戻す
+		mouseAngle = XMConvertToRadians(mouseAngleDegrees);
+		playerAngle = XMConvertToRadians(playerAngleDegrees);
+
+		if (length < 0.2f) {
+			playerAngle = playerManager->GetMyPlayer()->GetAngle().y;
+		}
+
+
+		playerManager->GetMyPlayer()->mouseAngle = mouseAngle;
+		playerManager->GetMyPlayer()->SetAngle({ 0, playerAngle, 0 });
+
+
+
+
+		sprites[static_cast<int>(SpriteNumber::BigCircle)]->Render(dc,
+			clickPos.x - 50, clickPos.y - 50, //描画位置
+			100, 100,             //表示サイズ
+			0, 0,                 //切り取りはじめ位置
+			300, 300,           //画像サイズ
+			0.0f,
+			1, 1, 1, 1);
+
+		//小さい円が大きい円から出ないように補正
+		if (length > 50.0f)
+		{
+			float scaleFactor = 50.0f / length;
+			vec = DirectX::XMVectorScale(vec, scaleFactor);
+			DirectX::XMFLOAT3 correctedOldPos;
+			DirectX::XMStoreFloat3(&correctedOldPos, DirectX::XMVectorSubtract(Pos, vec));
+			oldMousePos.x = correctedOldPos.x;
+			oldMousePos.y = correctedOldPos.y;
+
+			length = 50.0f;
+
+		}
 		playerManager->GetMyPlayer()->mouselength = length;
-		return;
+		sprites[static_cast<int>(SpriteNumber::SmallCircle)]->Render(dc,
+			oldMousePos.x - 15, oldMousePos.y - 15, //描画位置
+			30, 30,             //表示サイズ
+			0, 0,                 //切り取りはじめ位置
+			100, 100,           //画像サイズ
+			0.0f,
+			1, 1, 1, 1);
 	}
-	//クリック時
-	if (mouse.GetButtonDown() & Mouse::BTN_LEFT)
-	{
-		clickPos.x = static_cast<float>(mouse.GetPositionX());
-		clickPos.y = static_cast<float>(mouse.GetPositionY());
-	}
-
-	DirectX::XMVECTOR vec, OldPos, Pos;
-    OldPos = XMLoadFloat3(&oldMousePos);
-    Pos = XMLoadFloat3(&clickPos);
-    vec = XMVectorSubtract(Pos, OldPos);
-
-	length = XMVectorGetX(XMVector3Length(vec));
-	float deltaX = XMVectorGetX(vec);
-	float deltaY = XMVectorGetY(vec);
-	
-
-	mouseAngle = atan2(deltaY, deltaX);
-	playerAngle = mouseAngle;
-	// ラジアンから度に変換
-	mouseAngleDegrees = XMConvertToDegrees(mouseAngle);
-	playerAngleDegrees = mouseAngleDegrees;
-
-	// 0度を上方向にするために90度を追加
-	playerAngleDegrees = 90.0f - playerAngleDegrees;
-
-	// 角度を0-360度の範囲に調整
-	if (playerAngleDegrees < 0) {
-		playerAngleDegrees += 360.0f;
-	}
-	if (mouseAngleDegrees < 0) {
-		mouseAngleDegrees += 360.0f;
-	}
-
-	//逆回転のため補正
-	playerAngleDegrees -= 360;
-	playerAngleDegrees *= -1;
-
-	//角度を度からラジアンに戻す
-	mouseAngle = XMConvertToRadians(mouseAngleDegrees);
-	playerAngle = XMConvertToRadians(playerAngleDegrees);
-
-	if (length < 0.2f) {
-		playerAngle = playerManager->GetMyPlayer()->GetAngle().y;
-	}
-
-
-	playerManager->GetMyPlayer()->mouseAngle = mouseAngle;
-	playerManager->GetMyPlayer()->SetAngle({ 0, playerAngle, 0 });
-	
-
-	
-	
-	sprites[static_cast<int>(SpriteNumber::BigCircle)]->Render(dc,
-		clickPos.x - 50, clickPos.y - 50, //描画位置
-		100, 100,             //表示サイズ
-		0, 0,                 //切り取りはじめ位置
-		300, 300,           //画像サイズ
-		0.0f,
-		1, 1, 1, 1);
-
-	//小さい円が大きい円から出ないように補正
-	if (length > 50.0f)
-	{
-		float scaleFactor = 50.0f / length;
-		vec = DirectX::XMVectorScale(vec, scaleFactor);
-		DirectX::XMFLOAT3 correctedOldPos;
-		DirectX::XMStoreFloat3(&correctedOldPos, DirectX::XMVectorSubtract(Pos, vec));
-		oldMousePos.x = correctedOldPos.x;
-		oldMousePos.y = correctedOldPos.y;
-
-		length = 50.0f;
-		
-	}
-	playerManager->GetMyPlayer()->mouselength = length;
-	sprites[static_cast<int>(SpriteNumber::SmallCircle)]->Render(dc,
-		oldMousePos.x - 15, oldMousePos.y - 15, //描画位置
-		30, 30,             //表示サイズ
-		0, 0,                 //切り取りはじめ位置
-		100, 100,           //画像サイズ
-		0.0f,
-		1, 1, 1, 1);
 }
 
 // プレイヤーID描画

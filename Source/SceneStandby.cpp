@@ -331,7 +331,7 @@ void SceneStandby::Render()
 	    }
 
 		//ID表示
-		if (playerManager->GetMyPlayerID() != 0)
+		if (playerManager->GetMyPlayerID() != 0 && !numberinputflag)
 		{
 			RenderID(dc, rc.view, rc.projection);
 		}
@@ -523,8 +523,8 @@ void SceneStandby::RenderID(ID3D11DeviceContext* dc,
 	
 	// 2Dスプライト描画
 	{
-		float positionX = scereenPosition.x - 7;
-		float positionY = scereenPosition.y;
+		float positionX = scereenPosition.x - 30;
+		float positionY = scereenPosition.y-30;
 		int digit = 0;
 		const float gaugeWidth = 25.0f;
 		const float gaugeHeight = 33.0f;
@@ -536,7 +536,7 @@ void SceneStandby::RenderID(ID3D11DeviceContext* dc,
 			// スプライトを描画
 			sprites[static_cast<int>(Spritenumber::Number)]->Render(dc,
 				positionX, positionY,
-				15, 15,
+				60, 60,
 				gaugeWidth * digit, 0,
 				gaugeWidth, gaugeHeight,
 				0.0f,
