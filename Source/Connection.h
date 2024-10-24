@@ -61,10 +61,13 @@ public:
 
 	void SendSeeFriend();
 
+	void SendDummy();
+
 	// ネットワーク処理更新関数
 	void NetrowkUpdate(float elapsedTime);
 
-	void RecvThread();
+	void TcpRecvThread();
+	void UdpRecvThread();
 
 
 	enum class TcpTag : unsigned short
@@ -87,9 +90,9 @@ public:
 	enum class UdpTag : unsigned short
 	{
 		Message,		// チャットメッセージ
-		//Move,			// 移動
+		Move,			// 移動
 		Attack,			// 攻撃
-		
+		Dummy,          //サーバーでアドレス保存用
 	};
 	
 
@@ -101,7 +104,7 @@ public:
 
 	struct PlayerInput
 	{
-		TcpTag cmd;
+		UdpTag cmd;
 		short id;
 		DirectX::XMFLOAT3 velocity;
 		DirectX::XMFLOAT3 position;
@@ -198,6 +201,12 @@ public:
 		short teamnunber;
 	};
 
+	struct Dummy
+	{
+		UdpTag cmd;
+		short id;
+	};
+
 	/*{
 		struct IdSearch
 		{
@@ -244,13 +253,13 @@ private:
 	char input[32];
 	WSADATA wsaData{};
 	SOCKET sock{};
-	std::thread th;
+	std::thread tcpTh;
 	bool loop = true;
 	std::mutex mutex;
 	
 
 	struct sockaddr_in uAddr;
 	SOCKET uSock{};
-	
+	std::thread udpTh;
 };
 

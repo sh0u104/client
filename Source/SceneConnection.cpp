@@ -61,8 +61,6 @@ void SceneConnection::Initialize()
         connection = SceneManager::Instance().GetConnection();
     }
 
-  
-
     //Ú‘±ˆ—
     if (!connection->isConnection)
     {

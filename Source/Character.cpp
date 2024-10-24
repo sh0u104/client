@@ -220,21 +220,25 @@ void Character::UpdateVelocity(float elapsedTime)
         UpdateHorizontalVelocity(elapsedFrame);
     }
 
+    // 垂直移動更新処理
+    UpdateVerticalMove(elapsedTime);
 
-    if (isEnemy)
-    {
-        EnemyVerticalMove(elapsedTime);
-       EnemyHorizontalMove(elapsedTime);
-    }
+    // 水平移動更新処理
+    UpdateHorizontalMove(elapsedTime);
+    //if (isEnemy)
+    //{
+    //    EnemyVerticalMove(elapsedTime);
+    //   EnemyHorizontalMove(elapsedTime);
+    //}
     //recv後の値を使う
-    else
-    {
-        // 垂直移動更新処理
-        UpdateVerticalMove(elapsedTime);
-
-        // 水平移動更新処理
-        UpdateHorizontalMove(elapsedTime);
-    }
+    //else
+    //{
+    //    // 垂直移動更新処理
+    //    UpdateVerticalMove(elapsedTime);
+    //
+    //    // 水平移動更新処理
+    //    UpdateHorizontalMove(elapsedTime);
+    //}
 }
 
 // 無敵時間更新
@@ -260,7 +264,6 @@ void Character::UpdateVerticalMove(float elapsedTime)
    
     // 垂直方向の移動量
     float my = velocity.y * elapsedTime;
-    float mry = RecvVelocity.y * elapsedTime;
     slopeRate = 0.0f;
 
     // キャラクターのY軸方向となる法線ベクトル
@@ -306,22 +309,21 @@ void Character::UpdateVerticalMove(float elapsedTime)
             }
             isGround = true;
             velocity.y = 0.0f;
-            //RecvVelocity.y = 0.0f;
 
         }
         else
         {
             // 空中に浮いている
-            position.y += mry;
+            position.y += my;
             isGround = false;
         }
 
     }
 
     // 上昇中
-    else if (mry > 0.0f)
+    else if (my > 0.0f)
     {
-        position.y += mry;
+        position.y += my;
         isGround = false;
     }
 
@@ -416,12 +418,12 @@ void Character::UpdateHorizontalMove(float elapsedTime)
 {
    
     // 水平速力量計算
-    float velocityLengthXZ = sqrtf(RecvVelocity.x* RecvVelocity.x+ RecvVelocity.z* RecvVelocity.z);
+    float velocityLengthXZ = sqrtf(velocity.x* velocity.x+ velocity.z* velocity.z);
     if (velocityLengthXZ > 0.0f)
     {
         // 水平移動値
-        float mx = RecvVelocity.x * elapsedTime;
-        float mz = RecvVelocity.z * elapsedTime;
+        float mx = velocity.x * elapsedTime;
+        float mz = velocity.z * elapsedTime;
 
         // レイの開始位置と終点位置
         // 段差分高く
@@ -478,12 +480,12 @@ void Character::UpdateHorizontalMove(float elapsedTime)
 void Character::UpdateReflection(float elapsedTime)
 {
     // 水平速力量計算
-    float velocityLengthXZ = sqrtf(RecvVelocity.x * RecvVelocity.x + RecvVelocity.z * RecvVelocity.z);
+    float velocityLengthXZ = sqrtf(velocity.x * velocity.x + velocity.z * velocity.z);
     if (velocityLengthXZ > 0.0f)
     {
         // 水平移動値
-        float mx = RecvVelocity.x * elapsedTime;
-        float mz = RecvVelocity.z * elapsedTime;
+        float mx = velocity.x * elapsedTime;
+        float mz = velocity.z * elapsedTime;
 
         // レイの開始位置と終点位置
         // 段差分高く
@@ -585,7 +587,7 @@ void Character::EnemyVerticalMove(float elapsedTime)
             }
             isGround = true;
             velocity.y = 0.0f;
-            //RecvVelocity.y = 0.0f;
+            //velocity.y = 0.0f;
 
         }
         else

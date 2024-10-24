@@ -42,7 +42,9 @@ void Connection::Initialize()
 		WSACleanup();
 	}
 
-	
+	//u_long mode = 1; // ノンブロッキングモードを有効にするために1を設定
+	//ioctlsocket(sock, FIONBIO, &mode);
+
 	// サーバへ接続
 	int Connect = connect(sock, reinterpret_cast<struct sockaddr*>(&addr), sizeof(addr));
 
@@ -51,7 +53,8 @@ void Connection::Initialize()
 
 		// 受信スレッド実装
 		std::cout << "thread" << std::endl;
-		th = std::thread(&Connection::RecvThread, this);
+		tcpTh = std::thread(&Connection::TcpRecvThread, this);
+		udpTh = std::thread(&Connection::UdpRecvThread, this);
 
 		isConnection = true;
 	}
@@ -100,16 +103,16 @@ bool Connection::UDPInitialize()
 	//// ノンブロッキングの設定
 	u_long mode = 1; // ノンブロッキングモードを有効にするために1を設定
 	ioctlsocket(uSock, FIONBIO, &mode);
-	char buffer[256]{ "" };
-	strcpy_s(buffer, "ACCESS");
-	int addrSize = sizeof(struct sockaddr_in);
-	sendto(uSock, buffer, strlen(buffer) + 1, 0, (struct sockaddr*)&uAddr, addrSize);
-
-	int size = recvfrom(uSock, buffer, sizeof(buffer), 0, reinterpret_cast<sockaddr*>(&uAddr), &addrSize);
-	if (size > 0)
-	{
-		return true;
-	}
+	//char buffer[256]{ "" };
+	//strcpy_s(buffer, "ACCESS");
+	//int addrSize = sizeof(struct sockaddr_in);
+	//sendto(uSock, buffer, strlen(buffer) + 1, 0, (struct sockaddr*)&uAddr, addrSize);
+	//
+	//int size = recvfrom(uSock, buffer, sizeof(buffer), 0, reinterpret_cast<sockaddr*>(&uAddr), &addrSize);
+	//if (size > 0)
+	//{
+	//	return true;
+	//}
 
 	return false;
 }
@@ -139,10 +142,12 @@ void Connection::Finalize()
 	
 
 		// スレッドの終了まで待機
-		th.join();
+		tcpTh.join();
+		udpTh.join();
 
 		// ソケット終了処理
 		int c = closesocket(sock);
+		c= closesocket(uSock);
 	
 		// WSA終了処理
 		int wsaCleanup = WSACleanup();
@@ -154,11 +159,40 @@ void Connection::NetrowkUpdate(float elapsedTime)
 {
 }
 
-void Connection::RecvThread()
+void Connection::UdpRecvThread()
 {
-	
+  do {
+	    //UDP
+	    {
+	    	char Buffer[256]{};
+	    	int addrSize = sizeof(struct sockaddr_in);
+	    
+	    	int size = recvfrom(uSock, Buffer, sizeof(Buffer), 0, reinterpret_cast<sockaddr*>(&uAddr), &addrSize);
+	    	if (size > 0)
+	    	{
+	    		PlayerInput input;
+	    		memcpy_s(&input, sizeof(PlayerInput), Buffer, sizeof(PlayerInput));
+	    		Player* player = playerManager->GetPlayer(input.id);
+	    		player->SetAngle(input.angle);
+	    		if (playerManager->GetMyPlayerID() != input.id)
+	    		{
+	    			player->SetPosition(input.position);
+					player->SetVelovity(input.velocity);
+	    			//アニメーションにいれる
+	    			if (player->GetState() != input.state)
+	    			{
+	    				player->GetStateMachine()->ChangeState(static_cast<int>(input.state));
+	    			}
+	    		}
+	    	}
+	    }
+	} while (loop);
+}
+
+void Connection::TcpRecvThread()
+{
 	do {
-		  //TCP
+		//TCP
 		{
 			char buffer[2048]{};
 
@@ -348,7 +382,6 @@ void Connection::RecvThread()
 					playerManager->SetGameStart(true);
 				}
 				break;
-
 				case TcpTag::Login:
 				{
 					PlayerLogin login;
@@ -363,6 +396,8 @@ void Connection::RecvThread()
 						//ログイン数を加算
 						playerManager->AddLoginCount();
 						std::cout << std::endl;
+
+						SendDummy();
 					}
 					else
 					{
@@ -401,7 +436,6 @@ void Connection::RecvThread()
 					PlayerInput input;
 					memcpy_s(&input, sizeof(PlayerInput), buffer, sizeof(PlayerInput));
 					Player* player = playerManager->GetPlayer(input.id);
-					player->SetRecvVelocity(input.velocity);
 					player->SetAngle(input.angle);
 					if (playerManager->GetMyPlayerID() != input.id)
 					{
@@ -437,8 +471,6 @@ void Connection::RecvThread()
 				}
 			}
 		}
-
-
 	} while (loop);
 }
 
@@ -498,7 +530,7 @@ void Connection::SendMove(DirectX::XMFLOAT3 velocity, DirectX::XMFLOAT3 position
 	Player::State state, DirectX::XMFLOAT3 angle)
 {
 	PlayerInput input;
-	input.cmd = TcpTag::Move;
+	input.cmd = UdpTag::Move;
 	input.id = playerManager->GetMyPlayerID();
 	input.velocity = velocity;
 	input.position = position;
@@ -507,7 +539,8 @@ void Connection::SendMove(DirectX::XMFLOAT3 velocity, DirectX::XMFLOAT3 position
 
 	char buffer[sizeof(PlayerInput)];
 	memcpy_s(buffer, sizeof(buffer), &input, sizeof(PlayerInput));
-	int s = send(sock, buffer, sizeof(buffer), 0);
+	//int s = send(sock, buffer, sizeof(buffer), 0);
+	sendto(uSock, buffer, sizeof(buffer), 0, (struct sockaddr*)&uAddr, sizeof(struct sockaddr_in));
 }
 
 void Connection::SendSync(DirectX::XMFLOAT3 position)
@@ -666,4 +699,15 @@ void Connection::SendSeeFriend()
 	//int s = send(sock, buffer, sizeof(buffer), 0);
 
 
+}
+
+void Connection::SendDummy()
+{
+	Dummy dummy;
+	dummy.cmd = UdpTag::Dummy;
+	dummy.id = playerManager->GetMyPlayerID();
+	char buffer[sizeof(Dummy)];
+	memcpy_s(buffer, sizeof(Dummy), &dummy, sizeof(Dummy));
+
+	sendto(uSock, buffer, sizeof(buffer), 0, (struct sockaddr*)&uAddr, sizeof(struct sockaddr_in));
 }

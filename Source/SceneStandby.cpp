@@ -750,16 +750,17 @@ void SceneStandby::RenderTeamJoin(ID3D11DeviceContext* dc)
 	}
 	if (numbers.size() < 4)
 	{
-		if (Uiclick(posxy[0][0], posxy[0][1], sizeX, sizeY))numbers.push_back(1);
-		if (Uiclick(posxy[1][0], posxy[1][1], sizeX, sizeY))numbers.push_back(2);
-		if (Uiclick(posxy[2][0], posxy[2][1], sizeX, sizeY))numbers.push_back(3);
-		if (Uiclick(posxy[3][0], posxy[3][1], sizeX, sizeY))numbers.push_back(4);
-		if (Uiclick(posxy[4][0], posxy[4][1], sizeX, sizeY))numbers.push_back(5);
-		if (Uiclick(posxy[5][0], posxy[5][1], sizeX, sizeY))numbers.push_back(6);
-		if (Uiclick(posxy[6][0], posxy[6][1], sizeX, sizeY))numbers.push_back(7);
-		if (Uiclick(posxy[7][0], posxy[7][1], sizeX, sizeY))numbers.push_back(8);
-		if (Uiclick(posxy[8][0], posxy[8][1], sizeX, sizeY))numbers.push_back(9);
-		if (Uiclick(posxy[10][0], posxy[10][1], sizeX, sizeY))numbers.push_back(0);
+		for (int i = 0; i < 10; ++i)
+		{
+			//9Ç±ñ⁄Ç™àÍåÖè¡ãéÇ≈10Ç±ÇﬂÇ™0ÇæÇ©ÇÁ
+			if (i == 9)
+			{
+				if (Uiclick(posxy[10][0], posxy[10][1], sizeX, sizeY))numbers.emplace_back(0);
+				break;
+			}
+			if (Uiclick(posxy[i][0], posxy[i][1], sizeX, sizeY))numbers.emplace_back(i+1);
+
+		}
 	}
 	//àÍåÖè¡ãé
 	if (numbers.size() > 0) 
@@ -767,7 +768,7 @@ void SceneStandby::RenderTeamJoin(ID3D11DeviceContext* dc)
 		if (Uiclick(posxy[9][0], posxy[9][1], sizeX, sizeY))numbers.pop_back();
 	}
 	//ëóêM
-	if (numbers.size() ==4)
+	if (numbers.size() == 4)
 	{
 		if (Uiclick(posxy[11][0], posxy[11][1], sizeX, sizeY))
 		{

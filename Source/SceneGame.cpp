@@ -161,7 +161,6 @@ void SceneGame::Update(float elapsedTime)
 		//操作停止時
 		else if (playerManager->GetMyPlayer()->Getoperation())
 		{
-			playerManager->GetMyPlayer()->SetRecvVelocity({ 0.0f,0.0f,0.0f });
 			playerManager->GetMyPlayer()->Setoperation(false);
 		}
 
@@ -169,7 +168,6 @@ void SceneGame::Update(float elapsedTime)
 		{
 			guiPosition = playerManager->GetMyPlayer()->GetPosition();
 			guiVelocity = playerManager->GetMyPlayer()->GetVelocity();
-			guiRecvVelocity = playerManager->GetMyPlayer()->GetRecvVelocity();
 			guiId = playerManager->GetMyPlayer()->GetPlayerID();
 			guiAngle = playerManager->GetMyPlayer()->GetAngle();
 		}
@@ -427,38 +425,43 @@ void SceneGame::MouseOpreration(ID3D11DeviceContext* dc)
 		playerManager->GetMyPlayer()->mouseAngle = mouseAngle;
 		playerManager->GetMyPlayer()->SetAngle({ 0, playerAngle, 0 });
 
-
-
-
-		sprites[static_cast<int>(SpriteNumber::BigCircle)]->Render(dc,
-			clickPos.x - 50, clickPos.y - 50, //描画位置
-			100, 100,             //表示サイズ
-			0, 0,                 //切り取りはじめ位置
-			300, 300,           //画像サイズ
-			0.0f,
-			1, 1, 1, 1);
-
-		//小さい円が大きい円から出ないように補正
-		if (length > 50.0f)
+		//描画
 		{
-			float scaleFactor = 50.0f / length;
-			vec = DirectX::XMVectorScale(vec, scaleFactor);
-			DirectX::XMFLOAT3 correctedOldPos;
-			DirectX::XMStoreFloat3(&correctedOldPos, DirectX::XMVectorSubtract(Pos, vec));
-			oldMousePos.x = correctedOldPos.x;
-			oldMousePos.y = correctedOldPos.y;
 
-			length = 50.0f;
+			sprites[static_cast<int>(SpriteNumber::BigCircle)]->Render(dc,
+				clickPos.x - 50, clickPos.y - 50, //描画位置
+				100, 100,             //表示サイズ
+				0, 0,                 //切り取りはじめ位置
+				300, 300,           //画像サイズ
+				0.0f,
+				1, 1, 1, 1);
 
+			//小さい円が大きい円から出ないように補正
+			if (length > 50.0f)
+			{
+				float scaleFactor = 50.0f / length;
+				vec = DirectX::XMVectorScale(vec, scaleFactor);
+				DirectX::XMFLOAT3 correctedOldPos;
+				DirectX::XMStoreFloat3(&correctedOldPos, DirectX::XMVectorSubtract(Pos, vec));
+				oldMousePos.x = correctedOldPos.x;
+				oldMousePos.y = correctedOldPos.y;
+
+				length = 50.0f;
+
+			}
+
+			//補正後を代入
+			playerManager->GetMyPlayer()->mouselength = length;
+
+
+			sprites[static_cast<int>(SpriteNumber::SmallCircle)]->Render(dc,
+				oldMousePos.x - 15, oldMousePos.y - 15, //描画位置
+				30, 30,             //表示サイズ
+				0, 0,                 //切り取りはじめ位置
+				100, 100,           //画像サイズ
+				0.0f,
+				1, 1, 1, 1);
 		}
-		playerManager->GetMyPlayer()->mouselength = length;
-		sprites[static_cast<int>(SpriteNumber::SmallCircle)]->Render(dc,
-			oldMousePos.x - 15, oldMousePos.y - 15, //描画位置
-			30, 30,             //表示サイズ
-			0, 0,                 //切り取りはじめ位置
-			100, 100,           //画像サイズ
-			0.0f,
-			1, 1, 1, 1);
 	}
 }
 

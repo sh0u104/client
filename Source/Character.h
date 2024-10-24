@@ -51,9 +51,6 @@ public:
     // ç≈ëÂåíçNèÛë‘ÇéÊìæ
     int GetMaxHealth() const { return maxHealth; }
 
-    //í«â¡
-    DirectX::XMFLOAT3 GetRecvVelocity() { return this->RecvVelocity; }
-    void SetRecvVelocity(DirectX::XMFLOAT3 velocity) { this->RecvVelocity = velocity; }
 
     DirectX::XMFLOAT3 GetRecvPosition() { return this->RecvPosition; }
     void SetRecvPosition(DirectX::XMFLOAT3 position) { this->RecvPosition = position; }
@@ -120,7 +117,6 @@ protected:// åpè≥êÊÇ≈Ç‡égÇ¶ÇÈ
     DirectX::XMFLOAT3  velocity = { 0,0,0 };
 
     //í«â¡
-    DirectX::XMFLOAT3 RecvVelocity = { 0,0,0 };
     DirectX::XMFLOAT3 RecvPosition = { 0,0,0 };
    
 

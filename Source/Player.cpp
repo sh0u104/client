@@ -45,7 +45,7 @@ Player::Player()
 
     // 待機ステートへ遷移
     //TransitionIdleState();
-    stateMachine = new StateMachine();
+    stateMachine = std::make_shared<StateMachine>();
     stateMachine->RegisterState(new IdleState(this));
     stateMachine->RegisterState(new MoveState(this));
     stateMachine->RegisterState(new LandState(this));
@@ -61,7 +61,6 @@ Player::~Player()
     delete hitEffect;
     delete desEffect;
     delete model;
-    delete stateMachine;
 }
 
 
@@ -76,38 +75,7 @@ void Player::Update(float elapsedTime)
     if (Getoperation())
     {
         stateMachine->Update(elapsedTime);
-       // switch (state)
-       // {
-       // case State::Idle:
-       //     UpdateIdleState(elapsedTime);
-       //     break;
-       // case State::Move:
-       //     UpdateMoveState(elapsedTime);
-       //     break;
-       // case State::Jump:
-       //     UpdateJumpState(elapsedTime);
-       //     break;
-       // case State::Land:
-       //     UpdateLandState(elapsedTime);
-       //     break;
-       // case State::JumpFlip:
-       //     UpdatejumpFlipState(elapsedTime);
-       //     break;
-       // case State::Attack:
-       //     UpdateAttackState(elapsedTime);
-       //     break;
-       // case State::Damage:
-       //     UpdateDamageState(elapsedTime);
-       //     break;
-       // case State::Death:
-       //     UpdateDeathState(elapsedTime);
-       //     break;
-       // case State::Revive:
-       //     UpdateReviveState(elapsedTime);
-       //     break;
-       // }
     }
-
 
     // 速力処理更新
     UpdateVelocity(elapsedTime);
@@ -118,40 +86,6 @@ void Player::Update(float elapsedTime)
     //hitEffect->SetScale(hitEffect->GetEfeHandle(),{ 0.1f,0.1f,0.1f });
     hitEffect->SetScale(hitEffect->GetEfeHandle(), { 1,1,1 });
 
-    {
-        //// 入力情報を取得 // INPUTからゲームパット貰える
-        //GamePad& gamePad = Input::Instance().GetGamePad();
-        //float ax = gamePad.GetAxisLX();// 左スティック
-        //float ay = gamePad.GetAxisLY();
-
-        //// 移動操作
-        //float moveSpeed = 5.0f * elapsedTime;// 移動速度
-        //{
-        //    // 左スティックの入力情報をもとにXZ平面への移動処理
-        //    position.x += ax * moveSpeed;//5倍する
-        //    position.z += ay * moveSpeed;
-        //}
-
-        //// 回転処理
-        //float rotateSpeed = DirectX::XMConvertToRadians(360) * elapsedTime;// １秒間に360度する
-        //if (gamePad.GetButton() & GamePad::BTN_A)
-        //{
-        //    // X軸回転操作
-        //    angle.x += rotateSpeed;
-        //}
-        //if (gamePad.GetButton() & GamePad::BTN_B)
-        //{
-        //    // Y軸回転操作
-        //    angle.y += rotateSpeed;
-
-        //}
-        //if (gamePad.GetButton() & GamePad::BTN_X)
-        //{
-        //    // Z軸回転操作
-        //    angle.z += rotateSpeed;
-
-        //}
-    }
     // プレイヤーと敵との衝突処理
     CollisionPlayerVsEnemies();
 
@@ -169,9 +103,6 @@ void Player::Update(float elapsedTime)
     // モデル行列更新
     // 何処に出してほしいここに 
     model->UpdateTransform(transform);
-
-
-    //position = position;
 
 }
 

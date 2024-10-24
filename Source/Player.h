@@ -103,7 +103,7 @@ public:
     //    Revive,
     //    None,
     //};
-    StateMachine* GetStateMachine() { return stateMachine; }
+    StateMachine* GetStateMachine() { return stateMachine.get(); }
     Model* GetModel() { return model; }
 public:
     // スティック入力値から移動ベクトルを取得 進行ベクトルを取る進むべき方向
@@ -185,7 +185,8 @@ public:
 
     void SetState(State state) { this->state = state; }
 private:
-    StateMachine* stateMachine = nullptr;
+    std::shared_ptr<StateMachine> stateMachine;
+   // StateMachine* stateMachine = nullptr;
     Model* model = nullptr;
 
     float          moveSpeed = 5.0f;
@@ -226,7 +227,7 @@ public:
     
     bool flagVelosity() { return velocity.x != 0 || velocity.y != 0 || velocity.z != 0; }
     DirectX::XMFLOAT3 GetVelocity() { return this->velocity; }
-   
+    void SetVelovity(DirectX::XMFLOAT3 velocity) { this->velocity = velocity; }
     
     bool Getoperation() { return operation;}
     void Setoperation(bool flag) { operation = flag;}
@@ -252,6 +253,7 @@ public:
     void SetName(char name[10]){ strcpy_s(this->Name, name); }
 
    
+
     float mouseAngle = 0;
     float mouselength = 0;
 protected:
