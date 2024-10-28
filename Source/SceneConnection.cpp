@@ -4,9 +4,12 @@
 #include "Input/Input.h"
 #include "SceneLoading.h"
 #include "SceneStandby.h"
-
 #include <thread>
+#include <fstream>
 
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
 // 初期化
 void SceneConnection::Initialize()
 {
@@ -76,10 +79,7 @@ void SceneConnection::Finalize()
 }
 // 更新処理
 void SceneConnection::Update(float elapsedTime)
-{
-    
-   
-  
+{ 
     //接続成功
     //サインインサインアップで受け取りが終わったらに変更する
     if (connection->isConnection && playerManager->GetMyPlayerID()>0)
@@ -87,9 +87,14 @@ void SceneConnection::Update(float elapsedTime)
         SceneManager::Instance().ChangeScene(new SceneLoading(new SceneStandby));
     }
    
-    if (isNewLogin || isLogin)
+    if (isNewLogin)
     {
-        strcpy_s(name, "Alice");
+        NewLogin();
+        //strcpy_s(name, "isNewLogin");
+    }
+    if ( isLogin)
+    {
+        strcpy_s(name, "isLogin");
      
     }
 }
@@ -126,17 +131,17 @@ void SceneConnection::Render()
    {
        ImGui::Text("name: % s", name);
       // if(ImGui::InputInt("ID",playerManager->get))
-       if (isNewLogin)
-       {
-           ImGui::Text("login");
-           ImGui::InputText("Name", name, sizeof(name));
-           ImGui::InputText("password", pass, sizeof(pass));
-           if (strcmp(name, "") != 0 && strcmp(pass, "") != 0)
-               if (ImGui::Button("Decision"))
-               {
-                   connection->SendSignUp(name, pass);
-               }
-       }
+      //if (isNewLogin)
+      //{
+      //    ImGui::Text("login");
+      //    ImGui::InputText("Name", name, sizeof(name));
+      //    ImGui::InputText("password", pass, sizeof(pass));
+      //    if (strcmp(name, "") != 0 && strcmp(pass, "") != 0)
+      //        if (ImGui::Button("Decision"))
+      //        {
+      //            connection->SendSignUp(name, pass);
+      //        }
+      //}
        if (isLogin)
        {
            ImGui::Text("Newlogin");
@@ -162,6 +167,97 @@ void SceneConnection::Render()
        ImGui::End();
    }
 
+}
+
+void SceneConnection::NewLogin()
+{
+    // Winsockの初期化
+    WSADATA wsaData{};
+    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+        std::cerr << "WSAの初期化に失敗しました。" << std::endl;
+        return ;
+    }
+    // ソケットの作成
+    SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock == INVALID_SOCKET) {
+        std::cerr << "ソケット作成に失敗しました。" << std::endl;
+        WSACleanup();
+        return ;
+    }
+
+    // 接続先のアドレス情報設定（localhost:7189）
+    sockaddr_in server_addr{};
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(7189);
+    server_addr.sin_addr.s_addr = inet_addr("127.0.0.1"); // IPv4アドレスを設定
+
+    // サーバーへ接続
+    if (connect(sock, reinterpret_cast<sockaddr*>(&server_addr), sizeof(server_addr)) != 0) {
+        std::cerr << "サーバーへの接続に失敗しました。" << std::endl;
+        closesocket(sock);
+        WSACleanup();
+        return ;
+    }
+    std::cout << "サーバーに接続しました。" << std::endl;
+
+    // 接続確認のため、少し待機
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    // HTTPリクエストを作成
+    std::string request =
+        "GET /Registry/Registration HTTP/1.1\r\n"
+        "Host: localhost:7189\r\n"
+        "Connection: close\r\n\r\n";
+
+    if (send(sock, request.c_str(), request.length(), 0) == SOCKET_ERROR) {
+        std::cerr << "リクエスト送信に失敗しました。" << std::endl;
+        closesocket(sock);
+        WSACleanup();
+        return ;
+    }
+
+    // 受信データの格納
+    std::vector<char> data;
+    char buffer[1024];
+    int bytesReceived;
+
+    // データを完全に受信するまでループ
+    while ((bytesReceived = recv(sock, buffer, sizeof(buffer), 0)) > 0) {
+        data.insert(data.end(), buffer, buffer + bytesReceived);
+    }
+
+    if (bytesReceived == SOCKET_ERROR) {
+        std::cerr << "データ受信中にエラーが発生しました。" << std::endl;
+        closesocket(sock);
+        WSACleanup();
+        return ;
+    }
+
+    closesocket(sock);
+    WSACleanup();
+
+    // 受信したデータをJSONとして解析
+    try {
+        std::string response(data.begin(), data.end());
+        auto jsonResponse = nlohmann::json::parse(response);
+        std::cout << "解析されたJSONデータ:\n" << jsonResponse.dump(4) << std::endl;
+    }
+    catch (const nlohmann::json::parse_error& e) {
+        std::cerr << "JSON解析エラー: " << e.what() << std::endl;
+    }
+
+    // 受信データをファイルに保存
+    std::ofstream outputFile("response.json", std::ios::binary);
+    if (outputFile.is_open()) {
+        outputFile.write(data.data(), data.size());
+        std::cout << "データがresponse.jsonに書き込まれました。" << std::endl;
+    }
+    else {
+        std::cerr << "ファイルを開くのに失敗しました。" << std::endl;
+    }
+
+
+    isNewLogin = false;
 }
 
 void SceneConnection::RenderNetError(ID3D11DeviceContext* dc)

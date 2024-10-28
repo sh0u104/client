@@ -61,7 +61,7 @@ public:
 
 	void SendSeeFriend();
 
-	void SendDummy();
+	void SendUdpAddr();
 
 	// ネットワーク処理更新関数
 	void NetrowkUpdate(float elapsedTime);
@@ -86,13 +86,13 @@ public:
 		Move,
 		Sync,			// 同期
 		Login,
+		UdpAddr,          //サーバーでUDPのアドレス保存用
 	};
 	enum class UdpTag : unsigned short
 	{
 		Message,		// チャットメッセージ
 		Move,			// 移動
 		Attack,			// 攻撃
-		Dummy,          //サーバーでアドレス保存用
 	};
 	
 
@@ -201,10 +201,11 @@ public:
 		short teamnunber;
 	};
 
-	struct Dummy
+	struct UdpAddr
 	{
-		UdpTag cmd;
+		TcpTag cmd;
 		short id;
+		sockaddr_in udpAddr;
 	};
 
 	/*{

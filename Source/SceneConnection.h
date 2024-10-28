@@ -19,6 +19,8 @@ public:
     // •`‰æˆ—
     void Render() override;
 
+    void NewLogin();
+
     void RenderNetError(ID3D11DeviceContext* dc);
     void RenderLogin(ID3D11DeviceContext* dc);
     void RenderName(ID3D11DeviceContext* dc);

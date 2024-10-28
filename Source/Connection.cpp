@@ -103,16 +103,8 @@ bool Connection::UDPInitialize()
 	//// ノンブロッキングの設定
 	u_long mode = 1; // ノンブロッキングモードを有効にするために1を設定
 	ioctlsocket(uSock, FIONBIO, &mode);
-	//char buffer[256]{ "" };
-	//strcpy_s(buffer, "ACCESS");
-	//int addrSize = sizeof(struct sockaddr_in);
-	//sendto(uSock, buffer, strlen(buffer) + 1, 0, (struct sockaddr*)&uAddr, addrSize);
-	//
-	//int size = recvfrom(uSock, buffer, sizeof(buffer), 0, reinterpret_cast<sockaddr*>(&uAddr), &addrSize);
-	//if (size > 0)
-	//{
-	//	return true;
-	//}
+
+	SendUdpAddr();
 
 	return false;
 }
@@ -397,7 +389,6 @@ void Connection::TcpRecvThread()
 						playerManager->AddLoginCount();
 						std::cout << std::endl;
 
-						SendDummy();
 					}
 					else
 					{
@@ -701,13 +692,15 @@ void Connection::SendSeeFriend()
 
 }
 
-void Connection::SendDummy()
+void Connection::SendUdpAddr()
 {
-	Dummy dummy;
-	dummy.cmd = UdpTag::Dummy;
-	dummy.id = playerManager->GetMyPlayerID();
-	char buffer[sizeof(Dummy)];
-	memcpy_s(buffer, sizeof(Dummy), &dummy, sizeof(Dummy));
+	UdpAddr udpAddr;
+	udpAddr.cmd = TcpTag::UdpAddr;
+	udpAddr.id = playerManager->GetMyPlayerID();
+	udpAddr.udpAddr = uAddr;
 
+	char buffer[sizeof(UdpAddr)];
+	memcpy_s(buffer, sizeof(UdpAddr), &udpAddr, sizeof(UdpAddr));
+	//int s = send(sock, buffer, sizeof(buffer), 0);
 	sendto(uSock, buffer, sizeof(buffer), 0, (struct sockaddr*)&uAddr, sizeof(struct sockaddr_in));
 }
