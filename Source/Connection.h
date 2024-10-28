@@ -87,12 +87,14 @@ public:
 		Sync,			// 同期
 		Login,
 		UdpAddr,          //サーバーでUDPのアドレス保存用
+		
 	};
 	enum class UdpTag : unsigned short
 	{
 		Message,		// チャットメッセージ
 		Move,			// 移動
 		Attack,			// 攻撃
+		UdpAddr,          //サーバーでUDPのアドレス保存用
 	};
 	
 
@@ -203,9 +205,8 @@ public:
 
 	struct UdpAddr
 	{
-		TcpTag cmd;
+		UdpTag cmd;
 		short id;
-		sockaddr_in udpAddr;
 	};
 
 	/*{
@@ -260,6 +261,7 @@ private:
 	
 
 	struct sockaddr_in uAddr;
+	bool isUAddr = true;
 	SOCKET uSock{};
 	std::thread udpTh;
 };

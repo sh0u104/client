@@ -89,7 +89,7 @@ void SceneConnection::Update(float elapsedTime)
    
     if (isNewLogin)
     {
-        NewLogin();
+        //NewLogin();
         //strcpy_s(name, "isNewLogin");
     }
     if ( isLogin)

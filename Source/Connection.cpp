@@ -104,8 +104,11 @@ bool Connection::UDPInitialize()
 	u_long mode = 1; // ノンブロッキングモードを有効にするために1を設定
 	ioctlsocket(uSock, FIONBIO, &mode);
 
-	SendUdpAddr();
-
+	while (isUAddr)
+	{
+		SendUdpAddr();
+		Sleep(10);
+	}
 	return false;
 }
 
@@ -394,6 +397,11 @@ void Connection::TcpRecvThread()
 					{
 						//
 					}
+				}
+				break;
+				case TcpTag::UdpAddr:
+				{
+					isUAddr = false;
 				}
 				break;
 				/*case NetworkTag::Sync:
@@ -695,9 +703,8 @@ void Connection::SendSeeFriend()
 void Connection::SendUdpAddr()
 {
 	UdpAddr udpAddr;
-	udpAddr.cmd = TcpTag::UdpAddr;
+	udpAddr.cmd = UdpTag::UdpAddr;
 	udpAddr.id = playerManager->GetMyPlayerID();
-	udpAddr.udpAddr = uAddr;
 
 	char buffer[sizeof(UdpAddr)];
 	memcpy_s(buffer, sizeof(UdpAddr), &udpAddr, sizeof(UdpAddr));
