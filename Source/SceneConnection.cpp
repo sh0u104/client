@@ -8,10 +8,11 @@
 #include <fstream>
 
 #include <nlohmann/json.hpp>
+using json = nlohmann::json;
+
 //#include <openssl/ssl.h>
 //#include <openssl/err.h>
-
-using json = nlohmann::json;
+//
 //#pragma comment(lib, "libssl.lib")
 //#pragma comment(lib, "libcrypto.lib")
 // 初期化
@@ -175,86 +176,86 @@ void SceneConnection::Render()
 
 void SceneConnection::NewLogin()
 {
-    WSADATA wsaData{};
-    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-        std::cerr << "WSAの初期化に失敗しました。" << std::endl;
-        return ;
-    }
+    //WSADATA wsaData{};
+    //if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+    //    std::cerr << "WSAの初期化に失敗しました。" << std::endl;
+    //    return ;
+    //}
 
-    // ソケットの作成
-    SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock == INVALID_SOCKET) {
-        std::cerr << "ソケット作成に失敗しました。" << std::endl;
-        WSACleanup();
-        return ;
-    }
+    //// ソケットの作成
+    //SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
+    //if (sock == INVALID_SOCKET) {
+    //    std::cerr << "ソケット作成に失敗しました。" << std::endl;
+    //    WSACleanup();
+    //    return ;
+    //}
 
-    // 接続先のアドレス情報設定（localhost:7189）
-    sockaddr_in server_addr{};
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(7189);
-    server_addr.sin_addr.s_addr = inet_addr("127.0.0.1"); // IPv4アドレスを設定
+    //// 接続先のアドレス情報設定（localhost:7189）
+    //sockaddr_in server_addr{};
+    //server_addr.sin_family = AF_INET;
+    //server_addr.sin_port = htons(7189);
+    //server_addr.sin_addr.s_addr = inet_addr("127.0.0.1"); // IPv4アドレスを設定
 
-    // サーバーへ接続
-    if (connect(sock, reinterpret_cast<sockaddr*>(&server_addr), sizeof(server_addr)) != 0) {
-        std::cerr << "サーバーへの接続に失敗しました。" << std::endl;
-        closesocket(sock);
-        WSACleanup();
-        return ;
-    }
-    std::cout << "サーバーに接続しました。" << std::endl;
+    //// サーバーへ接続
+    //if (connect(sock, reinterpret_cast<sockaddr*>(&server_addr), sizeof(server_addr)) != 0) {
+    //    std::cerr << "サーバーへの接続に失敗しました。" << std::endl;
+    //    closesocket(sock);
+    //    WSACleanup();
+    //    return ;
+    //}
+    //std::cout << "サーバーに接続しました。" << std::endl;
 
-    // HTTPリクエストを作成して送信
-    std::string request =
-        "GET /Registry/Registration HTTP/1.1\r\n"
-        "Host: localhost:7189\r\n"
-        "Connection: close\r\n\r\n";
+    //// HTTPリクエストを作成して送信
+    //std::string request =
+    //    "GET /Registry/Registration HTTP/1.1\r\n"
+    //    "Host: localhost:7189\r\n"
+    //    "Connection: close\r\n\r\n";
 
-    if (send(sock, request.c_str(), request.length(), 0) == SOCKET_ERROR) {
-        std::cerr << "リクエスト送信に失敗しました。" << std::endl;
-        closesocket(sock);
-        WSACleanup();
-        return ;
-    }
+    //if (send(sock, request.c_str(), request.length(), 0) == SOCKET_ERROR) {
+    //    std::cerr << "リクエスト送信に失敗しました。" << std::endl;
+    //    closesocket(sock);
+    //    WSACleanup();
+    //    return ;
+    //}
 
-    // データの受信
-    std::vector<char> data;
-    char buffer[1024];
-    int bytesReceived;
-    while ((bytesReceived = recv(sock, buffer, sizeof(buffer), 0)) > 0) {
-        data.insert(data.end(), buffer, buffer + bytesReceived);
-    }
+    //// データの受信
+    //std::vector<char> data;
+    //char buffer[1024];
+    //int bytesReceived;
+    //while ((bytesReceived = recv(sock, buffer, sizeof(buffer), 0)) > 0) {
+    //    data.insert(data.end(), buffer, buffer + bytesReceived);
+    //}
 
-    if (bytesReceived == SOCKET_ERROR) {
-        std::cerr << "データ受信に失敗しました。" << std::endl;
-        closesocket(sock);
-        WSACleanup();
-        return ;
-    }
+    //if (bytesReceived == SOCKET_ERROR) {
+    //    std::cerr << "データ受信に失敗しました。" << std::endl;
+    //    closesocket(sock);
+    //    WSACleanup();
+    //    return ;
+    //}
 
-    // 受信データをJSONとして解析
-    try {
-        std::string response(data.begin(), data.end());
-        auto jsonResponse = nlohmann::json::parse(response);
-        std::cout << "解析されたJSONデータ:\n" << jsonResponse.dump(4) << std::endl;
-    }
-    catch (const nlohmann::json::parse_error& e) {
-        std::cerr << "JSON解析エラー: " << e.what() << std::endl;
-    }
+    //// 受信データをJSONとして解析
+    //try {
+    //    std::string response(data.begin(), data.end());
+    //    auto jsonResponse = nlohmann::json::parse(response);
+    //    std::cout << "解析されたJSONデータ:\n" << jsonResponse.dump(4) << std::endl;
+    //}
+    //catch (const nlohmann::json::parse_error& e) {
+    //    std::cerr << "JSON解析エラー: " << e.what() << std::endl;
+    //}
 
-    // 受信データをファイルに書き込む
-    std::ofstream outputFile("response.json", std::ios::binary);
-    if (outputFile.is_open()) {
-        outputFile.write(data.data(), data.size());
-        std::cout << "response.json に書き込みました。" << std::endl;
-    }
-    else {
-        std::cerr << "ファイルの書き込みに失敗しました。" << std::endl;
-    }
+    //// 受信データをファイルに書き込む
+    //std::ofstream outputFile("response.json", std::ios::binary);
+    //if (outputFile.is_open()) {
+    //    outputFile.write(data.data(), data.size());
+    //    std::cout << "response.json に書き込みました。" << std::endl;
+    //}
+    //else {
+    //    std::cerr << "ファイルの書き込みに失敗しました。" << std::endl;
+    //}
 
-    // ソケットのクリーンアップ
-    closesocket(sock);
-    WSACleanup();
+    //// ソケットのクリーンアップ
+    //closesocket(sock);
+    //WSACleanup();
 
     isNewLogin = false;
 }

@@ -63,6 +63,12 @@ void SceneGame::Initialize()
 
 		sprites[static_cast<int>(SpriteNumber::SmallCircle)] = std::make_unique<Sprite>("Data/Sprite/smallcircle.png");
 
+		sprites[static_cast<int>(SpriteNumber::Mouse)] = std::make_unique<Sprite>("Data/Sprite/mouse.png");
+
+		sprites[static_cast<int>(SpriteNumber::WASD)] = std::make_unique<Sprite>("Data/Sprite/WASD.png");
+
+		sprites[static_cast<int>(SpriteNumber::SelectEdge)] = std::make_unique<Sprite>("Data/Sprite/selectedge.png");
+
 	}
 
 	// プレイヤー初期化
@@ -233,8 +239,15 @@ void SceneGame::Render()
 
 		shader->End(dc);
 	}
-	MouseOpreration(dc);
+	//2D
+	{
+		if (playerManager->GetMyPlayer()->GetisMouseOperation())
+		{
+			MouseOpreration(dc);
+		}
 
+		OprerationSelect(dc);
+	}
 	// 3Dエフェクト描画
 	{
 		EffectManager::Instance().Render(rc.view, rc.projection);
@@ -242,8 +255,6 @@ void SceneGame::Render()
 
 	// 3Dデバッグ描画
 	{
-	
-
 		ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_FirstUseEver);
 		ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
 		// beginからendまでの内容が出来る
@@ -325,7 +336,6 @@ void SceneGame::Render()
 
 void SceneGame::MouseOpreration(ID3D11DeviceContext* dc)
 {
-	
 	HWND hwnd;
 	hwnd = GetActiveWindow();
 	if (hwnd != NULL)
@@ -336,7 +346,6 @@ void SceneGame::MouseOpreration(ID3D11DeviceContext* dc)
 		{
 			oldMousePos.x = static_cast<float>(mouse.GetOldPositionX());
 			oldMousePos.y = static_cast<float>(mouse.GetOldPositionY());
-
 		}
 		else
 		{
@@ -432,6 +441,89 @@ void SceneGame::MouseOpreration(ID3D11DeviceContext* dc)
 				1, 1, 1, 1);
 		}
 	}
+}
+
+void SceneGame::OprerationSelect(ID3D11DeviceContext* dc)
+{
+
+	DirectX::XMFLOAT2 size, mousePos, WASDPos,edgePos;
+
+	size.x = 50;
+	size.y = 75;
+
+	mousePos.x = 25;
+	mousePos.y = 25;
+
+	WASDPos.x = 125;
+	WASDPos.y = 25;
+	
+	//マウスのイラスト描画
+	sprites[static_cast<int>(SpriteNumber::Mouse)]->Render(dc,
+		mousePos.x, mousePos.y,  //描画位置
+		size.x, size.y,  //表示サイズ
+		0, 0,      //切り取りはじめ位置
+		780, 1178, //画像サイズ
+		0.0f,
+		1, 1, 1, 1);
+
+	//WASDボタンの描画
+	sprites[static_cast<int>(SpriteNumber::WASD)]->Render(dc,
+		WASDPos.x, WASDPos.y,  //描画位置
+		size.x, size.y,  //表示サイズ
+		0, 0,    //切り取りはじめ位置
+		255, 194, //画像サイズ
+		0.0f,
+		1, 1, 1, 1);
+
+	if (playerManager->GetMyPlayer()->GetisMouseOperation())
+	{
+		if (Uiclick(WASDPos, size))
+		{
+			playerManager->GetMyPlayer()->SetisMouseOperation(false);
+		}
+		
+		edgePos = mousePos;
+	}
+	else
+	{
+		if (Uiclick(mousePos, size))
+		{
+			playerManager->GetMyPlayer()->SetisMouseOperation(true);
+		}
+		edgePos = WASDPos;
+	}
+	edgePos.x -= size.x / 4;
+	edgePos.y -= size.y / 4;
+
+	//選択している縁描画
+	sprites[static_cast<int>(SpriteNumber::SelectEdge)]->Render(dc,
+		edgePos.x, edgePos.y,  //描画位置
+		size.x*1.5,size.y*1.5,  //表示サイズ
+		0, 0,      //切り取りはじめ位置
+		100,100, //画像サイズ
+		0.0f,
+		1, 1, 1, 1);
+
+}
+
+bool SceneGame::Uiclick(DirectX::XMFLOAT2 pos, DirectX::XMFLOAT2 size)
+{
+	DirectX::XMFLOAT3 scereenPosition;
+
+	Mouse& mouse = Input::Instance().GetMouse();
+	if (mouse.GetButtonDown() & Mouse::BTN_LEFT)
+	{
+		scereenPosition.x = static_cast<float>(mouse.GetPositionX());
+		scereenPosition.y = static_cast<float>(mouse.GetPositionY());
+
+		if (pos.x < scereenPosition.x && scereenPosition.x < pos.x + size.x
+			&& pos.y < scereenPosition.y && scereenPosition.y < pos.y + size.y)
+		{
+			Sleep(10);
+			return true;
+		}
+	}
+	return false;
 }
 
 // プレイヤーID描画

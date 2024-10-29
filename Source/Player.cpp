@@ -145,7 +145,17 @@ bool Player::InputMove(float elapsedTime)
 {
    
     // 進行ベクトル取得
-    DirectX::XMFLOAT3 moveVec = GetMoveVec();
+    DirectX::XMFLOAT3 moveVec;
+    //キーかマウス移動どっちにするか
+    if (isMouseOperation)
+    {
+        moveVec = MouseGetMoveVec();
+    }
+    else
+    {
+        moveVec = KeyGetMoveVec();
+    }
+
     // 移動処理
    /* Move(elapsedTime, moveVec.x, moveVec.z, moveSpeed);*/
     Move(moveVec.x, moveVec.z, moveSpeed);
@@ -166,11 +176,68 @@ bool Player::InputMove(float elapsedTime)
 }
 
 
-DirectX::XMFLOAT3 Player::GetMoveVec() const
+DirectX::XMFLOAT3 Player::KeyGetMoveVec() const
+{
+    // 入力情報を取得
+    GamePad& gamePad = Input::Instance().GetGamePad();
+    float ax = gamePad.GetAxisLX();
+    float ay = gamePad.GetAxisLY();
+
+    // カメラ方向とスティックの入力値によって進行方向を計算する
+    Camera& camera = Camera::Instance();
+    const DirectX::XMFLOAT3& cameraRight = camera.GetRight();
+    const DirectX::XMFLOAT3& cameraFront = camera.GetFront();
+
+    // 移動ベクトルはXZ平面に水平なベクトルになるようにする
+
+    // カメラ右方向ベクトルはＸＺ平面に水平なベクトルに変換
+    float cameraRightX = cameraRight.x;
+    float cameraRightZ = cameraRight.z;
+    // y成分を取らずに　矢印の長さを取得
+    float cameraRightLength = sqrtf(cameraRightX * cameraRightX + cameraRightZ * cameraRightZ);
+    // 何故Y方向を消してるか　右方向が斜めでも真っ直ぐ進んでほしいYを０
+    //　にする少し距離が変わるだから単位ベクトルにする１．０に
+    if (cameraRightLength > 0.0f)
+    {
+        // 単位ベクトル化
+        // 右方向の単位ベクトル 
+        cameraRightX = cameraRightX / cameraRightLength;
+        cameraRightZ = cameraRightZ / cameraRightLength;
+
+    }
+
+    // カメラ前方向ベクトルをXZ単位ベクトルに変換
+    float cameraFrontX = cameraFront.x;
+    float cameraFrontZ = cameraFront.z;
+    float cameraFrontLength = sqrtf(cameraFrontX * cameraFrontX + cameraFrontZ * cameraFrontZ);
+    if (cameraFrontLength > 0.0f)
+    {
+        // 単位ベクトル化
+
+        cameraFrontX = cameraFrontX / cameraFrontLength;
+        cameraFrontZ = cameraFrontZ / cameraFrontLength;
+    }
+
+    // スティックの水平入力値をカメラ右方向に反映し、
+    // スティックの垂直入力値をカメラ前方向に反映し、
+    // 進行ベクトルを計算する
+    DirectX::XMFLOAT3 vec;// 移動方向進むべき方向進行ベクトル
+    // ax,ayスティックの具合　cameraRightX（カメラ）
+    // (cameraRightX* ax) + (cameraFrontX * ay)これは上の進方向を真っ直ぐにする奴
+    // 
+    vec.x = (cameraRightX * ax) + (cameraFrontX * ay);// 右方向
+    vec.z = (cameraRightZ * ax) + (cameraFrontZ * ay);// ますっぐ
+    // Y軸方向には移動しない
+    vec.y = 0.0f;
+    return vec;
+
+}
+
+DirectX::XMFLOAT3 Player::MouseGetMoveVec() const
 {
    
     // 入力情報を取得
-    GamePad& gamePad = Input::Instance().GetGamePad();
+    //GamePad& gamePad = Input::Instance().GetGamePad();
     //float ax = gamePad.GetAxisLX();
     float ax = 0;
     float ay = mouselength / 50;

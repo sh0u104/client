@@ -29,7 +29,10 @@ public:
 	void Render() override;
 
 	void MouseOpreration(ID3D11DeviceContext* dc);
+
+	void OprerationSelect(ID3D11DeviceContext* dc);
 	
+	bool Uiclick(DirectX::XMFLOAT2 pos, DirectX::XMFLOAT2 size);
 private:
 	DirectX::XMFLOAT3 clickPos;
 	DirectX::XMFLOAT3 oldMousePos;
@@ -60,6 +63,9 @@ private:
 		Number,
 		BigCircle,
 		SmallCircle,
+		SelectEdge,
+		Mouse,
+		WASD,
 		Max
 	};
 	std::unique_ptr<Sprite> sprites[static_cast<int>(SpriteNumber::Max)] = {};

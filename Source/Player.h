@@ -107,7 +107,8 @@ public:
     Model* GetModel() { return model; }
 public:
     // スティック入力値から移動ベクトルを取得 進行ベクトルを取る進むべき方向
-    DirectX::XMFLOAT3 GetMoveVec() const;
+    DirectX::XMFLOAT3 KeyGetMoveVec() const;
+    DirectX::XMFLOAT3 MouseGetMoveVec() const;
 
     // 移動入力処理
     bool InputMove(float elapsedTime);
@@ -253,9 +254,13 @@ public:
     void SetName(char name[10]){ strcpy_s(this->Name, name); }
 
    
+    void SetisMouseOperation(bool ismouse) { this->isMouseOperation = ismouse; }
+    bool GetisMouseOperation() { return this->isMouseOperation; }
 
     float mouseAngle = 0;
     float mouselength = 0;
+
+  
 protected:
   
     int teamNumber = 0;
@@ -266,5 +271,5 @@ protected:
     bool startCheck = false;
 
     char Name[10];
-
+    bool isMouseOperation = true;
 };
