@@ -8,8 +8,12 @@
 #include <fstream>
 
 #include <nlohmann/json.hpp>
+//#include <openssl/ssl.h>
+//#include <openssl/err.h>
 
 using json = nlohmann::json;
+//#pragma comment(lib, "libssl.lib")
+//#pragma comment(lib, "libcrypto.lib")
 // 初期化
 void SceneConnection::Initialize()
 {
@@ -171,12 +175,12 @@ void SceneConnection::Render()
 
 void SceneConnection::NewLogin()
 {
-    // Winsockの初期化
     WSADATA wsaData{};
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
         std::cerr << "WSAの初期化に失敗しました。" << std::endl;
         return ;
     }
+
     // ソケットの作成
     SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock == INVALID_SOCKET) {
@@ -200,10 +204,7 @@ void SceneConnection::NewLogin()
     }
     std::cout << "サーバーに接続しました。" << std::endl;
 
-    // 接続確認のため、少し待機
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-    // HTTPリクエストを作成
+    // HTTPリクエストを作成して送信
     std::string request =
         "GET /Registry/Registration HTTP/1.1\r\n"
         "Host: localhost:7189\r\n"
@@ -216,27 +217,22 @@ void SceneConnection::NewLogin()
         return ;
     }
 
-    // 受信データの格納
+    // データの受信
     std::vector<char> data;
     char buffer[1024];
     int bytesReceived;
-
-    // データを完全に受信するまでループ
     while ((bytesReceived = recv(sock, buffer, sizeof(buffer), 0)) > 0) {
         data.insert(data.end(), buffer, buffer + bytesReceived);
     }
 
     if (bytesReceived == SOCKET_ERROR) {
-        std::cerr << "データ受信中にエラーが発生しました。" << std::endl;
+        std::cerr << "データ受信に失敗しました。" << std::endl;
         closesocket(sock);
         WSACleanup();
         return ;
     }
 
-    closesocket(sock);
-    WSACleanup();
-
-    // 受信したデータをJSONとして解析
+    // 受信データをJSONとして解析
     try {
         std::string response(data.begin(), data.end());
         auto jsonResponse = nlohmann::json::parse(response);
@@ -246,16 +242,19 @@ void SceneConnection::NewLogin()
         std::cerr << "JSON解析エラー: " << e.what() << std::endl;
     }
 
-    // 受信データをファイルに保存
+    // 受信データをファイルに書き込む
     std::ofstream outputFile("response.json", std::ios::binary);
     if (outputFile.is_open()) {
         outputFile.write(data.data(), data.size());
-        std::cout << "データがresponse.jsonに書き込まれました。" << std::endl;
+        std::cout << "response.json に書き込みました。" << std::endl;
     }
     else {
-        std::cerr << "ファイルを開くのに失敗しました。" << std::endl;
+        std::cerr << "ファイルの書き込みに失敗しました。" << std::endl;
     }
 
+    // ソケットのクリーンアップ
+    closesocket(sock);
+    WSACleanup();
 
     isNewLogin = false;
 }
