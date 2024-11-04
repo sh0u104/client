@@ -163,16 +163,11 @@ void SceneStandby::Update(float elapsedTime)
 	//デバッグ用
 	if (debugGameStart)
 	{
-		if (playerManager->GetMyPlayerID() > 0&&!teamcreate)
+		if (playerManager->GetMyPlayerID() > 0)
 		{
-			teamcreate = true;
-			connection->SendTeamcreate();
-		}
-		if (playerManager->GetMyPlayer()->Getteamnumber() > 0)
-		{
-			playerManager->SetteamLeader(true);
 			sendgamestart = true;
 		}
+		
 	}
 
 	//チームを作る時
@@ -339,10 +334,12 @@ void SceneStandby::Render()
 		//
 		if (playerManager->GetMyPlayer()->Getteamnumber() > 0)
 		{
+			//チーム番号表示
 			RenderTeamNumber(dc, rc.view, rc.projection);
 
 			if (!playerManager->GetteamLeader())
 			{
+				//準備完了ボタン表示
 				RenderReady(dc, playerManager->GetMyPlayer()->GetstartCheck());
 			}
 			else
@@ -507,43 +504,43 @@ void SceneStandby::RenderID(ID3D11DeviceContext* dc,
 
 
 	// 画像の長さ
-	const float gaugeWidth = 50.0f;
-	const float gaugeHeight = 70.0f;
-	int ID = playerManager->GetMyPlayerID();
+	const float gaugeWidth = 25.0f;
+	const float gaugeHeight = 33.0f;
 
 	// プレイヤーIDの桁数を求める
 	int numDigits = 1;
-	int tempID = 1;
+	int ID = playerManager->GetMyPlayerID();
+	int tempID = ID;
 	while (tempID >= 10)
 	{
 		tempID /= 10;
 		numDigits++;
 	}
 
-	
-	// 2Dスプライト描画
+
+
 	{
-		float positionX = scereenPosition.x - 30;
-		float positionY = scereenPosition.y-30;
+		float numberposX = scereenPosition.x - 10;
+		float numberposY = scereenPosition.y - 10;
 		int digit = 0;
-		const float gaugeWidth = 25.0f;
-		const float gaugeHeight = 33.0f;
+
 		// 各桁を描画するループ
 		for (int i = numDigits - 1; i >= 0; --i)
 		{
 			// 各桁の数値を取得
 			digit = (ID / static_cast<int>(pow(10, i))) % 10;
+
 			// スプライトを描画
 			sprites[static_cast<int>(Spritenumber::Number)]->Render(dc,
-				positionX, positionY,
-				60, 60,
-				gaugeWidth * digit, 0,
+				numberposX, numberposY,
+				30, 30,
+				gaugeWidth * digit + digit, 0,
 				gaugeWidth, gaugeHeight,
 				0.0f,
 				1, 1, 1, 1);
 
 			// 次の桁の位置に移動
-			positionX += 15;
+			numberposX += 20;
 		}
 	}
 }

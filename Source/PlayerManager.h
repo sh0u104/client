@@ -22,6 +22,7 @@ public:
 	std::vector<Player*> GetPlayers() { return players; }
 	Player* GetPlayer(int id);
 	Player* GetMyPlayer();
+
 	void SetMyPlayerID(int id) { myPlayerId = id; }
 	short GetMyPlayerID() { return myPlayerId; }
 	void ErasePlayer(int id);
@@ -83,7 +84,7 @@ public:
 private:
 
 	std::vector<Player*> players;
-	short myPlayerId = -1;
+	int myPlayerId = -1;
 	std::vector<Player*> deleteList;
 
 

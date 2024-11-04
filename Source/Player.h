@@ -260,7 +260,6 @@ public:
     float mouseAngle = 0;
     float mouselength = 0;
 
-  
 protected:
   
     int teamNumber = 0;

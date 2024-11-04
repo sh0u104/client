@@ -27,9 +27,9 @@ public:
 
 	
 	
-	void SendSignIn(char name[10], char password[10]);
+	void SendSignIn(int Id);
 
-	void SendSignUp(char name[10], char password[10]);
+	void SendSignUp(int Id);
 
 	void SendGeustLogin();
 
@@ -107,7 +107,7 @@ public:
 	struct PlayerInput
 	{
 		UdpTag cmd;
-		short id;
+		int id;
 		DirectX::XMFLOAT3 velocity;
 		DirectX::XMFLOAT3 position;
 		Player::State state;
@@ -117,7 +117,7 @@ public:
 	struct PlayerLogin
 	{
 		TcpTag cmd;
-		short id;
+		int id;
 	};
 	
 	struct GeustLogin
@@ -128,27 +128,29 @@ public:
 	struct SignIn
 	{
 		TcpTag cmd;
-		char name[10];
-		char pass[10];
-		bool result;
+		int Id;
+		//char name[10];
+		//char pass[10];
+		//bool result;
 	};
 
 	struct SignUp
 	{
 		TcpTag cmd;
-		char name[10];
-		char pass[10];
+		int Id;
+		//char name[10];
+		//char pass[10];
 	};
 
 	struct PlayerLogout
 	{
 		TcpTag cmd;
-		short id;
+		int id;
 	};
 	struct PlayerSync
 	{
 		TcpTag cmd;
-		short id;
+		int id;
 		DirectX::XMFLOAT3 position;
 		DirectX::XMFLOAT3 velocity;
 		DirectX::XMFLOAT3 angle;
@@ -157,7 +159,7 @@ public:
 	struct TeamCreate
 	{
 		TcpTag cmd;
-		short id;
+		int id;
 		int number;
 		bool Permission;
 	};
@@ -165,27 +167,27 @@ public:
 	struct Teamjoin
 	{
 		TcpTag cmd;
-		short id;
+		int id;
 		int number;
 	};
 
 	struct TeamLeave
 	{
 		TcpTag cmd;
-		short id;
+		int id;
 		bool isLeader;
 	};
 
 	struct Teamsync
 	{
 		TcpTag cmd;
-		short id[4];
+		int id[4];
 	};
 
 	struct StartCheck
 	{
 		TcpTag cmd;
-		short id;
+		int id;
 		short teamnunber;
 		bool check;
 	};
@@ -193,7 +195,7 @@ public:
 	struct GameStart
 	{
 		TcpTag cmd;
-		short id;
+		int id;
 		short teamnunber;
 	};
 
@@ -206,7 +208,7 @@ public:
 	struct UdpAddr
 	{
 		UdpTag cmd;
-		short id;
+		int id;
 	};
 
 	/*{

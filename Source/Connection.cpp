@@ -3,6 +3,7 @@
 #include "PlayerManager.h"
 #include "SceneManager.h"
 #include "StateMachine.h"
+
 #pragma comment(lib, "ws2_32.lib")
 Connection::Connection()
 {
@@ -215,17 +216,6 @@ void Connection::TcpRecvThread()
 					SignIn signIn;
 					memcpy_s(&signIn, sizeof(SignIn), buffer, sizeof(SignIn));
 
-					//サーバーに送信したアカウントの情報があれば
-					if (signIn.result)
-					{
-						playerManager->GetMyPlayer()->SetName(signIn.name);
-						playerManager->SetSignIn(true);
-					}
-					//なかったら
-					else
-					{
-
-					}
 				}
 				break;
 				case TcpTag::SignUp:
@@ -233,7 +223,7 @@ void Connection::TcpRecvThread()
 					SignUp signUp;
 					memcpy_s(&signUp, sizeof(SignUp), buffer, sizeof(SignUp));
 
-					playerManager->GetMyPlayer()->SetName(signUp.name);
+					//playerManager->GetMyPlayer()->SetName(signUp.name);
 					playerManager->SetSignUp(true);
 				}
 				break;
@@ -244,7 +234,11 @@ void Connection::TcpRecvThread()
 					std::cout << " 退出id " << logout.id << std::endl;
 
 					if (playerManager->GetMyPlayerID() != logout.id)
+					{
 						playerManager->ErasePlayer(logout.id);
+						playerManager->DeletePlayer();
+					}
+
 				}
 				break;
 				case TcpTag::TeamCreate:
@@ -491,24 +485,22 @@ void Connection::DeleteID()
 }
 
 
-void Connection::SendSignIn(char name[10], char password[10])
+void Connection::SendSignIn(int Id)
 {
 	SignIn signin;
 	signin.cmd = TcpTag::SignIn;
-	strcpy_s(signin.name, name);
-	strcpy_s(signin.pass, password);
+	signin.Id = Id;
 
 	char buffer[sizeof(SignIn)];
 	memcpy_s(buffer, sizeof(buffer), &signin, sizeof(SignIn));
 	int s = send(sock, buffer, sizeof(buffer), 0);
 }
 
-void Connection::SendSignUp(char name[10], char password[10])
+void Connection::SendSignUp(int Id)
 {
 	SignUp signup;
 	signup.cmd = TcpTag::SignUp;
-	strcpy_s(signup.name, name);
-	strcpy_s(signup.pass, password);
+	signup.Id = Id;
 
 	char buffer[sizeof(SignUp)];
 	memcpy_s(buffer, sizeof(buffer), &signup, sizeof(SignUp));

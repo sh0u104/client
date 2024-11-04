@@ -13,6 +13,7 @@
 
 //static SceneGame sceneGame;
 
+//SceneConnection* sceneConnection;
 // ‚’¼“¯ŠúŠÔŠuİ’è
 static const int syncInterval = 1;
 

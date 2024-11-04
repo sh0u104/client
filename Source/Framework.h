@@ -1,11 +1,12 @@
 #pragma once
 
+
 #include <windows.h>
 #include "HighResolutionTimer.h"
 #include "Audio/Audio.h"
 #include "Graphics/Graphics.h"
 #include "Input/input.h"
-
+#include "SceneConnection.h"
 class Framework
 {
 public:

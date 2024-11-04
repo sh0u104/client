@@ -28,19 +28,12 @@ void SceneTitle::Update(float elapsedTime)
 {
     GamePad& gamePad = Input::Instance().GetGamePad();
 
-    // 何かボタンを押したらローディングをはさんでゲームシーンへ切り替え
-    const GamePadButton anyButton =
-        GamePad::BTN_A|
-    GamePad::BTN_B|
-    GamePad::BTN_X|
-    GamePad::BTN_Y;
-
-   if (gamePad.GetButton() & anyButton)// ロードの次ゲームという書き方
-       //SceneStandby
-       //SceneGame
-       //SceneManager::Instance().ChangeScene(new SceneLoading(new SceneGame));
-       SceneManager::Instance().ChangeScene(new SceneLoading(new SceneConnection));
-        
+    //マウスの左クリック
+    Mouse& mouse = Input::Instance().GetMouse();
+    if (mouse.GetButtonDown() & Mouse::BTN_LEFT)
+    {
+        SceneManager::Instance().ChangeScene(new SceneLoading(new SceneConnection));
+    }
 
 }
 // 描画処理

@@ -19,14 +19,17 @@ public:
     // ï`âÊèàóù
     void Render() override;
 
-    void NewLogin();
+    void Signin();
+    void Signup();
+    int GetDataJson();
+    void NameJson();
 
+    bool UiClick(float posX, float posY, float sizeX, float sizeY);
     void RenderNetError(ID3D11DeviceContext* dc);
     void RenderLogin(ID3D11DeviceContext* dc);
     void RenderName(ID3D11DeviceContext* dc);
 
-    bool UiClick(float posX, float posY, float sizeX, float sizeY);
-
+   
 private:
     PlayerManager* playerManager = nullptr;
     Connection* connection = nullptr;
@@ -44,10 +47,13 @@ private:
     std::unique_ptr<Sprite> sprites[(int)SpriteNumber::Max] = {};
 
     bool isGuest = false;
-    bool isLogin = false;
-    bool isNewLogin = false;
+    bool isSignin = false;
+    bool isSignup = false;
     char name[10];
     char pass[10];
-   
+
+    int maxID = 0;
+    int ID = 0;
+    char Name[10];
 };
 

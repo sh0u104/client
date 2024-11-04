@@ -78,11 +78,14 @@ void SceneGame::Initialize()
 	//playerManager = new PlayerManager();
 	playerManager = SceneManager::Instance().GetPlayerManager();
 
-	for(int i=0;i<playerManager->GetPlayers().size();++i)
+	if (playerManager->GetMyPlayer()->Getteamnumber() > 0)
 	{
-		int MYID = playerManager->GetMyPlayer()->Getteamsid(i);
-		playerManager->GetPlayer(MYID)->SetAngle({ 0.0f,0.0f,0.0f });
-		playerManager->GetPlayer(MYID)->SetPosition({ 1.0f * i,0.0f,0.0f });
+		for (int i = 0; i < playerManager->GetPlayers().size(); ++i)
+		{
+			int MYID = playerManager->GetMyPlayer()->Getteamsid(i);
+			playerManager->GetPlayer(MYID)->SetAngle({ 0.0f,0.0f,0.0f });
+			playerManager->GetPlayer(MYID)->SetPosition({ 1.0f * i,0.0f,0.0f });
+		}
 	}
 
 	//通信初期化
@@ -196,7 +199,8 @@ void SceneGame::Update(float elapsedTime)
 	EffectManager::Instance().Update(elapsedTime);
 
 	
-	
+	//消去リストのIDのプレイヤーを消す
+	connection->DeleteID();
 }
 
 

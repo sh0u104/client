@@ -54,26 +54,26 @@ void SceneManager::Clear()
 
 void SceneManager::ConnectionClear()
 {
+   
     //接続終了化
-    if (this->connection)
-    {
-        connection->Finalize();
-        delete connection;
-        connection = nullptr;
-    }
+    connection->Finalize();
     // プレイヤー終了化
-    if (playerManager)
+    for (Player* player : playerManager->GetPlayers())
     {
-        for (Player* player : playerManager->GetPlayers())
-        {
-               playerManager->ErasePlayer(player->GetPlayerID());
-        }
-        playerManager->DeletePlayer();
-        delete playerManager;
-        playerManager = nullptr;
+        playerManager->ErasePlayer(player->GetPlayerID());
     }
+    playerManager->DeletePlayer();
 
-    
+
+
+    delete playerManager;
+    playerManager = nullptr;
+
+    delete connection;
+    connection = nullptr;
+
+
+
 }
 // シーン切り替え
 void SceneManager::ChangeScene(Scene* scene)

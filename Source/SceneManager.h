@@ -2,6 +2,7 @@
 
 #include "Scene.h"
 #include "Connection.h"
+
 // シーンマネージャー
 class SceneManager
 {
@@ -46,6 +47,8 @@ public:
 
     void SetconnectionInitialized(bool flag) { this->connectionInitialized = flag; }
     bool GetconnectionInitialized() { return connectionInitialized; }
+
+
 private:
     Scene* currentScene = nullptr;
     Scene* nextScene = nullptr;
@@ -54,4 +57,5 @@ private:
     PlayerManager* playerManager = nullptr;
     bool standbyInitialized = false;
     bool connectionInitialized = false;
+
 };
