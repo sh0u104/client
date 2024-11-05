@@ -34,8 +34,8 @@ public:
 	
 	bool Uiclick(DirectX::XMFLOAT2 pos, DirectX::XMFLOAT2 size);
 private:
-	DirectX::XMFLOAT3 clickPos;
-	DirectX::XMFLOAT3 oldMousePos;
+	DirectX::XMFLOAT3 clickPos = {};
+	DirectX::XMFLOAT3 oldMousePos = {};
 	float mouseAngle = 0.0f;
 	float playerAngle = 0.0f;
 	float length = 0.0f;
@@ -52,7 +52,9 @@ private:
 	);
 	void RenderTimer(ID3D11DeviceContext* dc,int timer);
 
-
+	void RenderName(ID3D11DeviceContext* dc,
+		const DirectX::XMFLOAT4X4& view,
+		const DirectX::XMFLOAT4X4& projection);
 
 private:
 	Player* player = nullptr;
@@ -66,6 +68,8 @@ private:
 		SelectEdge,
 		Mouse,
 		WASD,
+		Setting,
+		Name,
 		Max
 	};
 	std::unique_ptr<Sprite> sprites[static_cast<int>(SpriteNumber::Max)] = {};
@@ -76,14 +80,14 @@ private:
 	Connection* connection = nullptr;
 	PlayerManager* playerManager = nullptr;
 
-	DirectX::XMFLOAT3 guiPosition;
-	DirectX::XMFLOAT3 guiVelocity;
-	DirectX::XMFLOAT3 guiRecvVelocity;
-	DirectX::XMFLOAT3 guiAngle;
+	DirectX::XMFLOAT3 guiPosition = {};
+	DirectX::XMFLOAT3 guiVelocity = {};
+	DirectX::XMFLOAT3 guiRecvVelocity = {};
+	DirectX::XMFLOAT3 guiAngle = {};
 
 
 	bool  sendFlag = true;
-	int guiId;
+	int guiId = 0;
 
 	enum class State
 	{
@@ -98,7 +102,9 @@ private:
 		Revive
 	};
 
-	int guiTeamsId[4];
+	int guiTeamsId[4] = {};
 
 	float timer = 10.0;
+
+	bool isSetting = false;
 };

@@ -209,7 +209,7 @@ private:
 
 
     // ’…’nêŠ‚Ü‚Å‚Ì‹——£@ \•ª‚È‘¬“x‚Å—Ž‚Æ‚·d—Í‚Ì‚T”{‚QA‚R•bŒã‚É’…’nƒ‚[ƒVƒ‡ƒ“‚ð‚·‚éB
-    int jumpfliptime =  grabity * 5;
+   // int jumpfliptime =  grabity * 5;
 
     float  leftHandRadius = 0.4f;
            
@@ -257,6 +257,9 @@ public:
     void SetisMouseOperation(bool ismouse) { this->isMouseOperation = ismouse; }
     bool GetisMouseOperation() { return this->isMouseOperation; }
 
+    void SetLoginDay(int day) { this->loginDay = day; }
+    int GetLoginDay() { return this->loginDay; }
+
     float mouseAngle = 0;
     float mouselength = 0;
 
@@ -271,4 +274,5 @@ protected:
 
     char Name[10];
     bool isMouseOperation = true;
+    int loginDay = 0;
 };

@@ -78,6 +78,8 @@ void SceneStandby::Initialize()
 		sprites[static_cast<int>(Spritenumber::Multi)] = std::make_unique<Sprite>("Data/Sprite/multi.png");
 		//スタート
 		sprites[static_cast<int>(Spritenumber::Start)] = std::make_unique<Sprite>("Data/Sprite/start.png");
+		//名前
+		sprites[static_cast<int>(Spritenumber::Name)] = std::make_unique<Sprite>("Data/Sprite/font1.png");
 	}
 
 	SceneManager& sceneManager = SceneManager::Instance();
@@ -222,7 +224,7 @@ void SceneStandby::Update(float elapsedTime)
 				//生成
 				Player* player = new Player();
 				player->SetPlayerID(ID);						//貰ったID情報をストック
-				player->SetPosition(DirectX::XMFLOAT3(1.5 * generateCount, 0, 0));			//発生位置
+				player->SetPosition(DirectX::XMFLOAT3(1.5f * generateCount, 0, 0));			//発生位置
 				player->SetAngle({ 0.0f,3.0f,0.0f });
 				player->Setoperation(false);
 
@@ -243,7 +245,7 @@ void SceneStandby::Update(float elapsedTime)
 		int ID = playerManager->GetMyPlayer()->Getteamsid(generateCount);
 		Player* player = new Player();
 		player->SetPlayerID(ID);						//貰ったID情報をストック
-		player->SetPosition(DirectX::XMFLOAT3(1.5 * generateCount, 0, 0));			//発生位置
+		player->SetPosition(DirectX::XMFLOAT3(1.5f * generateCount, 0, 0));			//発生位置
 		player->SetAngle({ 0.0f,3.0f,0.0f });
 		player->Setoperation(false);
 
@@ -326,9 +328,14 @@ void SceneStandby::Render()
 	    }
 
 		//ID表示
-		if (playerManager->GetMyPlayerID() != 0 && !numberinputflag)
+		if (playerManager->GetMyPlayerID() != 0 && !numberinputflag && playerManager->GetMyPlayer()->GetName()[0] == '\0')
 		{
 			RenderID(dc, rc.view, rc.projection);
+		}
+
+		if (playerManager->GetMyPlayer()->GetName() != '\0'&& !numberinputflag)
+		{
+			RenderName(dc, rc.view, rc.projection);
 		}
 		
 		//
@@ -367,12 +374,14 @@ void SceneStandby::Render()
 	// 2Dデバッグ描画
 	{
 		
-		ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_FirstUseEver);
+		ImGui::SetNextWindowPos(ImVec2(310, 10), ImGuiCond_FirstUseEver);
 		ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
 		// beginからendまでの内容が出来る
 		if (ImGui::Begin("Player", nullptr, ImGuiWindowFlags_None))
 		{
-		
+			ImGui::Text("LoginDay: %d", playerManager->GetMyPlayer()->GetLoginDay());
+			ImGui::Text("ID: %d", playerManager->GetMyPlayer()->GetPlayerID());
+
 		    ImGui::Text("State: %d", static_cast<int>(playerManager->GetMyPlayer()->GetState()));
 			if (ImGui::Button("debugGameStart"))
 			{
@@ -618,6 +627,79 @@ void SceneStandby::RenderTeamNumber(ID3D11DeviceContext* dc, const DirectX::XMFL
 
 }
 
+void SceneStandby::RenderName(ID3D11DeviceContext* dc, const DirectX::XMFLOAT4X4& view, const DirectX::XMFLOAT4X4& projection)
+{
+	// ビューポート 画面のサイズ等
+	// ビューポートとは2Dの画面に描画範囲の指定(クリッピング指定も出来る)位置を指定
+	D3D11_VIEWPORT viewport;
+	UINT numViewports = 1;
+	// ラスタライザーステートにバインドされているビューポート配列を取得
+	dc->RSGetViewports(&numViewports, &viewport);
+
+	// 変換行列
+	DirectX::XMMATRIX View = DirectX::XMLoadFloat4x4(&view);
+	DirectX::XMMATRIX Projection = DirectX::XMLoadFloat4x4(&projection);
+	// ローカルからワールドに行くときにいる奴相手のポジションを渡す。
+	DirectX::XMMATRIX World = DirectX::XMMatrixIdentity();
+	DirectX::XMVECTOR world = {};
+	DirectX::XMVector3Transform(world, World);
+
+	//プレイヤーの頭上
+	DirectX::XMFLOAT3 worldPosition = playerManager->GetMyPlayer()->GetPosition();
+	worldPosition.y += playerManager->GetMyPlayer()->GetHeight();
+
+	// ワールドからスクリーン
+	DirectX::XMVECTOR WorldPosition = DirectX::XMLoadFloat3(&worldPosition);
+
+
+	// ゲージ描画 // ワールドからスクリーン
+	DirectX::XMVECTOR ScreenPosition = DirectX::XMVector3Project(
+		WorldPosition,
+		viewport.TopLeftX,
+		viewport.TopLeftY,
+		viewport.Width,
+		viewport.Height,
+		viewport.MinDepth,
+		viewport.MaxDepth,
+		Projection,
+		View,
+		World
+
+	);
+	// スクリーン座標
+	DirectX::XMFLOAT3 scereenPosition;
+	DirectX::XMStoreFloat3(&scereenPosition, ScreenPosition);
+
+
+
+
+	float positionX = scereenPosition.x-30;
+	float positionY = scereenPosition.y;
+
+	float sizeX = 32;
+	float sizeY = 32;
+
+	char name[10];
+	strcpy_s(name, playerManager->GetMyPlayer()->GetName());
+	//枠組み
+	for (int i = 0; i < 9; ++i)
+	{
+		if (name[i] == '\0')break;
+		int number = static_cast<int>(name[i]);
+		int width = number % 16;
+		int height = number / 16;
+		sprites[static_cast<int>(Spritenumber::Name)]->Render(dc,
+			positionX, positionY,      //描画位置
+			24,24,              //表示サイズ
+			sizeX * width, sizeY * height, //切り取りはじめ位置
+			sizeX, sizeY,              //画像サイズ
+			0.0f,
+			1, 1, 1, 1);
+
+		positionX += sizeX / 2;
+	}
+}
+
 void SceneStandby::RenderTeam(ID3D11DeviceContext* dc)
 {
 	float positionX = 10;
@@ -722,24 +804,24 @@ void SceneStandby::RenderTeamJoin(ID3D11DeviceContext* dc)
 	//ボタンを個数分
 	
 	int count = 0;
-	int sizeX = 90;
-	int sizeY = 30;
+	float sizeX = 90;
+	float sizeY = 30;
 	
-	for (int i = 0; i < 4; ++i)
+	for (float i = 0; i < 4; ++i)
 	{
-		for (int j = 0; j < 3; ++j)
+		for (float j = 0; j < 3; ++j)
 		{
 			++count;
 			sprites[static_cast<int>(Spritenumber::TeamjoinNumber)]->Render(dc,
-				positionX + 130 + (j * 100), positionY + 140+(i*40), //描画位置
+				positionX + 130.0f + (j * 100.0f), positionY + 140.0f+(i*40.0f), //描画位置
 				sizeX, sizeY,                      //表示サイズ
-				0 + (j * 300), 0+(i*100),    //切り取りはじめ位置
+				(j * 300.0f), (i*100.0f),    //切り取りはじめ位置
 				300, 100,                    //画像サイズ
 				0.0f,
 				1, 1, 1, 1);
 
-			int posx = positionX + 130 + (j * 100);
-			int posy = positionY + 140 + (i * 40);
+			float posx = positionX + 130.0f + (j * 100.0f);
+			float posy = positionY + 140.0f + (i * 40.0f);
 			posxy[count-1][0] = posx;
 			posxy[count-1][1] = posy;
 			
@@ -770,9 +852,9 @@ void SceneStandby::RenderTeamJoin(ID3D11DeviceContext* dc)
 		if (Uiclick(posxy[11][0], posxy[11][1], sizeX, sizeY))
 		{
 			int result = 0;
-			int size = numbers.size();
+			int size = static_cast<int>(numbers.size());
 			for (int i = 0; i < size; ++i) {
-				result += numbers[i] * std::pow(10, size - i - 1);
+				result += numbers[i] * static_cast<int>(std::pow(10, size - i - 1));
 			}
 			TeamNumber = result;
 			
@@ -817,7 +899,7 @@ void SceneStandby::RenderTeamJoin(ID3D11DeviceContext* dc)
 		0.0f,
 		1, 1, 1, 1);
 
-	if (Uiclick(positionX + 565, positionY - 5, 40, 40))
+	if (Uiclick(positionX + 565.0f, positionY - 5.0f, 40.0f, 40.0f))
 	{
 		numberinputflag = false;
 		numbers.erase(numbers.begin(), numbers.end());
@@ -840,7 +922,7 @@ void SceneStandby::RenderReady(ID3D11DeviceContext* dc, bool isready)
 			0.0f,
 			1, 1, 1, 1);
 
-		if (Uiclick(positionX, positionY, 150, 50))
+		if (Uiclick(positionX, positionY, 150.0f, 50.0f))
 		{
 			playerManager->GetMyPlayer()->SetstartCheck(true);
 			connection->SendStartCheck(true);
@@ -856,7 +938,7 @@ void SceneStandby::RenderReady(ID3D11DeviceContext* dc, bool isready)
 			0.0f,
 			1, 1, 1, 1);
 
-		if (Uiclick(positionX, positionY, 150, 50))
+		if (Uiclick(positionX, positionY, 150.0f, 50.0f))
 		{
 			playerManager->GetMyPlayer()->SetstartCheck(false);
 			connection->SendStartCheck(false);
@@ -905,7 +987,7 @@ void SceneStandby::RenderGameStart(ID3D11DeviceContext* dc)
 		500, 184,           //画像サイズ
 		0.0f,
 		1, 1, 1, 1);
-	if (Uiclick(positionX, positionY, 150, 50))
+	if (Uiclick(positionX, positionY, 150.0f, 50.0f))
 	{
 		debugGameStart = true;
 	}

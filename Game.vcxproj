@@ -107,7 +107,6 @@
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="ApiLogin.h" />
     <ClInclude Include="External\DirectXTex\WICTextureLoader.h" />
     <ClInclude Include="External\imgui\imconfig.h" />
     <ClInclude Include="External\imgui\imgui.h" />
@@ -169,7 +168,6 @@
     <ClInclude Include="Source\StateMachine.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ApiLogin.cpp" />
     <ClCompile Include="External\DirectXTex\WICTextureLoader.cpp" />
     <ClCompile Include="External\imgui\imgui.cpp" />
     <ClCompile Include="External\imgui\imgui_demo.cpp" />

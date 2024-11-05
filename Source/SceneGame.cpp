@@ -20,6 +20,7 @@
 #include "SceneTitle.h"
 
 #include "SceneStandby.h"
+#include "Logger.h"
 // 初期化
 void SceneGame::Initialize()
 {
@@ -69,6 +70,11 @@ void SceneGame::Initialize()
 
 		sprites[static_cast<int>(SpriteNumber::SelectEdge)] = std::make_unique<Sprite>("Data/Sprite/selectedge.png");
 
+		sprites[static_cast<int>(SpriteNumber::Setting)] = std::make_unique<Sprite>("Data/Sprite/setting.png");
+
+		//名前
+		sprites[static_cast<int>(SpriteNumber::Name)] = std::make_unique<Sprite>("Data/Sprite/font1.png");
+		Logger::Print("finalize send failed. error code\n");
 	}
 
 	// プレイヤー初期化
@@ -250,7 +256,10 @@ void SceneGame::Render()
 			MouseOpreration(dc);
 		}
 
+
+		//設定画面
 		OprerationSelect(dc);
+		
 	}
 	// 3Dエフェクト描画
 	{
@@ -259,7 +268,7 @@ void SceneGame::Render()
 
 	// 3Dデバッグ描画
 	{
-		ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_FirstUseEver);
+		ImGui::SetNextWindowPos(ImVec2(500, 10), ImGuiCond_FirstUseEver);
 		ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
 		// beginからendまでの内容が出来る
 		if (ImGui::Begin("Player", nullptr, ImGuiWindowFlags_None))
@@ -297,8 +306,15 @@ void SceneGame::Render()
 		{
 			if (playerManager->GetPlayers().size() > 0)
 			{
-				RenderNumber(dc, rc.view, rc.projection);
 				RenderTimer(dc, int(timer));
+				if (playerManager->GetMyPlayer()->GetName()[0] == '\0')
+				{
+					RenderNumber(dc, rc.view, rc.projection);
+				}
+				else
+				{
+					RenderName(dc, rc.view, rc.projection);
+				}
 			}
 		}
 
@@ -449,65 +465,79 @@ void SceneGame::MouseOpreration(ID3D11DeviceContext* dc)
 
 void SceneGame::OprerationSelect(ID3D11DeviceContext* dc)
 {
-
-	DirectX::XMFLOAT2 size, mousePos, WASDPos,edgePos;
-
-	size.x = 50;
-	size.y = 75;
-
-	mousePos.x = 25;
-	mousePos.y = 25;
-
-	WASDPos.x = 125;
-	WASDPos.y = 25;
 	
-	//マウスのイラスト描画
-	sprites[static_cast<int>(SpriteNumber::Mouse)]->Render(dc,
-		mousePos.x, mousePos.y,  //描画位置
+	DirectX::XMFLOAT2 size,pos;
+	pos = { 10,10 };
+	size = { 30,30 };
+	sprites[static_cast<int>(SpriteNumber::Setting)]->Render(dc,
+		pos.x, pos.y,  //描画位置
 		size.x, size.y,  //表示サイズ
 		0, 0,      //切り取りはじめ位置
-		780, 1178, //画像サイズ
+		256,256, //画像サイズ
 		0.0f,
 		1, 1, 1, 1);
 
-	//WASDボタンの描画
-	sprites[static_cast<int>(SpriteNumber::WASD)]->Render(dc,
-		WASDPos.x, WASDPos.y,  //描画位置
-		size.x, size.y,  //表示サイズ
-		0, 0,    //切り取りはじめ位置
-		255, 194, //画像サイズ
-		0.0f,
-		1, 1, 1, 1);
-
-	if (playerManager->GetMyPlayer()->GetisMouseOperation())
+	if (Uiclick(pos, size))
 	{
-		if (Uiclick(WASDPos, size))
-		{
-			playerManager->GetMyPlayer()->SetisMouseOperation(false);
-		}
-		
-		edgePos = mousePos;
-	}
-	else
+		isSetting = !isSetting;
+		Sleep(10);
+	};
+	
+	if (isSetting)
 	{
-		if (Uiclick(mousePos, size))
+		DirectX::XMFLOAT2 size, mousePos, WASDPos, edgePos;
+
+		size = { 50,75 };
+		mousePos = { 75,25 };
+		WASDPos = { 175,25 };
+
+		//マウスのイラスト描画
+		sprites[static_cast<int>(SpriteNumber::Mouse)]->Render(dc,
+			mousePos.x, mousePos.y,  //描画位置
+			size.x, size.y,  //表示サイズ
+			0, 0,      //切り取りはじめ位置
+			780, 1178, //画像サイズ
+			0.0f,
+			1, 1, 1, 1);
+
+		//WASDボタンの描画
+		sprites[static_cast<int>(SpriteNumber::WASD)]->Render(dc,
+			WASDPos.x, WASDPos.y,  //描画位置
+			size.x, size.y,  //表示サイズ
+			0, 0,    //切り取りはじめ位置
+			255, 194, //画像サイズ
+			0.0f,
+			1, 1, 1, 1);
+
+		if (playerManager->GetMyPlayer()->GetisMouseOperation())
 		{
-			playerManager->GetMyPlayer()->SetisMouseOperation(true);
+			if (Uiclick(WASDPos, size))
+			{
+				playerManager->GetMyPlayer()->SetisMouseOperation(false);
+			}
+
+			edgePos = mousePos;
 		}
-		edgePos = WASDPos;
+		else
+		{
+			if (Uiclick(mousePos, size))
+			{
+				playerManager->GetMyPlayer()->SetisMouseOperation(true);
+			}
+			edgePos = WASDPos;
+		}
+		edgePos.x -= size.x / 4;
+		edgePos.y -= size.y / 4;
+
+		//選択している縁描画
+		sprites[static_cast<int>(SpriteNumber::SelectEdge)]->Render(dc,
+			edgePos.x, edgePos.y,  //描画位置
+			size.x * 1.5f, size.y * 1.5f,  //表示サイズ
+			0, 0,      //切り取りはじめ位置
+			100, 100, //画像サイズ
+			0.0f,
+			1, 1, 1, 1);
 	}
-	edgePos.x -= size.x / 4;
-	edgePos.y -= size.y / 4;
-
-	//選択している縁描画
-	sprites[static_cast<int>(SpriteNumber::SelectEdge)]->Render(dc,
-		edgePos.x, edgePos.y,  //描画位置
-		size.x*1.5,size.y*1.5,  //表示サイズ
-		0, 0,      //切り取りはじめ位置
-		100,100, //画像サイズ
-		0.0f,
-		1, 1, 1, 1);
-
 }
 
 bool SceneGame::Uiclick(DirectX::XMFLOAT2 pos, DirectX::XMFLOAT2 size)
@@ -662,6 +692,79 @@ void SceneGame::RenderTimer(ID3D11DeviceContext* dc, int timer)
 			// 次の桁の位置に移動
 			positionX += 15;
 		}
+	}
+}
+
+void SceneGame::RenderName(ID3D11DeviceContext* dc, const DirectX::XMFLOAT4X4& view, const DirectX::XMFLOAT4X4& projection)
+{
+	// ビューポート 画面のサイズ等
+	// ビューポートとは2Dの画面に描画範囲の指定(クリッピング指定も出来る)位置を指定
+	D3D11_VIEWPORT viewport;
+	UINT numViewports = 1;
+	// ラスタライザーステートにバインドされているビューポート配列を取得
+	dc->RSGetViewports(&numViewports, &viewport);
+
+	// 変換行列
+	DirectX::XMMATRIX View = DirectX::XMLoadFloat4x4(&view);
+	DirectX::XMMATRIX Projection = DirectX::XMLoadFloat4x4(&projection);
+	// ローカルからワールドに行くときにいる奴相手のポジションを渡す。
+	DirectX::XMMATRIX World = DirectX::XMMatrixIdentity();
+	DirectX::XMVECTOR world = {};
+	DirectX::XMVector3Transform(world, World);
+
+	//プレイヤーの頭上
+	DirectX::XMFLOAT3 worldPosition = playerManager->GetMyPlayer()->GetPosition();
+	worldPosition.y += playerManager->GetMyPlayer()->GetHeight();
+
+	// ワールドからスクリーン
+	DirectX::XMVECTOR WorldPosition = DirectX::XMLoadFloat3(&worldPosition);
+
+
+	// ゲージ描画 // ワールドからスクリーン
+	DirectX::XMVECTOR ScreenPosition = DirectX::XMVector3Project(
+		WorldPosition,
+		viewport.TopLeftX,
+		viewport.TopLeftY,
+		viewport.Width,
+		viewport.Height,
+		viewport.MinDepth,
+		viewport.MaxDepth,
+		Projection,
+		View,
+		World
+
+	);
+	// スクリーン座標
+	DirectX::XMFLOAT3 scereenPosition;
+	DirectX::XMStoreFloat3(&scereenPosition, ScreenPosition);
+
+
+
+
+	float positionX = scereenPosition.x - 30;
+	float positionY = scereenPosition.y;
+
+	float sizeX = 32;
+	float sizeY = 32;
+
+	char name[10];
+	strcpy_s(name, playerManager->GetMyPlayer()->GetName());
+	//枠組み
+	for (int i = 0; i < 9; ++i)
+	{
+		if (name[i] == '\0')break;
+		int number = static_cast<int>(name[i]);
+		int width = number % 16;
+		int height = number / 16;
+		sprites[static_cast<int>(SpriteNumber::Name)]->Render(dc,
+			positionX, positionY,      //描画位置
+			24, 24,              //表示サイズ
+			sizeX * width, sizeY * height, //切り取りはじめ位置
+			sizeX, sizeY,              //画像サイズ
+			0.0f,
+			1, 1, 1, 1);
+
+		positionX += sizeX / 2;
 	}
 }
 

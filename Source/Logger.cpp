@@ -11,6 +11,7 @@ void Logger::Print(const char* format, ...)
 	va_start(args, format);
 	vsnprintf(message, sizeof(message), format, args);
 	va_end(args);
-
+	::OutputDebugStringA("*******************************************************************************************\n\n");
 	::OutputDebugStringA(message);
+	::OutputDebugStringA("\n*******************************************************************************************\n");
 }

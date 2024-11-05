@@ -24,10 +24,13 @@ public:
     int GetDataJson();
     void NameJson();
 
+    void handleInput(char* inputBuffer, size_t bufferSize);
+
     bool UiClick(float posX, float posY, float sizeX, float sizeY);
     void RenderNetError(ID3D11DeviceContext* dc);
     void RenderLogin(ID3D11DeviceContext* dc);
     void RenderName(ID3D11DeviceContext* dc);
+
 
    
 private:
@@ -55,5 +58,8 @@ private:
     int maxID = 0;
     int ID = 0;
     char Name[10];
+    int loginDay = 0;
+
+    bool isname = false;
 };
 

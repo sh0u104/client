@@ -103,12 +103,12 @@ private:
 	bool signIn = false;
 	bool signUp = false;
 
-	char searchName[10];
+	char searchName[10] = {};
 	bool searchResult = false;
-	short searchId;
+	short searchId = {};
 
-	char senderName[10];
-	short sendertId;
+	char senderName[10] = {};
+	short sendertId = {};
 	
 	
 

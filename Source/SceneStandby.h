@@ -43,6 +43,7 @@ private:
         Solo,
         Multi,
         Start,
+        Name,
       //ModeSelect,
         Max
     };
@@ -77,6 +78,10 @@ private:
         const DirectX::XMFLOAT4X4& projection
     );
 
+    void RenderName(ID3D11DeviceContext* dc,
+        const DirectX::XMFLOAT4X4& view,
+        const DirectX::XMFLOAT4X4& projection);
+
     void RenderTeam(ID3D11DeviceContext* dc);
     void RenderTeamSelect(ID3D11DeviceContext* dc);
     void RenderTeamJoin(ID3D11DeviceContext* dc);
@@ -87,14 +92,14 @@ private:
 
     bool Uiclick(float posX,float posY,float sizeX,float sizeY);
     std::vector<int>numbers;
-    int posxy[12][2];
+    float posxy[12][2] = {};
 public:
     //int guimyid;
     //int guiteamnumber;
-    int guiteamsid[4];
+    int guiteamsid[4] = {};
    
-    char name[10];
-    char pass[10];
+    //char name[10];
+    //char pass[10];
 
     bool signupok = false;
 

@@ -24,6 +24,7 @@ using json = nlohmann::json;
 #pragma comment(lib, "libssl.lib")
 #pragma comment(lib, "libcrypto.lib")
 
+#include <conio.h>
 // 初期化
 void SceneConnection::Initialize()
 {
@@ -160,13 +161,17 @@ void SceneConnection::Render()
             RenderLogin(dc);
         }
     }
-   ImGui::SetNextWindowPos(ImVec2(500, 200), ImGuiCond_FirstUseEver);
-   ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
+   ImGui::SetNextWindowPos(ImVec2(500, -10), ImGuiCond_FirstUseEver);
+   ImGui::SetNextWindowSize(ImVec2(300, 500), ImGuiCond_FirstUseEver);
    // beginからendまでの内容が出来る
    if (ImGui::Begin("login", nullptr, ImGuiWindowFlags_None))
    {
        ImGui::Text("name: % s", name);
        ImGui::Text("userId: %d", ID);
+       ImGui::Text("userDay: %d", loginDay);
+       ImGui::InputText("Name", name, sizeof(name));
+       ImGui::InputText("password", pass, sizeof(pass));
+       isname = true;
       // if(ImGui::InputInt("ID",playerManager->get))
       //if (isNewLogin)
       //{
@@ -551,6 +556,8 @@ void SceneConnection::Signup()
 
     std::cout << "User ID Number: " << userIdNumber << std::endl;
 
+    playerManager->GetMyPlayer()->SetLoginDay(json["user_login"]["loginDay"]);
+
     SSL_shutdown(ssl);
     SSL_free(ssl);
     SSL_CTX_free(ctx);
@@ -603,6 +610,7 @@ void SceneConnection::NameJson()
         userName = jsonData["user_profile"]["userName"];
       
         std::cout << "userId: " << userName << std::endl;
+        playerManager->GetMyPlayer()->SetLoginDay(jsonData["user_login"]["loginDay"]);
     }
     else {
         std::cerr << "userIdが見つかりません" << std::endl;
@@ -610,6 +618,32 @@ void SceneConnection::NameJson()
 
     strcpy_s(Name, sizeof(Name), userName.c_str());
     
+}
+
+void SceneConnection::handleInput(char* inputBuffer, size_t bufferSize)
+{
+    size_t currentLength = strlen(inputBuffer);
+
+    // キーが押されているか確認
+    if (_kbhit()) {
+        char ch = _getch();  // 1文字取得
+
+        // Enterキーで終了
+        if (ch == '\r') {
+            std::cout << "\n入力終了" << std::endl;
+            return;
+        }
+
+        // バックスペース処理
+        if (ch == '\b' && currentLength > 0) {
+            inputBuffer[--currentLength] = '\0';
+        }
+        // バッファに追加（最大長を超えない場合）
+        else if (currentLength < bufferSize - 1) {
+            inputBuffer[currentLength++] = ch;
+            inputBuffer[currentLength] = '\0';
+        }
+    }
 }
 
 void SceneConnection::RenderNetError(ID3D11DeviceContext* dc)
@@ -690,7 +724,7 @@ void SceneConnection::RenderLogin(ID3D11DeviceContext* dc)
         0.0f,
         1, 1, 1, 1);
 
-    if (UiClick(positionX+250, positionY, sizeX, sizeY))
+    if (UiClick(positionX+ interval, positionY, sizeX, sizeY))
     {
         isSignin = true;
     }
@@ -703,7 +737,7 @@ void SceneConnection::RenderLogin(ID3D11DeviceContext* dc)
         0.0f,
         1, 1, 1, 1);
 
-    if (UiClick(positionX+500, positionY, sizeX, sizeY))
+    if (UiClick(positionX+ interval*2, positionY, sizeX, sizeY))
     {
         isSignup = true;
     }
