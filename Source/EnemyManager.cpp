@@ -148,3 +148,15 @@ void EnemyManager::Clear()
     // vector‚Ì”‚ð‚O‚É
     enemies.clear();
 }
+
+Enemy* EnemyManager::GetIDEnemy(int ID)
+{
+    for (Enemy* enemy : enemies)
+    {
+        if (enemy->GetMyEnemyId() == ID)
+        {
+            return enemy;
+        }
+    }
+    return nullptr;
+}

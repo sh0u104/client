@@ -13,7 +13,7 @@ class SceneStandby  :public Scene
 {
 public:
 
-    SceneStandby(){}
+    SceneStandby() {}
     ~SceneStandby(){}
     // ‰Šú‰»
     void Initialize() override;

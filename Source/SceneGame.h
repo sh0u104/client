@@ -107,4 +107,6 @@ private:
 	float timer = 10.0;
 
 	bool isSetting = false;
+
+	int enemyCount = 0;
 };

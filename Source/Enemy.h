@@ -7,6 +7,8 @@
 class Enemy : public Character
 {
 public:
+
+   
     Enemy() {}
     ~Enemy() override {}
 
@@ -24,6 +26,21 @@ public:
 
     // デバッグプリミティブ描画
     virtual void DrawDebugPrimitive();
+    // ステート
+    enum class State
+    {
+        Wander,
+        Idle,
+        Pursuit,
+        Attack,
+        IdleBattle,
+        Damage,
+        Death
+    };
+    int ID = -1;
+    void SetMyEnemyId(int id) { this->ID = id; }
+    int  GetMyEnemyId() { return this->ID; }
+    State state = State::Wander;
 
-
+    State GetState() { return this->state; }
 };

@@ -56,22 +56,23 @@ void SceneManager::ConnectionClear()
 {
    
     //接続終了化
-    connection->Finalize();
-    // プレイヤー終了化
-    for (Player* player : playerManager->GetPlayers())
+    if (connection!=nullptr)
     {
-        playerManager->ErasePlayer(player->GetPlayerID());
+        connection->Finalize();
+        // プレイヤー終了化
+        for (Player* player : playerManager->GetPlayers())
+        {
+            playerManager->ErasePlayer(player->GetPlayerID());
+        }
+        playerManager->DeletePlayer();
+
+
+        delete playerManager;
+        playerManager = nullptr;
+
+        delete connection;
+        connection = nullptr;
     }
-    playerManager->DeletePlayer();
-
-
-
-    delete playerManager;
-    playerManager = nullptr;
-
-    delete connection;
-    connection = nullptr;
-
 
 
 }

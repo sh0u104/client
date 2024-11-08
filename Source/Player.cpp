@@ -21,8 +21,6 @@ Player& Player::Instance()
     return *instance;
 }
 
-
-
 // コンストラクタ
 Player::Player()
 {
@@ -125,8 +123,6 @@ void Player::DrawDebugPrimitive()
 
     if (attackCollisionFlag)
     {
-
-
         // 攻撃衝突用の左手ノードデバッグ球を描画
         Model::Node* leftHandBone = model->FindNode("mixamorig:LeftHand");
         debugRenderer->DrawSphere(DirectX::XMFLOAT3(

@@ -37,6 +37,8 @@ Framework::~Framework()
 	//sceneGame.Finalize();
 	SceneManager::Instance().Clear();
 
+
+	//サーバーとの接続終了化
 	SceneManager::Instance().ConnectionClear();
 	// エフェクトマネージャー終了化
 	EffectManager::Instance().Finalize();

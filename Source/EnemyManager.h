@@ -54,6 +54,10 @@ private:
         // エネミー取得
         // 引数の番号の場所に入っている物を出す。
         Enemy* GetEnemy(int index) { return enemies.at(index); }
+
+        Enemy* GetIDEnemy(int ID);
+
+        std::vector<Enemy*> GetEnemys() { return this->enemies; }
 private:
     // 更新　描画を複数する為のもの
     std::vector<Enemy*> enemies;

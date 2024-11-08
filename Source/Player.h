@@ -263,16 +263,20 @@ public:
     float mouseAngle = 0;
     float mouselength = 0;
 
+
+    void SetTeamHost(bool host) { this->teamHost = host; }
+    bool GetTeamHost() { return this->teamHost; }
 protected:
   
     int teamNumber = 0;
     int teamsId[4] = {};
+    bool teamHost = false;
+
     bool operation = false;
-    int playerID;
+    int playerID = 0;
     bool ready = false;
     bool startCheck = false;
-
-    char Name[10];
+    char Name[10] = {};
     bool isMouseOperation = true;
     int loginDay = 0;
 };

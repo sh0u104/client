@@ -116,7 +116,7 @@ void SceneStandby::Initialize()
 			playerManager->GetPlayer(MYID)->SetPosition({ 1.0f * i,0.0f,0.0f });
 		}
 		connection = sceneManager.GetConnection();
-		if (playerManager->GetteamLeader())
+		if (playerManager->GetMyPlayer()->GetTeamHost())
 		{
 			teamcreate = true;
 		}
@@ -158,6 +158,11 @@ void SceneStandby::Update(float elapsedTime)
 	//シーン遷移
 	if (playerManager->GetGameStart())
 	{
+		if (playerManager->GetMyPlayer()->Getteamnumber() == 0)
+		{
+			playerManager->GetMyPlayer()->SetTeamHost(true);
+		}
+
 		playerManager->SetGameStart(false);
 		SceneManager::Instance().ChangeScene(new SceneLoading(new SceneGame));
 	}
@@ -317,7 +322,7 @@ void SceneStandby::Render()
 		RenderMode(dc);
 
 		//ゲーム開始ボタン
-		if (playerManager->GetteamLeader() || playerManager->GetMyPlayer()->Getteamnumber()<1)
+		if (playerManager->GetMyPlayer()->GetTeamHost() || playerManager->GetMyPlayer()->Getteamnumber()<1)
 		{
 			RenderGameStart(dc);
 		}
@@ -344,7 +349,7 @@ void SceneStandby::Render()
 			//チーム番号表示
 			RenderTeamNumber(dc, rc.view, rc.projection);
 
-			if (!playerManager->GetteamLeader())
+			if (!playerManager->GetMyPlayer()->GetTeamHost())
 			{
 				//準備完了ボタン表示
 				RenderReady(dc, playerManager->GetMyPlayer()->GetstartCheck());
@@ -620,8 +625,8 @@ void SceneStandby::RenderTeamNumber(ID3D11DeviceContext* dc, const DirectX::XMFL
 		playerManager->GetMyPlayer()->Setteamnumber(0);
 		teamcreate = false;
 		teamscreenflag = false;
-		connection->SendTeamLeave(playerManager->GetteamLeader());
-		playerManager->SetteamLeader(false);
+		connection->SendTeamLeave(playerManager->GetMyPlayer()->GetTeamHost());
+		playerManager->GetMyPlayer()->SetTeamHost(false);
 	}
 
 
@@ -745,18 +750,18 @@ void SceneStandby::RenderTeamSelect(ID3D11DeviceContext* dc)
 		0.0f,
 		1, 1, 1, 1);
 
-		if (Uiclick(positionX + 70, positionY + 60, 200, 150))
-		{
-			//teamscreenflag = false;
-			////sendteamcreate = true;
-			//sendteamjoin = false;
-			//teamjoin = true;
-			//connection->SendTeamJoin(TeamNumber);
+	if (Uiclick(positionX + 70, positionY + 60, 200, 150))
+	{
+		//teamscreenflag = false;
+		////sendteamcreate = true;
+		//sendteamjoin = false;
+		//teamjoin = true;
+		//connection->SendTeamJoin(TeamNumber);
 
-	    teamcreate = true;
-	    connection->SendTeamcreate();
-	    playerManager->SetteamLeader(true);
-		}
+		teamcreate = true;
+		connection->SendTeamcreate();
+		playerManager->GetMyPlayer()->SetTeamHost(true);
+	}
 
 	//チーム加入ボタン
 	sprites[static_cast<int>(Spritenumber::TeamJoin)]->Render(dc,

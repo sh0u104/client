@@ -68,7 +68,7 @@ void Connection::Initialize()
 
 	if (UDPInitialize())
 	{
-		
+	
 	}
 }
 
@@ -154,7 +154,19 @@ void Connection::Finalize()
 void Connection::NetrowkUpdate(float elapsedTime)
 {
 }
+void Connection::SendEnemy(Enemy* enemy)
+{
+	EnemyData enemyData;
+	enemyData.id = enemy->GetMyEnemyId();
+	enemyData.position = enemy->GetPosition();
+	enemyData.angle = enemy->GetAngle();
+	enemyData.state = enemy->GetState();
+	enemyData.cmd = UdpTag::EnemyMove;
 
+	char buffer[sizeof(EnemyData)];
+	memcpy_s(buffer, sizeof(buffer), &enemyData, sizeof(EnemyData));
+	sendto(uSock, buffer, sizeof(buffer), 0, (struct sockaddr*)&uAddr, sizeof(struct sockaddr_in));
+}
 void Connection::UdpRecvThread()
 {
   do {
@@ -166,24 +178,52 @@ void Connection::UdpRecvThread()
 	    	int size = recvfrom(uSock, Buffer, sizeof(Buffer), 0, reinterpret_cast<sockaddr*>(&uAddr), &addrSize);
 	    	if (size > 0)
 	    	{
-	    		PlayerInput input;
-	    		memcpy_s(&input, sizeof(PlayerInput), Buffer, sizeof(PlayerInput));
-	    		Player* player = playerManager->GetPlayer(input.id);
-	    		player->SetAngle(input.angle);
-	    		if (playerManager->GetMyPlayerID() != input.id)
-	    		{
-	    			player->SetPosition(input.position);
-					player->SetVelovity(input.velocity);
-	    			//アニメーションにいれる
-	    			if (player->GetState() != input.state)
-	    			{
-	    				player->GetStateMachine()->ChangeState(static_cast<int>(input.state));
-	    			}
-	    		}
+				short type = 0;
+				memcpy_s(&type, sizeof(type), Buffer, sizeof(short));
+				switch (static_cast<UdpTag>(type))
+				{
+				case UdpTag::Move:
+				{
+					PlayerInput input;
+					memcpy_s(&input, sizeof(PlayerInput), Buffer, sizeof(PlayerInput));
+					Player* player = playerManager->GetPlayer(input.id);
+					if (playerManager->GetMyPlayerID() != input.id)
+					{
+						player->SetAngle(input.angle);
+						player->SetPosition(input.position);
+						player->SetVelovity(input.velocity);
+						//アニメーションにいれる
+						if (player->GetState() != input.state)
+						{
+							player->GetStateMachine()->ChangeState(static_cast<int>(input.state));
+						}
+					}
+				}
+				break;
+				case UdpTag::EnemyMove:
+				{
+					EnemyData enemyData;
+					memcpy_s(&enemyData, sizeof(EnemyData), Buffer, sizeof(EnemyData));
+					EnemyManager& enemyManager = EnemyManager::Instance();
+					Enemy* enemy = enemyManager.GetIDEnemy(enemyData.id);
+					if (enemy != nullptr)
+					{
+						enemy->SetAngle(enemyData.angle);
+						enemy->SetPosition(enemyData.position);
+						//アニメーションにいれる
+						if (enemy->GetState() != enemyData.state)
+						{
+							//enemy->GetStateMachine()->ChangeState(static_cast<int>(enemyData.state));
+						}
+					}
+				}
+				}
 	    	}
 	    }
 	} while (loop);
+
 }
+
 
 void Connection::TcpRecvThread()
 {
@@ -250,6 +290,7 @@ void Connection::TcpRecvThread()
 						//チームを作れたら
 						playerManager->GetPlayer(teamcreate.id)->Setteamnumber(teamcreate.number);
 						playerManager->GetMyPlayer()->Setteamsid(0, teamcreate.id);
+						playerManager->GetMyPlayer()->SetTeamHost(true);
 					}
 					else
 					{

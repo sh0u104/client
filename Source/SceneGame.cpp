@@ -103,17 +103,18 @@ void SceneGame::Initialize()
 	
 
 	// エネミー初期化
-	//EnemyManager& enemyManager = EnemyManager::Instance();
-	//for (int i = 0; i < 1; ++i)
-	//{
-	//	EnemySlime* slime = new EnemySlime();
-	//	slime->SetPosition(DirectX::XMFLOAT3(i * 2.0f, 0, 5));
-	//	// 縄張り
-	//	slime->SetTerritory(slime->GetPosition(), 10.0f);
-	//	slime->IsEnemy();
-	//	enemyManager.Register(slime);
-	//
-	//}
+	EnemyManager& enemyManager = EnemyManager::Instance();
+	for (int i = 0; i < 2; ++i)
+	{
+		EnemySlime* slime = new EnemySlime();
+		slime->SetPosition(DirectX::XMFLOAT3(i * 2.0f, 0, 5));
+		// 縄張り
+		slime->SetTerritory(slime->GetPosition(), 10.0f);
+		slime->IsEnemy();
+		++enemyCount;
+		slime->SetMyEnemyId(enemyCount);
+		enemyManager.Register(slime);
+	}
 	
 
 	//imgui用
@@ -145,17 +146,28 @@ void SceneGame::Finalize()
 // 更新処理
 void SceneGame::Update(float elapsedTime)
 {
-	
+	if (playerManager->GetMyPlayer()->GetTeamHost())
+	{
+		EnemyManager& enemyManager = EnemyManager::Instance();
+		std::vector<Enemy*> enemys = enemyManager.GetEnemys();
+		for (Enemy* enemy : enemys)
+		{
+			connection->SendEnemy(enemy);
+		}
+	}
+
 	//timer -= elapsedTime;
+	//ゲーム終了を送る
 	if (timer < 0)
 	{
-		//ゲーム終了を送る
 		connection->SendGameEnd(playerManager->GetMyPlayer()->Getteamnumber());
 		SceneManager::Instance().ChangeScene(new SceneLoading(new SceneStandby));
 	}
 
+	//プレイヤーが存在してたら
 	if (connection&& playerManager->GetPlayers().size()>0)
 	{
+
 		if (sendFlag)
 		{
 			if (!playerManager->GetMyPlayer()->Getoperation())
@@ -195,6 +207,7 @@ void SceneGame::Update(float elapsedTime)
 		//player->Update(elapsedTime);
 		playerManager->Update(elapsedTime);
 	}
+
 	// ステージ更新処理
 	StageManager::instance().Update(elapsedTime);
 	
@@ -273,6 +286,8 @@ void SceneGame::Render()
 		// beginからendまでの内容が出来る
 		if (ImGui::Begin("Player", nullptr, ImGuiWindowFlags_None))
 		{
+			ImGui::Text("Host: %d", playerManager->GetMyPlayer()->GetTeamHost());
+			
 			//ImGui::Text("State: %d", static_cast<int>(playerManager->GetMyPlayer()->GetState()));
 
 			// トランスフォーム

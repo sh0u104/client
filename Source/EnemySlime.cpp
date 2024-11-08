@@ -5,7 +5,7 @@
 #include "Mathf.h"
 #include "Player.h"
 #include "Collision.h"
-
+#include "SceneManager.h"
 // コンストラクタ
 EnemySlime::EnemySlime()
 {
@@ -31,40 +31,42 @@ EnemySlime::~EnemySlime()
 // 更新処理
 void EnemySlime::Update(float elapsedTime)
 {
-    // ステート毎の処理
-    switch (state)
+    if (SceneManager::Instance().GetPlayerManager()->GetMyPlayer()->GetTeamHost())
     {
-    case State::Wander:
-        UpdateWanderState(elapsedTime);
-        break;
-    case State::Idle:
-        UpdateIdleState(elapsedTime);
-        break;
-    case State::Pursuit:
-        UpdatePursuitState(elapsedTime);
-        break;
-    case State::Attack:
-        UpdateAttackState(elapsedTime);
-        break;
-    case State::IdleBattle:
-        UpdateIdleBattleState(elapsedTime);
-        break;
-    case State::Damage:
-        UpdateDamageState(elapsedTime);
-        break;
-    case State::Death:
-        UpdateDeathState(elapsedTime);
-        break;
+        // ステート毎の処理
+        switch (state)
+        {
+        case State::Wander:
+            UpdateWanderState(elapsedTime);
+            break;
+        case State::Idle:
+            UpdateIdleState(elapsedTime);
+            break;
+        case State::Pursuit:
+            UpdatePursuitState(elapsedTime);
+            break;
+        case State::Attack:
+            UpdateAttackState(elapsedTime);
+            break;
+        case State::IdleBattle:
+            UpdateIdleBattleState(elapsedTime);
+            break;
+        case State::Damage:
+            UpdateDamageState(elapsedTime);
+            break;
+        case State::Death:
+            UpdateDeathState(elapsedTime);
+            break;
+        }
+
+
+        // 速力処理更新
+        UpdateVelocity(elapsedTime);
+        // 無敵時間更新
+        UpdateInbincibleTimer(elapsedTime);
     }
-
-    
-
-    // 速力処理更新
-    UpdateVelocity(elapsedTime);
-    // 無敵時間更新
-    UpdateInbincibleTimer(elapsedTime);
-    // オブジェクト行列を更新
-    UpdateTransform();
+        // オブジェクト行列を更新
+        UpdateTransform();
 
     // モデルアニメーション更新
     model->UpdateAnimation(elapsedTime);
@@ -225,7 +227,7 @@ void EnemySlime::CollisitionNodeVsPlayer(const char* nodeName, float nodeRadius)
                 vec.y = 5.0f;
 
                 // 吹っ飛ばす
-                player.AddImpulse(vec);
+                //player.AddImpulse(vec);
             }
         }
     }
@@ -234,23 +236,38 @@ void EnemySlime::CollisitionNodeVsPlayer(const char* nodeName, float nodeRadius)
 bool EnemySlime::SearchPlayer()
 {
     // プレイヤーと高低差を考慮して３Dでの距離判定をする
-    const DirectX::XMFLOAT3& playerPosition = Player::Instance().GetPosition();
-    float vx = playerPosition.x - position.x;
-    float vy = playerPosition.y - position.y;
-    float vz = playerPosition.z - position.z;
-    // ルート
-    float dist = sqrtf(vx * vx + vy * vy + vz * vz);
+    float dist = INT_MAX;
+    float keepvx = 0;
+    float keepvz = 0;
+    std::vector<Player*> players = SceneManager::Instance().GetPlayerManager()->GetPlayers();
+    for (Player* player : players)
+    {
+        const DirectX::XMFLOAT3& playerPosition = player->GetPosition();
+        float vx = playerPosition.x - position.x;
+        float vy = playerPosition.y - position.y;
+        float vz = playerPosition.z - position.z;
+        float sqr = sqrtf(vx * vx + vy * vy + vz * vz);
+        // ルート
+        if (dist > sqr)
+        {
+            dist = sqr;
+            nearPlayerId = player->GetPlayerID();
+            keepvx = vx;
+            keepvz = vz;
+        }
+    }
+
     if (dist < searchRange)
     {
-        float distXZ = sqrtf(vx * vx + vz * vz);
+        float distXZ = sqrtf(keepvx * keepvx + keepvz * keepvz);
         // 単位ベクトル化
-        vx /= distXZ;
-        vz /= distXZ;
+        keepvx /= distXZ;
+        keepvz /= distXZ;
         // 前方ベクトル
         float frontX = sinf(angle.y);
         float frontZ = cosf(angle.y);
         // ２つのベクトルの内積値で前後判定
-        float dot = (frontX * vx) + (frontZ * vz);
+        float dot = (frontX * keepvx) + (frontZ * keepvz);
         //0.070；90度
         //0.0f；半分以上
         if (dot > 0.0f)
@@ -299,7 +316,8 @@ void EnemySlime::TransitionPursuitState()
 void EnemySlime::UpdatePursuitState(float elapsedTime)
 {
     // 目標地点ををプレイヤー位置に設定
-    targetPosition = Player::Instance().GetPosition();
+    
+    targetPosition = SceneManager::Instance().GetPlayerManager()->GetPlayer(nearPlayerId)->GetPosition();
 
     // 目標地点へ移動
     MoveToTarget(elapsedTime, 1.0f);
@@ -361,7 +379,7 @@ void EnemySlime::TransitionIdleBattleState()
 void EnemySlime::UpdateIdleBattleState(float elapsedTime)
 {
     // 目標地点をプレイヤー位置に設定
-    targetPosition = Player::Instance().GetPosition();
+    targetPosition = SceneManager::Instance().GetPlayerManager()->GetPlayer(nearPlayerId)->GetPosition();
 
     // タイマー処理
     stateTimer -= elapsedTime;

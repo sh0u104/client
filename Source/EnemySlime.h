@@ -25,6 +25,7 @@ public:
     // 縄張り設定
     void SetTerritory(const DirectX::XMFLOAT3& origin, float range);
 
+   
 private:
     // ターゲット位置をランダム設定
     void SetRandomTargetPosition();
@@ -81,17 +82,6 @@ private:
     void UpdateDeathState(float elapsedTime);
 
 private:
-    // ステート
-    enum class State
-    {
-        Wander,
-        Idle,
-        Pursuit,
-        Attack,
-        IdleBattle,
-        Damage,
-        Death
-    };
 
     // アニメーション
     enum Animation
@@ -127,7 +117,7 @@ protected:
 private:
     Model* model = nullptr;
 
-    State state = State::Wander;
+   
     DirectX::XMFLOAT3 targetPosition = { 0,0,0 };
     DirectX::XMFLOAT3 territoryOrigin = { 0,0,0 };
     float territoryRange = 10.0f;
@@ -140,5 +130,7 @@ private:
     float searchRange = 5.0f;
 
     float attackRange = 1.5f;
+
+    int nearPlayerId = 0;
 
 };

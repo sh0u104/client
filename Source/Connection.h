@@ -7,7 +7,7 @@
 #include <string>
 #include "PlayerManager.h" 
 #include "Player.h"
-
+#include "Enemy.h"
 using namespace DirectX;
 
 class Connection
@@ -69,7 +69,9 @@ public:
 	void TcpRecvThread();
 	void UdpRecvThread();
 
+	void SendEnemy(Enemy* enemy);
 
+	
 	enum class TcpTag : unsigned short
 	{
 		SignUp,         //アカウント作成
@@ -93,10 +95,20 @@ public:
 	{
 		Message,		// チャットメッセージ
 		Move,			// 移動
+		EnemyMove,       //敵の移動
 		Attack,			// 攻撃
 		UdpAddr,          //サーバーでUDPのアドレス保存用
 	};
 	
+	struct EnemyData
+	{
+		UdpTag cmd;
+		int id;
+		//DirectX::XMFLOAT3 velocity;
+		DirectX::XMFLOAT3 position;
+		Enemy::State state;
+		DirectX::XMFLOAT3 angle;
+	};
 
 	struct Message
 	{
@@ -266,5 +278,7 @@ private:
 	bool isUAddr = true;
 	SOCKET uSock{};
 	std::thread udpTh;
+
+	
 };
 

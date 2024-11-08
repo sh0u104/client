@@ -50,8 +50,6 @@ public:
 	float GetmessageEraseTime() { return messageEraseTime; }
 	void reduceMessageEraseTime(float elapsedTime) { this->messageEraseTime -= elapsedTime; }
 
-	void SetteamLeader(bool flag) { this->teamLeader = flag; }
-	bool GetteamLeader() { return teamLeader; }
 
 	void SetSignIn(bool flag) { this->signIn = flag; }
 	bool GetSignIn() { return this->signIn; }
@@ -97,8 +95,6 @@ private:
 
 	std::vector<std::string> messages;
 	float messageEraseTime = 0;
-
-	bool teamLeader = false;
 
 	bool signIn = false;
 	bool signUp = false;
