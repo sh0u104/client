@@ -13,6 +13,10 @@
 #include <DirectXMath.h>
 
 #include "StateDerived.h"
+
+#include "Connection.h"
+#include "SceneManager.h"
+
 static Player* instance = nullptr;
 
 // インスタンス取得
@@ -49,6 +53,7 @@ Player::Player()
     stateMachine->RegisterState(new LandState(this));
     stateMachine->RegisterState(new JumpState(this));
     stateMachine->RegisterState(new JumpFlipState(this));
+    stateMachine->RegisterState(new AttackState(this));
    
     stateMachine->SetState(static_cast<int>(State::Idle));
 }
@@ -70,7 +75,7 @@ void Player::Update(float elapsedTime)
 {
     
     // ステート毎の処理
-    if (Getoperation())
+    if (Getoperation() && stateMachine)
     {
         stateMachine->Update(elapsedTime);
     }
@@ -82,7 +87,7 @@ void Player::Update(float elapsedTime)
 
     //hitEffect->SetPosition(hitEffect->GetEfeHandle(), this->position);
     //hitEffect->SetScale(hitEffect->GetEfeHandle(),{ 0.1f,0.1f,0.1f });
-    hitEffect->SetScale(hitEffect->GetEfeHandle(), { 1,1,1 });
+    //hitEffect->SetScale(hitEffect->GetEfeHandle(), { 1,1,1 });
 
     // プレイヤーと敵との衝突処理
     CollisionPlayerVsEnemies();
@@ -504,7 +509,6 @@ void Player::CollisionNodeVsEnemies(const char* nodeName, float nodeRadius)
             enemy->GetRadius(),
             enemy->GetHeight(),
             outPositon))
-
         {
 
             // ダメージを与える。
@@ -514,37 +518,39 @@ void Player::CollisionNodeVsEnemies(const char* nodeName, float nodeRadius)
             {
 
                 // 吹き飛ばす
-                {
-                    // 衝動
-                    DirectX::XMFLOAT3 impulse;
-                    const float power = 10.0f;
-                    const DirectX::XMFLOAT3& e = enemy->GetPosition();
-                    const DirectX::XMFLOAT3& p = nodePosition;
-                    float vx = e.x - p.x;
-                    float vz = e.z - p.z;
-                    float lengthXZ = sqrtf(vx * vx + vz * vz);
-                    vx /= lengthXZ;
-                    vz /= lengthXZ;
-
-                    impulse.x = vx * power;
-                    impulse.y = power * 0.5f;
-                    impulse.z = vz * power;
-
-                    enemy->AddImpulse(impulse);
-                }
+               //{
+               //    // 衝動
+               //    DirectX::XMFLOAT3 impulse;
+               //    const float power = 10.0f;
+               //    const DirectX::XMFLOAT3& e = enemy->GetPosition();
+               //    const DirectX::XMFLOAT3& p = nodePosition;
+               //    float vx = e.x - p.x;
+               //    float vz = e.z - p.z;
+               //    float lengthXZ = sqrtf(vx * vx + vz * vz);
+               //    vx /= lengthXZ;
+               //    vz /= lengthXZ;
+               //
+               //    impulse.x = vx * power;
+               //    impulse.y = power * 0.5f;
+               //    impulse.z = vz * power;
+               //
+               //    enemy->AddImpulse(impulse);
+               //}
                 // ヒットエフェクト再生
+
                 {
                     DirectX::XMFLOAT3 e = enemy->GetPosition();
                     e.y += enemy->GetHeight() * 0.5f;
 
-
                     hitEffect->Play(e);
-
-
                     //desEffect->Play(e);
 
                 }
-
+                if (!GetTeamHost())
+                {
+                    Connection* connection = SceneManager::Instance().GetConnection();
+                    connection->SendEnemyDamage(enemy->GetMyEnemyId());
+                }
             }
         }
 
@@ -583,13 +589,13 @@ void Player::OnLanding()
 void Player::OnDead()
 {
     // 死亡ステート遷移
-    TransitionDeathState();
+    //TransitionDeathState();
 }
 
 void Player::OnDamaged()
 {
     // ダメージステートへ遷移
-    TransitionDamageState();
+    //TransitionDamageState();
 }
 
 //DirectX::XMFLOAT3 Player::GetMoveVec() const
@@ -746,306 +752,313 @@ bool Player::InputProjectile()
 
 bool Player::InputAttack()
 {
-    // 攻撃入力処理
-    GamePad& gamePad = Input::Instance().GetGamePad();
-
-    // 直進弾丸発射　xボタンを押したら
-    if (gamePad.GetButtonDown() & GamePad::BTN_B)
+    if (GetisMouseOperation())
     {
-        return true;
+        Mouse& mouse = Input::Instance().GetMouse();
+        if (mouse.GetButtonDown() & Mouse::BTN_RIGHT)
+        {
+            return true;
+        }
+    }
+    else
+    {
+        GamePad& gamePad = Input::Instance().GetGamePad();
+        // 直進弾丸発射　xボタンを押したら
+        if (gamePad.GetButtonDown() & GamePad::BTN_B)
+        {
+            return true;
+        }
     }
 
     return false;
 }
 
-// 待機ステートへ遷移
-void Player::TransitionIdleState()
-{
-    state = State::Idle;
-
-    // 待機アニメーション再生
-    //model->PlayAnimation(Anim_Idle, true);
-
-     // 走りアニメーション再生
-    model->PlayAnimation(Anim_Running, true);
-}
-
-// 待機ステート更新処理
-void Player::UpdateIdleState(float elapsedTime)
-{
-    // 移動入力処理
-    if (InputMove(elapsedTime))
-    {
-        TransitionMoveState();
-    }
-
-    // ジャンプ入力処理
-    if (InputJump())
-    {
-        TransitionJumpState();
-    }
-
-    if (InputAttack())
-    {
-        stated = state;
-        TransitionAttackState();
-    }
-
-    // 弾丸入力処理
-    if (InputProjectile())
-    {
-        TransitionAttackState();
-    }
-
-    // 移動入力処理
-    //InputMove(elapsedTime);
-}
-
-void Player::TransitionMoveState()
-{
-    state = State::Move;
-
-    // 走りアニメーション再生
-    model->PlayAnimation(Anim_Running, true);
-}
-
-void Player::ChangeState(State state)
-{
-    //操作権がないやつのステート遷移
-    if (GetState() != state)
-    {
-        switch (state)
-        {
-        case State::Idle:
-            TransitionIdleState();
-            break;
-        case State::Move:
-            TransitionMoveState();
-            break;
-        case State::Jump:
-            TransitionJumpState();
-            break;
-        case State::Land:
-            TransitionLandState();
-            break;
-        case  State::JumpFlip:
-            TransitionJumpFlipState();
-            break;
-        }
-    }
-}
-
-void Player::UpdateMoveState(float elapsedTime)
-{
-    // 移動入力処理
-    if (!InputMove(elapsedTime))
-    {
-        TransitionIdleState();
-    }
-
-
-    // ジャンプ入力処理
-    if (InputJump())
-    {   
-        TransitionJumpState();
-    }
-
-    if (InputAttack())
-    {
-        stated = state;
-        TransitionAttackState();
-    }
-
-    //// ジャンプ入力処理
-    //InputJump();
-
-    // 弾丸入力処理
-    if (InputProjectile())
-    {
-        TransitionAttackState();
-    }
-
-    //InputMove(elapsedTime);
-
-    //// 移動入力処理
-    //InputMove(elapsedTime);
-
-}
-
-void Player::TransitionJumpState()
-{
-    state = State::Jump;
-
-    // ジャンプアニメーション再生
-    model->PlayAnimation(Anim_Jump, true);
-}
-
-void Player::UpdateJumpState(float elapsedTime)
-{
-
-    InputMove(elapsedTime);
-
-    // ジャンプ入力処理
-    if (InputJump()&&jumpCount == 2)
-    {
-        TransitionJumpFlipState();
-    }
-
-    // ジャンプ入力胥吏
-    //if (inputJump())
-    // {
-    // // ジャンプフリップアニメーション再生
-    //  model->PlayAnimation(Anim_Jump_Flip, false);
-    //  }
-    // 
-    // // ジャンプアニメーション終了語
-    // if(!model->IsPlayaAnimation())
-    // {
-    // 落下アニメーション再生
-    // model->PlayAnimtion(Anim_Falling,true);
-    // }
-    // 
-    //
-
-}
-
-void Player::TransitionLandState()
-{
-    state = State::Land;
-
-    // 着地アニメーション再生
-    model->PlayAnimation(Anim_Landing, false);
-}
-
-void Player::UpdateLandState(float elapsedTime)
-{
-    // もし終わったら待機に変更
-    if (!model->IsPlayAnimation())
-    {
-
-        TransitionIdleState();
-    }
-
-}
-
-void Player::TransitionJumpFlipState()
-{
-    state = State::JumpFlip;
-
-    // 走りアニメーション再生
-    model->PlayAnimation(Anim_Jump_Flip, false);
-}
-
-void Player::UpdatejumpFlipState(float elapsedTime)
-{
-    //// 移動入力処理
-    //if (!InputMove(elapsedTime))
-    //{
-    //    TransitionIdleState();
-    //}
-
-    InputMove(elapsedTime);
-    //// ジャンプ入力処理
-    //if (!model->IsPlayAnimation())
-    //{
-    //    TransitionJumpState();
-    //}
-}
-
-void Player::TransitionAttackState()
-{
-    //state = State::Attack;
-    //
-    //// 走りアニメーション再生
-    //model->PlayAnimation(Anim_Attack, false);
-}
-
-void Player::UpdateAttackState(float elapsedTime)
-{
-    // もし終わったら待機に変更
-    if (!model->IsPlayAnimation())
-    {
-        attackCollisionFlag = false;
-        switch (stated)
-        {
-        case Player::State::Idle:
-            TransitionIdleState();
-            break;
-        case Player::State::Move:
-            TransitionMoveState();
-            break;
-        }
-        //TransitionIdleState();
-       
-    }
-    
-    // 任意のアニメーション再生区間でのみ衝突判定処理をする
-    float animationTime = model->GetCurrentANimationSeconds();
-    // 上手く行けば敵が回避行動を取ってくれる行動を用意出来る。
-    attackCollisionFlag = animationTime >= 0.3f && animationTime <= 0.4f;
-    if (attackCollisionFlag)
-    {
-        // 左手ノードとエネミーの衝突処理
-        CollisionNodeVsEnemies("mixamorig:LeftHand", leftHandRadius);
-    }
-}
-
-void Player::TransitionDamageState()
-{
-   // state = State::Damage;
-   //
-   // // ダメージアニメーション再生
-   // model->PlayAnimation(Anim_GetHit1, false);
-}
-
-void Player::UpdateDamageState(float elapsedTime)
-{
-    // ダメージアニメーション終わったら待機ステートへ
-    if (!model->IsPlayAnimation())
-    {
-            TransitionIdleState();
-    }
-}
-
-void Player::TransitionDeathState()
-{
-   // state = State::Death;
-   //
-   // // ダメージアニメーション再生
-   // model->PlayAnimation(Anim_Death, false);
-}
-
-void Player::UpdateDeathState(float elapsedTime)
-{   
-    
-    if (!model->IsPlayAnimation())
-    {
-       // ボタンを押したら復活ステートへ遷移
-        GamePad& gamePad = Input::Instance().GetGamePad();
-        if (gamePad.GetButtonDown() & GamePad::BTN_A)
-        {
-            TransitionReviveState();
-        }
-    }
-
-}
-// 復活ステート遷移
-void Player::TransitionReviveState()
-{
-    //state = State::Revive;
-    //
-    //// 体力回復
-    //health = maxHealth;
-    //
-    //// ダメージアニメーション再生
-    //model->PlayAnimation(Anim_Revive, false);
-}
-
-void Player::UpdateReviveState(float elapsedTime)
-{
-    if (!model->IsPlayAnimation())
-    {
-        TransitionIdleState();
-
-    }
-}
+//// 待機ステートへ遷移
+//void Player::TransitionIdleState()
+//{
+//    state = State::Idle;
+//
+//    // 待機アニメーション再生
+//    //model->PlayAnimation(Anim_Idle, true);
+//
+//     // 走りアニメーション再生
+//    model->PlayAnimation(Anim_Running, true);
+//}
+//
+//// 待機ステート更新処理
+//void Player::UpdateIdleState(float elapsedTime)
+//{
+//    // 移動入力処理
+//    if (InputMove(elapsedTime))
+//    {
+//        TransitionMoveState();
+//    }
+//
+//    // ジャンプ入力処理
+//    if (InputJump())
+//    {
+//        TransitionJumpState();
+//    }
+//
+//    if (InputAttack())
+//    {
+//        stated = state;
+//        TransitionAttackState();
+//    }
+//
+//    // 弾丸入力処理
+//    if (InputProjectile())
+//    {
+//        TransitionAttackState();
+//    }
+//
+//    // 移動入力処理
+//    //InputMove(elapsedTime);
+//}
+//
+//void Player::TransitionMoveState()
+//{
+//    state = State::Move;
+//
+//    // 走りアニメーション再生
+//    model->PlayAnimation(Anim_Running, true);
+//}
+//void Player::UpdateMoveState(float elapsedTime)
+//{
+//    // 移動入力処理
+//    if (!InputMove(elapsedTime))
+//    {
+//        TransitionIdleState();
+//    }
+//
+//
+//    // ジャンプ入力処理
+//    if (InputJump())
+//    {   
+//        TransitionJumpState();
+//    }
+//
+//    if (InputAttack())
+//    {
+//        stated = state;
+//        TransitionAttackState();
+//    }
+//
+//    //// ジャンプ入力処理
+//    //InputJump();
+//
+//    // 弾丸入力処理
+//    if (InputProjectile())
+//    {
+//        TransitionAttackState();
+//    }
+//
+//    //InputMove(elapsedTime);
+//
+//    //// 移動入力処理
+//    //InputMove(elapsedTime);
+//
+//}
+//
+//void Player::TransitionJumpState()
+//{
+//    state = State::Jump;
+//
+//    // ジャンプアニメーション再生
+//    model->PlayAnimation(Anim_Jump, true);
+//}
+//
+//void Player::UpdateJumpState(float elapsedTime)
+//{
+//
+//    InputMove(elapsedTime);
+//
+//    // ジャンプ入力処理
+//    if (InputJump()&&jumpCount == 2)
+//    {
+//        TransitionJumpFlipState();
+//    }
+//
+//    // ジャンプ入力胥吏
+//    //if (inputJump())
+//    // {
+//    // // ジャンプフリップアニメーション再生
+//    //  model->PlayAnimation(Anim_Jump_Flip, false);
+//    //  }
+//    // 
+//    // // ジャンプアニメーション終了語
+//    // if(!model->IsPlayaAnimation())
+//    // {
+//    // 落下アニメーション再生
+//    // model->PlayAnimtion(Anim_Falling,true);
+//    // }
+//    // 
+//    //
+//
+//}
+//
+//void Player::TransitionLandState()
+//{
+//    state = State::Land;
+//
+//    // 着地アニメーション再生
+//    model->PlayAnimation(Anim_Landing, false);
+//}
+//
+//void Player::UpdateLandState(float elapsedTime)
+//{
+//    // もし終わったら待機に変更
+//    if (!model->IsPlayAnimation())
+//    {
+//
+//        TransitionIdleState();
+//    }
+//
+//}
+//
+//void Player::TransitionJumpFlipState()
+//{
+//    state = State::JumpFlip;
+//
+//    // 走りアニメーション再生
+//    model->PlayAnimation(Anim_Jump_Flip, false);
+//}
+//
+//void Player::UpdatejumpFlipState(float elapsedTime)
+//{
+//    //// 移動入力処理
+//    //if (!InputMove(elapsedTime))
+//    //{
+//    //    TransitionIdleState();
+//    //}
+//
+//    InputMove(elapsedTime);
+//    //// ジャンプ入力処理
+//    //if (!model->IsPlayAnimation())
+//    //{
+//    //    TransitionJumpState();
+//    //}
+//}
+//
+//void Player::TransitionAttackState()
+//{
+//    //state = State::Attack;
+//    //
+//    //// 走りアニメーション再生
+//    //model->PlayAnimation(Anim_Attack, false);
+//}
+//
+//void Player::UpdateAttackState(float elapsedTime)
+//{
+//    // もし終わったら待機に変更
+//    if (!model->IsPlayAnimation())
+//    {
+//        attackCollisionFlag = false;
+//        switch (stated)
+//        {
+//        case Player::State::Idle:
+//            TransitionIdleState();
+//            break;
+//        case Player::State::Move:
+//            TransitionMoveState();
+//            break;
+//        }
+//        //TransitionIdleState();
+//       
+//    }
+//    
+//    // 任意のアニメーション再生区間でのみ衝突判定処理をする
+//    float animationTime = model->GetCurrentANimationSeconds();
+//    // 上手く行けば敵が回避行動を取ってくれる行動を用意出来る。
+//    attackCollisionFlag = animationTime >= 0.3f && animationTime <= 0.4f;
+//    if (attackCollisionFlag)
+//    {
+//        // 左手ノードとエネミーの衝突処理
+//        CollisionNodeVsEnemies("mixamorig:LeftHand", leftHandRadius);
+//    }
+//}
+//
+//void Player::TransitionDamageState()
+//{
+//   // state = State::Damage;
+//   //
+//   // // ダメージアニメーション再生
+//   // model->PlayAnimation(Anim_GetHit1, false);
+//}
+//
+//void Player::UpdateDamageState(float elapsedTime)
+//{
+//    // ダメージアニメーション終わったら待機ステートへ
+//    if (!model->IsPlayAnimation())
+//    {
+//            TransitionIdleState();
+//    }
+//}
+//
+//void Player::TransitionDeathState()
+//{
+//   // state = State::Death;
+//   //
+//   // // ダメージアニメーション再生
+//   // model->PlayAnimation(Anim_Death, false);
+//}
+//
+//void Player::UpdateDeathState(float elapsedTime)
+//{   
+//    
+//    if (!model->IsPlayAnimation())
+//    {
+//       // ボタンを押したら復活ステートへ遷移
+//        GamePad& gamePad = Input::Instance().GetGamePad();
+//        if (gamePad.GetButtonDown() & GamePad::BTN_A)
+//        {
+//            TransitionReviveState();
+//        }
+//    }
+//
+//}
+//// 復活ステート遷移
+//void Player::TransitionReviveState()
+//{
+//    //state = State::Revive;
+//    //
+//    //// 体力回復
+//    //health = maxHealth;
+//    //
+//    //// ダメージアニメーション再生
+//    //model->PlayAnimation(Anim_Revive, false);
+//}
+//
+//void Player::UpdateReviveState(float elapsedTime)
+//{
+//    if (!model->IsPlayAnimation())
+//    {
+//        TransitionIdleState();
+//
+//    }
+//}
+//void Player::ChangeState(State state)
+//{
+//    //操作権がないやつのステート遷移
+//    if (GetState() != state)
+//    {
+//        switch (state)
+//        {
+//        case State::Idle:
+//            TransitionIdleState();
+//            break;
+//        case State::Move:
+//            TransitionMoveState();
+//            break;
+//        case State::Jump:
+//            TransitionJumpState();
+//            break;
+//        case State::Land:
+//            TransitionLandState();
+//            break;
+//        case  State::JumpFlip:
+//            TransitionJumpFlipState();
+//            break;
+//        }
+//    }
+//}

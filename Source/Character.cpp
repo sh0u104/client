@@ -210,15 +210,13 @@ void Character::Jump(float speed)
 void Character::UpdateVelocity(float elapsedTime)
 { 
     float elapsedFrame = 60.0f * elapsedTime;
+   
+    // 垂直速力更新処理
+    UpdateVerticalVelocity(elapsedFrame);
 
-    //send前計算
-    {
-        // 垂直速力更新処理
-        UpdateVerticalVelocity(elapsedFrame);
-
-        // 水平速力更新処理
-        UpdateHorizontalVelocity(elapsedFrame);
-    }
+    // 水平速力更新処理
+    UpdateHorizontalVelocity(elapsedFrame);
+    
 
     // 垂直移動更新処理
     UpdateVerticalMove(elapsedTime);

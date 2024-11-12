@@ -16,6 +16,14 @@ public:
 	Connection();
 	~Connection();
 
+
+	// 唯一のインスタンス取得
+	static Connection& Instance()
+	{
+		static Connection instance;
+		return instance;
+	}
+
 	void Initialize();
 	bool UDPInitialize();
 	struct Test
@@ -70,6 +78,7 @@ public:
 	void UdpRecvThread();
 
 	void SendEnemy(Enemy* enemy);
+	void SendEnemyDamage(int enemuID);
 
 	
 	enum class TcpTag : unsigned short
@@ -88,7 +97,8 @@ public:
 		Move,
 		Sync,			// 同期
 		Login,
-		UdpAddr,          //サーバーでUDPのアドレス保存用
+		UdpAddr,        //サーバーでUDPのアドレス保存用
+		EnemyDamage,    //敵がダメージを受けたら
 		
 	};
 	enum class UdpTag : unsigned short
@@ -108,6 +118,12 @@ public:
 		DirectX::XMFLOAT3 position;
 		Enemy::State state;
 		DirectX::XMFLOAT3 angle;
+	};
+
+	struct EnemyDamage
+	{
+		TcpTag cmd;
+		int id;
 	};
 
 	struct Message

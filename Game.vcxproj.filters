@@ -207,6 +207,9 @@
     <ClInclude Include="Source\StateMachine.h">
       <Filter>Source</Filter>
     </ClInclude>
+    <ClInclude Include="Source\EnemyStateDerived.h">
+      <Filter>Source</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="External\imgui\imgui.cpp">
@@ -360,6 +363,9 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="Source\StateMachine.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\EnemyStateDerived.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>

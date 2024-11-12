@@ -17,7 +17,7 @@ void EnemyManager::Update(float elapsedTime)
     // 破棄処理 毎フレームここで一気に消す。
     // 注意projectilesの範囲for文中でerase()すると不具合が発生してしまうため、
     //  更新処理が終わった後に破棄リストに積まれたオブジェクトを削除する。
-    for (Enemy* enemy : removes)// 殺しますよリストを殺す
+    for (Enemy* enemy : removes)
     {
         // std::vectorから要素を削除する場合はイテレーターで削除しなければならない
         //      イテレーターの為にstd::findを使う              (enemiesの最初から最後まで調べてenemyがあったら)

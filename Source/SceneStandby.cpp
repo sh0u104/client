@@ -108,23 +108,34 @@ void SceneStandby::Initialize()
 	}
 	else
 	{
+		
 		playerManager = sceneManager.GetPlayerManager();
-		for (int i = 0; i < playerManager->GetPlayers().size(); ++i)
-		{
-			int MYID = playerManager->GetMyPlayer()->Getteamsid(i);
-			playerManager->GetPlayer(MYID)->SetAngle({ 0.0f,3.0f,0.0f });
-			playerManager->GetPlayer(MYID)->SetPosition({ 1.0f * i,0.0f,0.0f });
-		}
 		connection = sceneManager.GetConnection();
-		if (playerManager->GetMyPlayer()->GetTeamHost())
+	    //ソロの場合　
+		if (playerManager->GetMyPlayer()->Getteamnumber() == 0)
 		{
-			teamcreate = true;
+			playerManager->GetMyPlayer()->SetAngle({ 0.0f,3.0f,0.0f });
+			playerManager->GetMyPlayer()->SetPosition({ 0.0f,0.0f,0.0f });
 		}
 		else
 		{
-			//準備チェックを外す
-			playerManager->GetMyPlayer()->SetstartCheck(false);
-			teamjoin = true;
+			for (int i = 0; i < playerManager->GetPlayers().size(); ++i)
+			{
+				int MYID = playerManager->GetMyPlayer()->Getteamsid(i);
+				playerManager->GetPlayer(MYID)->SetAngle({ 0.0f,3.0f,0.0f });
+				playerManager->GetPlayer(MYID)->SetPosition({ 1.0f * i,0.0f,0.0f });
+			}
+			
+			if (playerManager->GetMyPlayer()->GetTeamHost())
+			{
+				teamcreate = true;
+			}
+			else
+			{
+				//準備チェックを外す
+				playerManager->GetMyPlayer()->SetstartCheck(false);
+				teamjoin = true;
+			}
 		}
 	}
 }
@@ -153,16 +164,11 @@ void SceneStandby::Finalize()
 
 void SceneStandby::Update(float elapsedTime)
 {
-	playerManager->GetMyPlayer()->ChangeState(Player::State::Idle);
+	playerManager->GetMyPlayer()->GetStateMachine()->ChangeState(static_cast<int>(Player::State::Idle));
 		
 	//シーン遷移
 	if (playerManager->GetGameStart())
 	{
-		if (playerManager->GetMyPlayer()->Getteamnumber() == 0)
-		{
-			playerManager->GetMyPlayer()->SetTeamHost(true);
-		}
-
 		playerManager->SetGameStart(false);
 		SceneManager::Instance().ChangeScene(new SceneLoading(new SceneGame));
 	}
@@ -170,9 +176,14 @@ void SceneStandby::Update(float elapsedTime)
 	//デバッグ用
 	if (debugGameStart)
 	{
+		debugGameStart = false;
 		if (playerManager->GetMyPlayerID() > 0)
 		{
 			sendgamestart = true;
+			if (playerManager->GetMyPlayer()->Getteamnumber() == 0)
+			{
+				playerManager->GetMyPlayer()->SetTeamHost(true);
+			}
 		}
 		
 	}
@@ -202,7 +213,7 @@ void SceneStandby::Update(float elapsedTime)
 	//}
 
 	//ゲームスタート申請
-	if(sendgamestart)
+	if(sendgamestart&& playerManager->GetMyPlayer()->GetTeamHost())
 	{
 		sendgamestart = false;
 		connection->SendGamestart
@@ -213,7 +224,6 @@ void SceneStandby::Update(float elapsedTime)
 
 	
 	int generateCount = playerManager->GetPlayersGenerateCount();
-
 	if (playerManager->GetSynclogin())
 	{
 		int teamMax = 4;

@@ -105,6 +105,7 @@ bool Connection::UDPInitialize()
 	u_long mode = 1; // ノンブロッキングモードを有効にするために1を設定
 	ioctlsocket(uSock, FIONBIO, &mode);
 
+	//サーバーにおくって帰ってくるまで
 	while (isUAddr)
 	{
 		SendUdpAddr();
@@ -157,16 +158,27 @@ void Connection::NetrowkUpdate(float elapsedTime)
 void Connection::SendEnemy(Enemy* enemy)
 {
 	EnemyData enemyData;
+	enemyData.cmd = UdpTag::EnemyMove;
 	enemyData.id = enemy->GetMyEnemyId();
 	enemyData.position = enemy->GetPosition();
 	enemyData.angle = enemy->GetAngle();
 	enemyData.state = enemy->GetState();
-	enemyData.cmd = UdpTag::EnemyMove;
 
 	char buffer[sizeof(EnemyData)];
 	memcpy_s(buffer, sizeof(buffer), &enemyData, sizeof(EnemyData));
 	sendto(uSock, buffer, sizeof(buffer), 0, (struct sockaddr*)&uAddr, sizeof(struct sockaddr_in));
 }
+void Connection::SendEnemyDamage(int enemuID)
+{
+	EnemyDamage enemyDamage;
+	enemyDamage.cmd = TcpTag::EnemyDamage;
+	enemyDamage.id = enemuID;
+
+	char buffer[sizeof(EnemyDamage)];
+	memcpy_s(buffer, sizeof(buffer), &enemyDamage, sizeof(EnemyDamage));
+	int s = send(sock, buffer, sizeof(buffer), 0);
+}
+
 void Connection::UdpRecvThread()
 {
   do {
@@ -187,7 +199,8 @@ void Connection::UdpRecvThread()
 					PlayerInput input;
 					memcpy_s(&input, sizeof(PlayerInput), Buffer, sizeof(PlayerInput));
 					Player* player = playerManager->GetPlayer(input.id);
-					if (playerManager->GetMyPlayerID() != input.id)
+
+					if (playerManager->GetMyPlayerID() != input.id )
 					{
 						player->SetAngle(input.angle);
 						player->SetPosition(input.position);
@@ -213,7 +226,7 @@ void Connection::UdpRecvThread()
 						//アニメーションにいれる
 						if (enemy->GetState() != enemyData.state)
 						{
-							//enemy->GetStateMachine()->ChangeState(static_cast<int>(enemyData.state));
+							enemy->GetStateMachine()->ChangeState(static_cast<int>(enemyData.state));
 						}
 					}
 				}
@@ -480,6 +493,18 @@ void Connection::TcpRecvThread()
 						{
 							player->GetStateMachine()->ChangeState(static_cast<int>(input.state));
 						}
+					}
+				}
+				break;
+				case TcpTag::EnemyDamage:
+				{
+					EnemyDamage enemyDamage;
+					memcpy_s(&enemyDamage, sizeof(EnemyDamage), buffer, sizeof(EnemyDamage));
+					EnemyManager& enemyManager = EnemyManager::Instance();
+					Enemy* enemy = enemyManager.GetIDEnemy(enemyDamage.id);
+					if (enemy != nullptr)
+					{
+						enemy->ApplyDamage(1, 0.5f);
 					}
 				}
 				break;

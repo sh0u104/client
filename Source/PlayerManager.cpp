@@ -16,8 +16,8 @@ void PlayerManager::Update(float elapsedTime)
 
 	for (Player* player : players)
 	{
+		if (player != nullptr)
 		if(player->GetReady())
-		//if (player != nullptr)
 		//if (!GetLogging_in())
 		player->Update(elapsedTime);
 	}

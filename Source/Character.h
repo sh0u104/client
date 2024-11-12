@@ -56,6 +56,8 @@ public:
     void SetRecvPosition(DirectX::XMFLOAT3 position) { this->RecvPosition = position; }
 
     void IsEnemy() { isEnemy = true; }
+
+   
 protected:
     // ˆÚ“®ˆ—
     //void Move(float elapsedTime, float vx, float vz, float speed);
@@ -137,12 +139,9 @@ protected:// Œp³æ‚Å‚àg‚¦‚é
     float moveVecZ = 0.0f;
 
     float airControl = 0.3f;
-
-
-
     float stepOffset = 1.0f;
-
     float slopeRate = 1.0f;
 
     bool isEnemy = false;
+   
 };

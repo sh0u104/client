@@ -35,6 +35,7 @@ void StateMachine::RegisterState(State* state)
 	// 親ステート登録
 	statePool.emplace_back(state);
 }
+
 // ステート番号取得
 int StateMachine::GetStateIndex()
 {

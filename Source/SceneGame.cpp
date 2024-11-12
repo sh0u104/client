@@ -56,7 +56,6 @@ void SceneGame::Initialize()
 
     //スプライト
 	{
-		//sprites[static_cast<int>(Spritenumber:)] = std::make_unique<Sprite>("Data/Sprite/");
 		//数字
 		sprites[static_cast<int>(SpriteNumber::Number)] = std::make_unique<Sprite>("Data/Sprite/number.png");
 
@@ -104,7 +103,7 @@ void SceneGame::Initialize()
 
 	// エネミー初期化
 	EnemyManager& enemyManager = EnemyManager::Instance();
-	for (int i = 0; i < 2; ++i)
+	for (int i = 0; i < 1; ++i)
 	{
 		EnemySlime* slime = new EnemySlime();
 		slime->SetPosition(DirectX::XMFLOAT3(i * 2.0f, 0, 5));
@@ -155,14 +154,18 @@ void SceneGame::Update(float elapsedTime)
 			connection->SendEnemy(enemy);
 		}
 	}
+	//敵全部死んだらロビーに戻る	
+	if (EnemyManager::Instance().GetEnemys().size() <= 0)
+	{
+		if(playerManager->GetMyPlayer()->GetTeamHost())
+		//ホストだけゲーム終わったを送る
+		connection->SendGameEnd(playerManager->GetMyPlayer()->Getteamnumber());
+
+		SceneManager::Instance().ChangeScene(new SceneLoading(new SceneStandby));
+	}
 
 	//timer -= elapsedTime;
 	//ゲーム終了を送る
-	if (timer < 0)
-	{
-		connection->SendGameEnd(playerManager->GetMyPlayer()->Getteamnumber());
-		SceneManager::Instance().ChangeScene(new SceneLoading(new SceneStandby));
-	}
 
 	//プレイヤーが存在してたら
 	if (connection&& playerManager->GetPlayers().size()>0)
@@ -205,6 +208,7 @@ void SceneGame::Update(float elapsedTime)
 		cameraController->Update(elapsedTime);
 		// プレイヤー更新処理
 		//player->Update(elapsedTime);
+		
 		playerManager->Update(elapsedTime);
 	}
 
@@ -284,8 +288,16 @@ void SceneGame::Render()
 		ImGui::SetNextWindowPos(ImVec2(500, 10), ImGuiCond_FirstUseEver);
 		ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
 		// beginからendまでの内容が出来る
+		EnemyManager& enemyManager = EnemyManager::Instance();
+		std::vector<Enemy*> enemys = enemyManager.GetEnemys();
 		if (ImGui::Begin("Player", nullptr, ImGuiWindowFlags_None))
 		{
+			for (Enemy* enemy : enemys)
+			{
+				ImGui::Text("EnemyHP: %d", enemy->GetHealth());
+				ImGui::Text("EnemyState: %d", enemy->GetState());
+
+			}
 			ImGui::Text("Host: %d", playerManager->GetMyPlayer()->GetTeamHost());
 			
 			//ImGui::Text("State: %d", static_cast<int>(playerManager->GetMyPlayer()->GetState()));

@@ -1,13 +1,25 @@
 #pragma once
-#include "Player.h"
+#include "EnemySlime.h"
 #include "StateBase.h"
-class IdleState : public State
+
+// ステート
+//enum class State
+//{
+//	Wander,
+//	Idle,
+//	Pursuit,
+//	Attack,
+//	IdleBattle,
+//	Damage,
+//	Death
+//};
+class EnemyWanderState : public State
 {
 public:
 	// コンストラクタ
-	IdleState(Player* player) :owner(player) {};
+	EnemyWanderState(EnemySlime* enemy) :owner(enemy){};
 	// デストラクタ
-	~IdleState() {}
+	~EnemyWanderState() {}
 	// ステートに入った時のメソッド
 	void Enter()override;
 	// ステートで実行するメソッド
@@ -15,33 +27,33 @@ public:
 	// ステートから出ていくときのメソッド
 	void Exit()override;
 protected:
-	Player* owner;
+	EnemySlime* owner;
 };
 
-class MoveState : public State
+class EnemyIdleState : public State
 {
 public:
 	// コンストラクタ
-	MoveState(Player* player) :owner(player) {};
+	EnemyIdleState(EnemySlime* enemy) :owner(enemy) {};
 	// デストラクタ
-	~MoveState() {}
+	~EnemyIdleState() {}
 	// ステートに入った時のメソッド
 	void Enter()override;
 	// ステートで実行するメソッド
 	void Execute(float elapsedTime)override;
 	// ステートから出ていくときのメソッド
-protected:
-	Player* owner;
 	void Exit()override;
+protected:
+	EnemySlime* owner;
 };
 
-class JumpState : public State
+class EnemyPursuitState : public State
 {
 public:
 	// コンストラクタ
-	JumpState(Player* player) :owner(player) {};
+	EnemyPursuitState(EnemySlime* enemy) :owner(enemy) {};
 	// デストラクタ
-	~JumpState() {}
+	~EnemyPursuitState() {}
 	// ステートに入った時のメソッド
 	void Enter()override;
 	// ステートで実行するメソッド
@@ -49,16 +61,16 @@ public:
 	// ステートから出ていくときのメソッド
 	void Exit()override;
 protected:
-	Player* owner;
+	EnemySlime* owner;
 };
 
-class LandState : public State
+class EnemyAttackState : public State
 {
 public:
 	// コンストラクタ
-	LandState(Player* player) :owner(player) {};
+	EnemyAttackState(EnemySlime* enemy) :owner(enemy) {};
 	// デストラクタ
-	~LandState() {}
+	~EnemyAttackState() {}
 	// ステートに入った時のメソッド
 	void Enter()override;
 	// ステートで実行するメソッド
@@ -66,16 +78,16 @@ public:
 	// ステートから出ていくときのメソッド
 	void Exit()override;
 protected:
-	Player* owner;
+	EnemySlime* owner;
 };
 
-class JumpFlipState : public State
+class EnemyIdleBattleState : public State
 {
 public:
 	// コンストラクタ
-	JumpFlipState(Player* player) :owner(player) {};
+	EnemyIdleBattleState(EnemySlime* enemy) :owner(enemy) {};
 	// デストラクタ
-	~JumpFlipState() {}
+	~EnemyIdleBattleState() {}
 	// ステートに入った時のメソッド
 	void Enter()override;
 	// ステートで実行するメソッド
@@ -83,16 +95,16 @@ public:
 	// ステートから出ていくときのメソッド
 	void Exit()override;
 protected:
-	Player* owner;
+	EnemySlime* owner;
 };
 
-class AttackState : public State
+class EnemyDamageState : public State
 {
 public:
 	// コンストラクタ
-	AttackState(Player* player) :owner(player) {};
+	EnemyDamageState(EnemySlime* enemy) :owner(enemy) {};
 	// デストラクタ
-	~AttackState() {}
+	~EnemyDamageState() {}
 	// ステートに入った時のメソッド
 	void Enter()override;
 	// ステートで実行するメソッド
@@ -100,5 +112,22 @@ public:
 	// ステートから出ていくときのメソッド
 	void Exit()override;
 protected:
-	Player* owner;
+	EnemySlime* owner;
+};
+
+class EnemyDeathState : public State
+{
+public:
+	// コンストラクタ
+	EnemyDeathState(EnemySlime* enemy) :owner(enemy) {};
+	// デストラクタ
+	~EnemyDeathState() {}
+	// ステートに入った時のメソッド
+	void Enter()override;
+	// ステートで実行するメソッド
+	void Execute(float elapsedTime)override;
+	// ステートから出ていくときのメソッド
+	void Exit()override;
+protected:
+	EnemySlime* owner;
 };

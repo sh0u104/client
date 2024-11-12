@@ -3,6 +3,7 @@
 #include "Graphics/Shader.h"
 #include "Character.h"
 
+#include "StateMachine.h"
 // エネミー
 class Enemy : public Character
 {
@@ -37,10 +38,19 @@ public:
         Damage,
         Death
     };
+
+   
     int ID = -1;
     void SetMyEnemyId(int id) { this->ID = id; }
     int  GetMyEnemyId() { return this->ID; }
     State state = State::Wander;
 
     State GetState() { return this->state; }
+    void SetState(State state) { this->state = state; }
+
+    Model* model = nullptr;
+    Model* GetModel() { return model; }
+
+    StateMachine* GetStateMachine() { return stateMachine.get(); }
+    std::shared_ptr<StateMachine> stateMachine;
 };

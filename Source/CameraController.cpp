@@ -85,7 +85,7 @@ void CameraController::DrawDebugGUI()
     if (ImGui::Begin("Player", nullptr, ImGuiWindowFlags_None))
     {
         // トランスフォーム
-        if (ImGui::CollapsingHeader("Transform0.2", ImGuiTreeNodeFlags_DefaultOpen))
+        if (ImGui::CollapsingHeader("CameraTransform", ImGuiTreeNodeFlags_DefaultOpen))
         {
             // 位置　// 数値をいじる
             ImGui::InputFloat3("angle", &angle.x);

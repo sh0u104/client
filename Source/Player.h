@@ -88,6 +88,7 @@ public:
         Land,
         Jump,
         JumpFlip,
+        Attack,
     };
     // ステート
     //enum class State
@@ -128,63 +129,66 @@ public:
     // 攻撃入力
     bool InputAttack();
 
-    // 待機ステートへ遷移
-    void TransitionIdleState();
-    // 待機ステート更新
-    void UpdateIdleState(float elapsedTime);
-
-    // 移動ステートへ更新
-    void UpdateMoveState(float elapsedTime);
-
-    // ジャンプステート更新処理
-    void UpdateJumpState(float elapsedTime);
-
-    // 着地ステートへ遷移
-    void TransitionLandState();
-
-    // 着地ステージ更新処理
-    void UpdateLandState(float elapsedTime);
-
-    // 二段ジャンプステート更新
-    void UpdatejumpFlipState(float elapsedTime);
-    
-
-    // 攻撃ステートへ遷移
-    void TransitionAttackState();
-
-    // 攻撃ステージ更新処理
-    void UpdateAttackState(float elapsedTime);
-
-    // ダメージステートへ遷移
-    void TransitionDamageState();
-
-    // ダメージステートへ更新処理
-    void UpdateDamageState(float elapsedTime);
-
-    // 死亡ステートへ遷移
-    void TransitionDeathState();
-
-    // 死亡ステート更新処理
-    void UpdateDeathState(float elapsedTime);
-
-    // 復活ステートへ遷移
-    void TransitionReviveState();
-
-    // 復活ステート更新処理
-    void UpdateReviveState(float elapsedTime);
-
-    // 二段ジャンプステートへ遷移
-    void TransitionJumpFlipState();
-
-    // ジャンプステートへ遷移
-    void TransitionJumpState();
-
-    // 移動ステートへ遷移    
-    void TransitionMoveState();
+    //// 待機ステートへ遷移
+    //void TransitionIdleState();
+    //// 待機ステート更新
+    //void UpdateIdleState(float elapsedTime);
+    //
+    //// 移動ステートへ更新
+    //void UpdateMoveState(float elapsedTime);
+    //
+    //// ジャンプステート更新処理
+    //void UpdateJumpState(float elapsedTime);
+    //
+    //// 着地ステートへ遷移
+    //void TransitionLandState();
+    //
+    //// 着地ステージ更新処理
+    //void UpdateLandState(float elapsedTime);
+    //
+    //// 二段ジャンプステート更新
+    //void UpdatejumpFlipState(float elapsedTime);
+    //
+    //
+    //// 攻撃ステートへ遷移
+    //void TransitionAttackState();
+    //
+    //// 攻撃ステージ更新処理
+    //void UpdateAttackState(float elapsedTime);
+    //
+    //// ダメージステートへ遷移
+    //void TransitionDamageState();
+    //
+    //// ダメージステートへ更新処理
+    //void UpdateDamageState(float elapsedTime);
+    //
+    //// 死亡ステートへ遷移
+    //void TransitionDeathState();
+    //
+    //// 死亡ステート更新処理
+    //void UpdateDeathState(float elapsedTime);
+    //
+    //// 復活ステートへ遷移
+    //void TransitionReviveState();
+    //
+    //// 復活ステート更新処理
+    //void UpdateReviveState(float elapsedTime);
+    //
+    //// 二段ジャンプステートへ遷移
+    //void TransitionJumpFlipState();
+    //
+    //// ジャンプステートへ遷移
+    //void TransitionJumpState();
+    //
+    //// 移動ステートへ遷移    
+    //void TransitionMoveState();
 
     int            jumpCount = 0;
 
     void SetState(State state) { this->state = state; }
+    //void SetStated(State stated) { this->stated = stated; }
+    //State GetStated() {return  this->stated; }
+    
 private:
     std::shared_ptr<StateMachine> stateMachine;
    // StateMachine* stateMachine = nullptr;
@@ -206,14 +210,8 @@ private:
     State   state = State::Idle;
     State   stated;
 
-
-
     // 着地場所までの距離　 十分な速度で落とす重力の５倍２、３秒後に着地モーションをする。
    // int jumpfliptime =  grabity * 5;
-
-    float  leftHandRadius = 0.4f;
-           
-    bool   attackCollisionFlag = false;
 
     int    healse  = 10;
 
@@ -237,8 +235,8 @@ public:
    
     void ChangeState(State state);
 
-    State GetSendState() { return this->sendState; }
-    State sendState = State::Idle;
+    //State GetSendState() { return this->sendState; }
+    //State sendState = State::Idle;
 
  
     int Getteamnumber() { return teamNumber; }
@@ -266,6 +264,11 @@ public:
 
     void SetTeamHost(bool host) { this->teamHost = host; }
     bool GetTeamHost() { return this->teamHost; }
+
+    void SetAttackCollisionFlag(bool attack) { this->attackCollisionFlag = attack; }
+    bool GetAttackCollisionFlag() { return this->attackCollisionFlag; }
+
+    float GetLeftHandRadius() { return this->leftHandRadius; }
 protected:
   
     int teamNumber = 0;
@@ -279,4 +282,7 @@ protected:
     char Name[10] = {};
     bool isMouseOperation = true;
     int loginDay = 0;
+
+    bool attackCollisionFlag = false;
+    float leftHandRadius = 0.4f;
 };
