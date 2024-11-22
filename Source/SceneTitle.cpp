@@ -11,7 +11,7 @@ void SceneTitle::Initialize()
 {
     // スプライト初期化
     sprite = new Sprite("Data/Sprite/Title.png");
-
+    SceneManager::Instance().ConnectionClear();
 }
 // 終了化
 void SceneTitle::Finalize()
@@ -22,6 +22,7 @@ void SceneTitle::Finalize()
         delete sprite;
         sprite = nullptr;
     }
+
 }
 // 更新処理
 void SceneTitle::Update(float elapsedTime)

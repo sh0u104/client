@@ -25,6 +25,14 @@ public:
     // ï`âÊèàóù
     void Render() override;
 
+    void OprerationSelect(ID3D11DeviceContext* dc);
+    void Logout(ID3D11DeviceContext* dc);
+
+    void SyncPlayerGenerate();
+
+    void LoginPlayerGenerate();
+
+    bool isSetting = false;
 private:
     enum class Spritenumber : int
     {
@@ -44,6 +52,11 @@ private:
         Multi,
         Start,
         Name,
+        Logout,
+        WASD,
+        SelectEdge,
+        Setting,
+        Mouse,
       //ModeSelect,
         Max
     };
@@ -90,7 +103,7 @@ private:
     void RenderGameStart(ID3D11DeviceContext* dc);
     char input[32];
 
-    bool Uiclick(float posX,float posY,float sizeX,float sizeY);
+    bool Uiclick(float posX,float posY,float sizeX,float size);
     std::vector<int>numbers;
     float posxy[12][2] = {};
 public:

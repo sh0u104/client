@@ -53,7 +53,10 @@ void SceneGame::Initialize()
 	);
 	// カメラコントローラー初期化
 	cameraController = new CameraController();
+	cameraController->DebugSetAngleX();
 
+	//Logger::Print("finalize send failed. error code\n");
+	
     //スプライト
 	{
 		//数字
@@ -71,9 +74,13 @@ void SceneGame::Initialize()
 
 		sprites[static_cast<int>(SpriteNumber::Setting)] = std::make_unique<Sprite>("Data/Sprite/setting.png");
 
-		//名前
+		//文字フォント
 		sprites[static_cast<int>(SpriteNumber::Name)] = std::make_unique<Sprite>("Data/Sprite/font1.png");
-		Logger::Print("finalize send failed. error code\n");
+		//ログアウト
+		sprites[static_cast<int>(SpriteNumber::Logout)] = std::make_unique<Sprite>("Data/Sprite/logout.png");
+		//チーム解散
+		sprites[static_cast<int>(SpriteNumber::TeamDisbanded)] = std::make_unique<Sprite>("Data/Sprite/teamdisbanded.png");
+		
 	}
 
 	// プレイヤー初期化
@@ -145,7 +152,7 @@ void SceneGame::Finalize()
 // 更新処理
 void SceneGame::Update(float elapsedTime)
 {
-	if (playerManager->GetMyPlayer()->GetTeamHost())
+	if (playerManager->GetMyPlayer()->GetTeamHost() && playerManager->GetMyPlayer()->Getteamnumber() > 1000)
 	{
 		EnemyManager& enemyManager = EnemyManager::Instance();
 		std::vector<Enemy*> enemys = enemyManager.GetEnemys();
@@ -178,7 +185,7 @@ void SceneGame::Update(float elapsedTime)
 				playerManager->GetMyPlayer()->Setoperation(true);
 			}
 
-			if (connection != nullptr)
+			if (connection != nullptr && playerManager->GetMyPlayer()->Getteamnumber() > 1000)
 			{
 				connection->SendMove(
 					playerManager->GetMyPlayer()->GetVelocity(),
@@ -223,7 +230,12 @@ void SceneGame::Update(float elapsedTime)
 
 	
 	//消去リストのIDのプレイヤーを消す
-	connection->DeleteID();
+	//connection->DeleteID();
+	//プレイヤー消去リストにあるものを消す
+	playerManager->DeletePlayer();
+
+	
+
 }
 
 
@@ -273,9 +285,22 @@ void SceneGame::Render()
 			MouseOpreration(dc);
 		}
 
+		//チームのホストがいなくなったら
+		if (playerManager->GetTeamDisbabded())
+		{
+			//ロビーに戻るを表示
+			TeamNotHost(dc);
 
+		}
 		//設定画面
 		OprerationSelect(dc);
+
+		//設定を開いてるか
+		if (isSetting)
+		{
+			//ログアウトボタン表示
+			Logout(dc);
+		}
 		
 	}
 	// 3Dエフェクト描画
@@ -292,6 +317,9 @@ void SceneGame::Render()
 		std::vector<Enemy*> enemys = enemyManager.GetEnemys();
 		if (ImGui::Begin("Player", nullptr, ImGuiWindowFlags_None))
 		{
+			ImGui::Text("Disbanded: %d", playerManager->GetTeamDisbabded());
+			ImGui::Text("LoginCount: %d", playerManager->GetLoginCount());
+			ImGui::Text("PlayersSize: %d", playerManager->GetPlayers().size());
 			for (Enemy* enemy : enemys)
 			{
 				ImGui::Text("EnemyHP: %d", enemy->GetHealth());
@@ -320,9 +348,9 @@ void SceneGame::Render()
 				{
 					ImGui::Text("false");
 				}
-				ImGui::InputFloat3("GUIVelocity", &guiVelocity.x);
-				ImGui::InputFloat3("RecvVelocity", &guiRecvVelocity.x);
-				ImGui::InputFloat3("GUIPosition", &guiPosition.x);
+				//ImGui::InputFloat3("GUIVelocity", &guiVelocity.x);
+				//ImGui::InputFloat3("RecvVelocity", &guiRecvVelocity.x);
+				//ImGui::InputFloat3("GUIPosition", &guiPosition.x);
 
 				ImGui::InputInt4("TeamsID", guiTeamsId);
 			}
@@ -492,24 +520,27 @@ void SceneGame::MouseOpreration(ID3D11DeviceContext* dc)
 
 void SceneGame::OprerationSelect(ID3D11DeviceContext* dc)
 {
-	
-	DirectX::XMFLOAT2 size,pos;
-	pos = { 10,10 };
-	size = { 30,30 };
-	sprites[static_cast<int>(SpriteNumber::Setting)]->Render(dc,
-		pos.x, pos.y,  //描画位置
-		size.x, size.y,  //表示サイズ
-		0, 0,      //切り取りはじめ位置
-		256,256, //画像サイズ
-		0.0f,
-		1, 1, 1, 1);
-
-	if (Uiclick(pos, size))
+	//設定ボタン表示
 	{
-		isSetting = !isSetting;
-		Sleep(10);
-	};
+		DirectX::XMFLOAT2 size, pos;
+		pos = { 10,10 };
+		size = { 30,30 };
+		sprites[static_cast<int>(SpriteNumber::Setting)]->Render(dc,
+			pos.x, pos.y,  //描画位置
+			size.x, size.y,  //表示サイズ
+			0, 0,      //切り取りはじめ位置
+			256, 256, //画像サイズ
+			0.0f,
+			1, 1, 1, 1);
+
+		if (Uiclick(pos, size))
+		{
+			isSetting = !isSetting;
+			Sleep(10);
+		};
+	}
 	
+	//設定ボタンを押していたら
 	if (isSetting)
 	{
 		DirectX::XMFLOAT2 size, mousePos, WASDPos, edgePos;
@@ -536,6 +567,8 @@ void SceneGame::OprerationSelect(ID3D11DeviceContext* dc)
 			0.0f,
 			1, 1, 1, 1);
 
+
+		//操作方法どちらが選択されてるかと縁の座標
 		if (playerManager->GetMyPlayer()->GetisMouseOperation())
 		{
 			if (Uiclick(WASDPos, size))
@@ -564,6 +597,56 @@ void SceneGame::OprerationSelect(ID3D11DeviceContext* dc)
 			100, 100, //画像サイズ
 			0.0f,
 			1, 1, 1, 1);
+
+	}
+}
+
+void SceneGame::Logout(ID3D11DeviceContext* dc)
+{
+	DirectX::XMFLOAT2 size, pos;
+	size = { 100,50 };
+	pos = { 25,150 };
+	//選択している縁描画
+	sprites[static_cast<int>(SpriteNumber::Logout)]->Render(dc,
+		pos.x, pos.y,  //描画位置
+		size.x , size.y ,  //表示サイズ
+		0, 0,              //切り取りはじめ位置
+		500,200,           //元の画像サイズ
+		0.0f,
+		1, 1, 1, 1);
+
+	if (Uiclick(pos, size))
+	{
+		connection->SendLogout();
+		SceneManager::Instance().ChangeScene(new SceneLoading(new SceneTitle));
+	}
+
+}
+
+void SceneGame::TeamNotHost(ID3D11DeviceContext* dc)
+{
+	DirectX::XMFLOAT2 size, pos;
+	size = { 500,300 };
+	pos = { 25,150 };
+	//選択している縁描画
+	sprites[static_cast<int>(SpriteNumber::TeamDisbanded)]->Render(dc,
+		pos.x, pos.y,  //描画位置
+		size.x, size.y,  //表示サイズ
+		0, 0,              //切り取りはじめ位置
+		800, 200,           //元の画像サイズ
+		0.0f,
+		1, 1, 1, 1);
+
+	Mouse& mouse = Input::Instance().GetMouse();
+	if (mouse.GetButtonDown() & Mouse::BTN_LEFT)
+	{
+		playerManager->SetTeamDisbabded(false);
+		playerManager->GetMyPlayer()->ResetTeamsid();
+
+		playerManager->ResetGenerateCount();
+		playerManager->ResetLoginCount();
+		//ロビーに戻る
+		SceneManager::Instance().ChangeScene(new SceneLoading(new SceneStandby));
 	}
 }
 

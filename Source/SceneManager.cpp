@@ -72,6 +72,10 @@ void SceneManager::ConnectionClear()
 
         delete connection;
         connection = nullptr;
+
+
+        SetstandbyInitialized(false);
+        SetconnectionInitialized(false);
     }
 
 

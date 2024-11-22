@@ -15,7 +15,7 @@
 
 //SceneConnection* sceneConnection;
 // 垂直同期間隔設定
-static const int syncInterval = 1;
+static const int syncInterval = 0;
 
 // コンストラクタ
 Framework::Framework(HWND hWnd)
@@ -23,11 +23,14 @@ Framework::Framework(HWND hWnd)
 	, input(hWnd)
 	, graphics(hWnd)
 {
+	hDC = GetDC(hWnd);
+
 	// エフェクトマネージャー初期化
 	EffectManager::Instance().Intialize();
 	// シーン初期化
 	//sceneGame.Initialize();
 	SceneManager::Instance().ChangeScene(new SceneTitle);
+	ReleaseDC(hWnd, hDC);
 }
 
 // デストラクタ
@@ -126,7 +129,7 @@ int Framework::Run()
 
 			float elapsedTime = syncInterval == 0
 				? timer.TimeInterval()
-				: syncInterval / 60.0f
+				: syncInterval / static_cast<float>(GetDeviceCaps(hDC, VREFRESH))
 				;
 			Update(elapsedTime);
 			Render(elapsedTime);

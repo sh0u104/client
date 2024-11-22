@@ -11,6 +11,7 @@ public:
 	void Render(ID3D11DeviceContext* dc, Shader* shader);
 
 	void DebugGUI();
+	void TeamHostCheck(bool teamDisbabded);
 
 	static PlayerManager& Instance()
 	{
@@ -25,18 +26,25 @@ public:
 
 	void SetMyPlayerID(int id) { myPlayerId = id; }
 	short GetMyPlayerID() { return myPlayerId; }
+	//消去リストに追加
 	void ErasePlayer(int id);
+	//消去リストの中身の物を消す
 	void DeletePlayer();
+
 
 	bool GetGameStart() { return gameStart; }
 	void SetGameStart(bool flag) { this->gameStart = flag; }
 
 	int GetLoginCount() { return this->loginCount; }
 	void AddLoginCount() { ++this->loginCount; }
+	void SubtractLoginCount(){--this->loginCount;}
+	void ResetLoginCount() { this->loginCount = 1; }
 	
 	int GetPlayersGenerateCount() { return this->PlayerGenerateCount; }
 	void AddPlayersGenerateCount() { ++this->PlayerGenerateCount; }
-	
+	void SubtractPlayersGenerateCount() { --this->PlayerGenerateCount; }
+	void ResetGenerateCount() {this->PlayerGenerateCount= 1;}
+
 	bool GetSynclogin() { return this->syncLogin; }
 	void SetSynclogin(bool flag) { this->syncLogin = flag; }
 	
@@ -73,6 +81,9 @@ public:
 	short GetSendertId() { return this->sendertId; }
 	void ResetSenderName(){ memset(senderName, 0, sizeof(senderName)); }
 
+	void SetTeamDisbabded(bool Disbabded) { this->teamDisbabded = Disbabded; }
+	bool GetTeamDisbabded() {return teamDisbabded;}
+
 	struct User
 	{
 		short ID;
@@ -106,6 +117,7 @@ private:
 	char senderName[10] = {};
 	short sendertId = {};
 	
-	
+
+	bool teamDisbabded = false;
 
 };

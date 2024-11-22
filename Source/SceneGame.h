@@ -31,6 +31,9 @@ public:
 	void MouseOpreration(ID3D11DeviceContext* dc);
 
 	void OprerationSelect(ID3D11DeviceContext* dc);
+	void Logout(ID3D11DeviceContext* dc);
+	//チームホストがいなくなったら
+	void TeamNotHost(ID3D11DeviceContext* dc);
 	
 	bool Uiclick(DirectX::XMFLOAT2 pos, DirectX::XMFLOAT2 size);
 private:
@@ -70,6 +73,8 @@ private:
 		WASD,
 		Setting,
 		Name,
+		Logout,
+		TeamDisbanded,
 		Max
 	};
 	std::unique_ptr<Sprite> sprites[static_cast<int>(SpriteNumber::Max)] = {};

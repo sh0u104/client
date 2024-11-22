@@ -3,7 +3,7 @@
 #include "PlayerManager.h"
 #include "SceneManager.h"
 #include "StateMachine.h"
-
+#include "Logger.h"
 #pragma comment(lib, "ws2_32.lib")
 Connection::Connection()
 {
@@ -64,11 +64,17 @@ void Connection::Initialize()
 		isConnection = false;
 		closesocket(sock);
 		WSACleanup();
+		return;
 	}
 
+	//失敗したらtrueがくる
 	if (UDPInitialize())
 	{
-	
+		udpTh.join();
+		isConnection = false;
+		closesocket(sock);
+		closesocket(uSock);
+		WSACleanup();
 	}
 }
 
@@ -106,10 +112,14 @@ bool Connection::UDPInitialize()
 	ioctlsocket(uSock, FIONBIO, &mode);
 
 	//サーバーにおくって帰ってくるまで
+	int count = 0;
 	while (isUAddr)
 	{
 		SendUdpAddr();
 		Sleep(10);
+		++count;
+		if (count > 10)
+			return true;
 	}
 	return false;
 }
@@ -122,30 +132,32 @@ void Connection::Finalize()
 		// マルチスレッドのループフラグを下ろす
 		loop = false;
 		PlayerLogout logout{};
-		
-		
-			logout.cmd = TcpTag::Logout;
-			//ログイン処理が終わってたら
-			if (playerManager != nullptr)
-			{
-				logout.id = playerManager->GetMyPlayerID();
-			}
-			//ログイン処理がまだなら
-			else
-			{
-				logout.id = -1;
-			}
-			int s = send(sock, reinterpret_cast<char*>(&logout), sizeof(PlayerLogout), 0);
-	
+		logout.cmd = TcpTag::Logout;
 
-		// スレッドの終了まで待機
-		tcpTh.join();
-		udpTh.join();
+
+		//ログイン処理が終わってたら
+		if (playerManager != nullptr)
+		{
+			logout.id = playerManager->GetMyPlayerID();
+		}
+		//ログイン処理がまだなら
+		else
+		{
+			logout.id = -1;
+		}
+		int s = send(sock, reinterpret_cast<char*>(&logout), sizeof(PlayerLogout), 0);
 
 		// ソケット終了処理
 		int c = closesocket(sock);
-		c= closesocket(uSock);
-	
+		c = closesocket(uSock);
+
+		// スレッドの終了まで待機
+		tcpTh.join();
+		Logger::Print("TCPのスレッドを閉じた");
+		udpTh.join();
+		Logger::Print("UDPのスレッドを閉じた");
+
+
 		// WSA終了処理
 		int wsaCleanup = WSACleanup();
 	}
@@ -188,7 +200,27 @@ void Connection::UdpRecvThread()
 	    	int addrSize = sizeof(struct sockaddr_in);
 	    
 	    	int size = recvfrom(uSock, Buffer, sizeof(Buffer), 0, reinterpret_cast<sockaddr*>(&uAddr), &addrSize);
-	    	if (size > 0)
+			if (size == -1) {
+				int error = WSAGetLastError();
+				if (error == WSAEWOULDBLOCK) {
+					// データがまだ来ていない場合、処理をスキップして次のループへ
+					continue;
+				}
+				else {
+					// 他のエラーの場合、ループを終了
+					Logger::Print("recvfrom error:\n",&error);
+					break;
+				}
+			}
+			else if (size == 0)
+			{
+				// クライアントが接続を閉じた場合の処理
+				//std::cout << "接続を閉じた" << std::endl;
+				Logger::Print("TUDP接続を閉じた");
+				break;
+			}
+			
+			if (size > 0)
 	    	{
 				short type = 0;
 				memcpy_s(&type, sizeof(type), Buffer, sizeof(short));
@@ -200,7 +232,7 @@ void Connection::UdpRecvThread()
 					memcpy_s(&input, sizeof(PlayerInput), Buffer, sizeof(PlayerInput));
 					Player* player = playerManager->GetPlayer(input.id);
 
-					if (playerManager->GetMyPlayerID() != input.id )
+					if (playerManager->GetMyPlayerID() != input.id)
 					{
 						player->SetAngle(input.angle);
 						player->SetPosition(input.position);
@@ -230,9 +262,11 @@ void Connection::UdpRecvThread()
 						}
 					}
 				}
+				break;
 				}
 	    	}
 	    }
+
 	} while (loop);
 
 }
@@ -249,13 +283,13 @@ void Connection::TcpRecvThread()
 			if (r == -1)
 			{
 				// エラーが発生した場合の処理
-				std::cout << "recv エラー" << std::endl;
-
+				//std::cout << "recv エラー" << std::endl;
+				//Logger::Print("recv エラー");
 			}
 			else if (r == 0)
 			{
 				// クライアントが接続を閉じた場合の処理
-				std::cout << "接続を閉じた" << std::endl;
+				Logger::Print("TCP接続を閉じた");
 			}
 			else
 			{
@@ -284,12 +318,12 @@ void Connection::TcpRecvThread()
 				{
 					PlayerLogout logout;
 					memcpy_s(&logout, sizeof(logout), buffer, sizeof(PlayerLogout));
-					std::cout << " 退出id " << logout.id << std::endl;
-
+					//std::cout << " 退出id " << logout.id << std::endl;
+					Logger::Print("退出id \n",logout.id);
 					if (playerManager->GetMyPlayerID() != logout.id)
 					{
 						playerManager->ErasePlayer(logout.id);
-						playerManager->DeletePlayer();
+						//playerManager->DeletePlayer();
 					}
 
 				}
@@ -360,28 +394,44 @@ void Connection::TcpRecvThread()
 					TeamLeave teamLeave;
 					memcpy_s(&teamLeave, sizeof(teamLeave), buffer, sizeof(TeamLeave));
 
-					//リーダーの時または本人の場合
-					if (teamLeave.isLeader || playerManager->GetMyPlayerID() == teamLeave.id)
+					//本人の時
+					if (teamLeave.id == playerManager->GetMyPlayerID())
 					{
 						for (int i = 0; i < 3; ++i)
 						{
-							int id = playerManager->GetMyPlayer()->Getteamsid(i);
-							playerManager->GetMyPlayer()->Setteamsid(i, 0);
-							//存在しないなら
-							if (id <= 0)continue;
-
-							deleteID.push_back(id);
+							int ID = playerManager->GetMyPlayer()->Getteamsid(i);
+							if (ID != playerManager->GetMyPlayerID())
+							{
+								playerManager->ErasePlayer(ID);
+							}
 						}
+						playerManager->GetMyPlayer()->Setteamnumber(0);
+						playerManager->ResetGenerateCount();
+						playerManager->ResetLoginCount();
+
+						break;
+					}
+
+					//リーダーかつ本人でもない時
+					if (teamLeave.isLeader)
+					{
+						playerManager->GetMyPlayer()->Setteamnumber(0);
+						playerManager->SetTeamDisbabded(true);
+						playerManager->ResetGenerateCount();
+						playerManager->ResetLoginCount();
 
 					}
+					//リーダーでも本人でもないとき
 					else
 					{
-						deleteID.push_back(teamLeave.id);
+						playerManager->SubtractLoginCount();
+						playerManager->SubtractPlayersGenerateCount();
 						for (int i = 0; i < 3; ++i)
 						{
-							if (playerManager->GetMyPlayer()->Getteamsid(i) == teamLeave.id)
+							int ID = playerManager->GetMyPlayer()->Getteamsid(i);
+							if (ID != playerManager->GetMyPlayerID())
 							{
-								playerManager->GetMyPlayer()->Setteamsid(i, 0);
+								playerManager->ErasePlayer(ID);
 							}
 						}
 
@@ -530,25 +580,26 @@ void Connection::TcpRecvThread()
 				}
 			}
 		}
+
 	} while (loop);
 }
 
 
 
-void Connection::DeleteID()
-{
-	//消去リストのIDのプレイヤーを消す
-	for (int i = 0; i <deleteID.size(); ++i)
-	{
-		if (deleteID.at(i) != playerManager->GetMyPlayerID())
-		{
-			playerManager->ErasePlayer(deleteID.at(i));
-			playerManager->DeletePlayer();
-		}
-		deleteID.erase(deleteID.begin() + i);
-
-	}
-}
+//void Connection::DeleteID()
+//{
+//	//消去リストのIDのプレイヤーを消す
+//	for (int i = 0; i <deleteID.size(); ++i)
+//	{
+//		if (deleteID.at(i) != playerManager->GetMyPlayerID())
+//		{
+//			playerManager->ErasePlayer(deleteID.at(i));
+//			//playerManager->DeletePlayer();
+//		}
+//		deleteID.erase(deleteID.begin() + i);
+//
+//	}
+//}
 
 
 void Connection::SendSignIn(int Id)
@@ -768,4 +819,12 @@ void Connection::SendUdpAddr()
 	memcpy_s(buffer, sizeof(UdpAddr), &udpAddr, sizeof(UdpAddr));
 	//int s = send(sock, buffer, sizeof(buffer), 0);
 	sendto(uSock, buffer, sizeof(buffer), 0, (struct sockaddr*)&uAddr, sizeof(struct sockaddr_in));
+}
+
+void Connection::SendLogout()
+{
+	PlayerLogout logout{};
+	logout.cmd = TcpTag::Logout;
+	logout.id = playerManager->GetMyPlayerID();
+	int s = send(sock, reinterpret_cast<char*>(&logout), sizeof(PlayerLogout), 0);
 }

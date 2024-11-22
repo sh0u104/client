@@ -1,7 +1,6 @@
 #include "Camera.h"
 
 // 指定方向を向く
-
 void Camera::SetLookAt(const DirectX::XMFLOAT3& eye, const DirectX::XMFLOAT3& focus, const DirectX::XMFLOAT3& up)
 {
     // 視点、　注視点、上方向からビュー行列を作成

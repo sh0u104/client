@@ -244,6 +244,7 @@ public:
 
     int Getteamsid(int number) { return teamsId[number]; }
     void Setteamsid(int number, int id) { this->teamsId[number] = id; }
+    void ResetTeamsid() { std::fill(teamsId, teamsId + 4, 0); }
 
     bool GetstartCheck() { return startCheck; }
     void SetstartCheck(bool check) { this->startCheck = check; }

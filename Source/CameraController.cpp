@@ -87,6 +87,7 @@ void CameraController::DrawDebugGUI()
         // トランスフォーム
         if (ImGui::CollapsingHeader("CameraTransform", ImGuiTreeNodeFlags_DefaultOpen))
         {
+            ImGui::InputFloat("Range", &range);
             // 位置　// 数値をいじる
             ImGui::InputFloat3("angle", &angle.x);
             // 回転
@@ -103,6 +104,8 @@ void CameraController::DrawDebugGUI()
             angle.z = DirectX::XMConvertToRadians(a.z);
             //// スケール
             //ImGui::InputFloat3("EYE", &eye.x);
+
+            
 
         }
     }

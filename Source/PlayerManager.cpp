@@ -27,7 +27,7 @@ void PlayerManager::Render(ID3D11DeviceContext* dc, Shader* shader)
 {
 	for (Player* player : players)
 	{
-		//if (player != nullptr)
+		if (player != nullptr)
 		if (player->GetReady())
 		//if (!GetLogging_in())
 		player->Render(dc, shader);
@@ -37,6 +37,7 @@ void PlayerManager::Render(ID3D11DeviceContext* dc, Shader* shader)
 void PlayerManager::DebugGUI()
 {
 }
+
 
 Player* PlayerManager::GetPlayer(int id)
 {
@@ -61,6 +62,8 @@ Player* PlayerManager::GetMyPlayer()
 	}
 	return nullptr;
 }
+
+//消去リストに追加
 void PlayerManager::ErasePlayer(int id)
 {
 	
@@ -75,8 +78,10 @@ void PlayerManager::ErasePlayer(int id)
 	}
 }
 
+//Updateで呼ぶ
 void PlayerManager::DeletePlayer()
 {
+	//消去リストの中身の物を消す
 	for (Player* player : deleteList)
 	{
 		// std::vectorから要素を削除する場合はイテレーターで削除しなければならない

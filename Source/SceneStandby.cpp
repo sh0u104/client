@@ -10,6 +10,7 @@
 #include "SceneManager.h"
 #include "SceneLoading.h"
 #include "SceneGame.h"
+#include "SceneTitle.h"
 
 void SceneStandby::Initialize()
 {
@@ -80,6 +81,18 @@ void SceneStandby::Initialize()
 		sprites[static_cast<int>(Spritenumber::Start)] = std::make_unique<Sprite>("Data/Sprite/start.png");
 		//名前
 		sprites[static_cast<int>(Spritenumber::Name)] = std::make_unique<Sprite>("Data/Sprite/font1.png");
+
+
+		sprites[static_cast<int>(Spritenumber::WASD)] = std::make_unique<Sprite>("Data/Sprite/WASD.png");
+
+		sprites[static_cast<int>(Spritenumber::SelectEdge)] = std::make_unique<Sprite>("Data/Sprite/selectedge.png");
+
+		sprites[static_cast<int>(Spritenumber::Setting)] = std::make_unique<Sprite>("Data/Sprite/setting.png");
+
+		sprites[static_cast<int>(Spritenumber::Mouse)] = std::make_unique<Sprite>("Data/Sprite/mouse.png");
+
+		//ログアウト
+		sprites[static_cast<int>(Spritenumber::Logout)] = std::make_unique<Sprite>("Data/Sprite/logout.png");
 	}
 
 	SceneManager& sceneManager = SceneManager::Instance();
@@ -220,73 +233,41 @@ void SceneStandby::Update(float elapsedTime)
 		(playerManager->GetMyPlayer()->Getteamnumber());
 	}
 
+	playerManager->Update(elapsedTime);
 
-
-	
-	int generateCount = playerManager->GetPlayersGenerateCount();
-	if (playerManager->GetSynclogin())
+	//チームのホストがいなくなったら
+	if (playerManager->GetTeamDisbabded())
 	{
-		int teamMax = 4;
-		for (int i = 0; i < teamMax-1; ++i)
+		for (int i = 0; i < 3; ++i)
 		{
 			int ID = playerManager->GetMyPlayer()->Getteamsid(i);
-
-			//チームに存在しなかったら
-			if (ID == 0)break;
-			//自分のIDじゃなかったら
-			if (playerManager->GetMyPlayerID() != ID)
+			if (ID != playerManager->GetMyPlayerID())
 			{
-				//生成
-				Player* player = new Player();
-				player->SetPlayerID(ID);						//貰ったID情報をストック
-				player->SetPosition(DirectX::XMFLOAT3(1.5f * generateCount, 0, 0));			//発生位置
-				player->SetAngle({ 0.0f,3.0f,0.0f });
-				player->Setoperation(false);
-
-				playerManager->AddPlayer(player);
-				playerManager->GetPlayer(ID)->SetReady(true);
-				playerManager->AddPlayersGenerateCount();
+				playerManager->ErasePlayer(ID);
 			}
 		}
-		playerManager->SetSynclogin(false);
+		playerManager->SetTeamDisbabded(false);
+		playerManager->GetMyPlayer()->ResetTeamsid();
 	}
-
-	//自分以外のプレイヤー生成join用
-	generateCount = playerManager->GetPlayersGenerateCount();
-	//ログインしてきてかつ生成がまだだったら
-	if (generateCount < playerManager->GetLoginCount()&&!playerManager->GetSynclogin())
-	{
-		//生成
-		int ID = playerManager->GetMyPlayer()->Getteamsid(generateCount);
-		Player* player = new Player();
-		player->SetPlayerID(ID);						//貰ったID情報をストック
-		player->SetPosition(DirectX::XMFLOAT3(1.5f * generateCount, 0, 0));			//発生位置
-		player->SetAngle({ 0.0f,3.0f,0.0f });
-		player->Setoperation(false);
-
-		playerManager->AddPlayer(player);
-		playerManager->GetPlayer(ID)->SetReady(true);
-		playerManager->AddPlayersGenerateCount();
-	}
-		
 	
-	cameraController->Update(elapsedTime);
-	//player->Update(elapsedTime);
-	//プレイヤーが存在すれば
-	//if (playerManager->GetMyPlayerID() != 0)
-	{
-		playerManager->Update(elapsedTime);
 
-		//imguiでちーむのＩＤを確認するため
-		guiteamsid[0] = playerManager->GetMyPlayer()->Getteamsid(0);
-		for (int i = 1; i < 3; ++i)
-		{
-			guiteamsid[i]= playerManager->GetMyPlayer()->Getteamsid(i);
-		}
-	}
+
+	//チームに先にいたプレイヤーを生成
+	SyncPlayerGenerate();
+	//後から来たプレイヤーを生成
+	LoginPlayerGenerate();
 
 	//消去リストのIDのプレイヤーを消す
-	connection->DeleteID();
+	//connection->DeleteID();
+	//プレイヤー消去リストにあるものを消す
+	playerManager->DeletePlayer();
+
+
+	//imgui用
+	for (int i = 0; i < 3; ++i)
+	{
+		guiteamsid[i] = playerManager->GetMyPlayer()->Getteamsid(i);
+	}
 }
 
 void SceneStandby::Render()
@@ -342,6 +323,10 @@ void SceneStandby::Render()
 	    	RenderTeamJoin(dc);
 	    }
 
+		OprerationSelect(dc);
+		if(isSetting)
+		Logout(dc);
+
 		//ID表示
 		if (playerManager->GetMyPlayerID() != 0 && !numberinputflag && playerManager->GetMyPlayer()->GetName()[0] == '\0')
 		{
@@ -394,8 +379,14 @@ void SceneStandby::Render()
 		// beginからendまでの内容が出来る
 		if (ImGui::Begin("Player", nullptr, ImGuiWindowFlags_None))
 		{
+			ImGui::Text("Host: %d", playerManager->GetMyPlayer()->GetTeamHost());
+			ImGui::Text("Disbanded: %d", playerManager->GetTeamDisbabded());
+			ImGui::Text("GenerateCount: %d", playerManager->GetPlayersGenerateCount());
+			ImGui::Text("LoginCount: %d", playerManager->GetLoginCount());
+
 			ImGui::Text("LoginDay: %d", playerManager->GetMyPlayer()->GetLoginDay());
 			ImGui::Text("ID: %d", playerManager->GetMyPlayer()->GetPlayerID());
+			ImGui::Text("PlayersSize: %d", playerManager->GetPlayers().size());
 
 		    ImGui::Text("State: %d", static_cast<int>(playerManager->GetMyPlayer()->GetState()));
 			if (ImGui::Button("debugGameStart"))
@@ -445,11 +436,11 @@ void SceneStandby::Render()
 		}
 		ImGui::End();
 
-		if (playerManager->GetLoginCount() > 1)
-		{
-			ImGui::SetNextWindowPos(ImVec2(500, 10), ImGuiCond_Once);
-			ImGui::SetNextWindowSize(ImVec2(300, 320), ImGuiCond_Once);
-			if (ImGui::Begin("Chat", nullptr, ImGuiWindowFlags_None))
+		//if (playerManager->GetLoginCount() > 1)
+		//{
+		//	ImGui::SetNextWindowPos(ImVec2(500, 10), ImGuiCond_Once);
+		//	ImGui::SetNextWindowSize(ImVec2(300, 320), ImGuiCond_Once);
+		//	if (ImGui::Begin("Chat", nullptr, ImGuiWindowFlags_None))
 			{
 				ImGui::Text("Message");
 				ImGui::BeginChild(ImGui::GetID((void*)0), ImVec2(250, 200), ImGuiWindowFlags_NoTitleBar);
@@ -472,10 +463,167 @@ void SceneStandby::Render()
 						input[0] = '\0';
 					}
 			}
-			ImGui::End();
-		}
+		//	ImGui::End();
+		//}
 
 		
+	}
+}
+
+void SceneStandby::OprerationSelect(ID3D11DeviceContext* dc)
+{
+	//設定ボタン表示
+	{
+		DirectX::XMFLOAT2 size, pos;
+		pos = { 410,10 };
+		size = { 30,30 };
+		sprites[static_cast<int>(Spritenumber::Setting)]->Render(dc,
+			pos.x, pos.y,  //描画位置
+			size.x, size.y,  //表示サイズ
+			0, 0,      //切り取りはじめ位置
+			256, 256, //画像サイズ
+			0.0f,
+			1, 1, 1, 1);
+
+		if (Uiclick(pos.x,pos.y, size.x,size.y))
+		{
+			isSetting = !isSetting;
+			Sleep(10);
+		};
+	}
+
+	//設定ボタンを押していたら
+	if (isSetting)
+	{
+		DirectX::XMFLOAT2 size, mousePos, WASDPos, edgePos;
+
+		size = { 50,75 };
+		mousePos = { 75,25 };
+		WASDPos = { 175,25 };
+
+		//マウスのイラスト描画
+		sprites[static_cast<int>(Spritenumber::Mouse)]->Render(dc,
+			mousePos.x, mousePos.y,  //描画位置
+			size.x, size.y,  //表示サイズ
+			0, 0,      //切り取りはじめ位置
+			780, 1178, //画像サイズ
+			0.0f,
+			1, 1, 1, 1);
+
+		//WASDボタンの描画
+		sprites[static_cast<int>(Spritenumber::WASD)]->Render(dc,
+			WASDPos.x, WASDPos.y,  //描画位置
+			size.x, size.y,  //表示サイズ
+			0, 0,    //切り取りはじめ位置
+			255, 194, //画像サイズ
+			0.0f,
+			1, 1, 1, 1);
+
+
+		//操作方法どちらが選択されてるかと縁の座標
+		if (playerManager->GetMyPlayer()->GetisMouseOperation())
+		{
+			if (Uiclick(WASDPos.x,WASDPos.y, size.x,size.y))
+			{
+				playerManager->GetMyPlayer()->SetisMouseOperation(false);
+			}
+
+			edgePos = mousePos;
+		}
+		else
+		{
+			if (Uiclick(mousePos.x,mousePos.y, size.x,size.y))
+			{
+				playerManager->GetMyPlayer()->SetisMouseOperation(true);
+			}
+			edgePos = WASDPos;
+		}
+		edgePos.x -= size.x / 4;
+		edgePos.y -= size.y / 4;
+
+		//選択している縁描画
+		sprites[static_cast<int>(Spritenumber::SelectEdge)]->Render(dc,
+			edgePos.x, edgePos.y,  //描画位置
+			size.x * 1.5f, size.y * 1.5f,  //表示サイズ
+			0, 0,      //切り取りはじめ位置
+			100, 100, //画像サイズ
+			0.0f,
+			1, 1, 1, 1);
+
+	}
+}
+
+void SceneStandby::Logout(ID3D11DeviceContext* dc)
+{
+	DirectX::XMFLOAT2 size, pos;
+	size = { 100,50 };
+	pos = { 25,150 };
+	//選択している縁描画
+	sprites[static_cast<int>(Spritenumber::Logout)]->Render(dc,
+		pos.x, pos.y,  //描画位置
+		size.x, size.y,  //表示サイズ
+		0, 0,              //切り取りはじめ位置
+		500, 200,           //元の画像サイズ
+		0.0f,
+		1, 1, 1, 1);
+
+	if (Uiclick(pos.x,pos.y, size.x,size.y))
+	{
+		connection->SendLogout();
+		SceneManager::Instance().ChangeScene(new SceneLoading(new SceneTitle));
+	}
+}
+
+void SceneStandby::SyncPlayerGenerate()
+{
+	int generateCount = playerManager->GetPlayersGenerateCount();
+
+	if (playerManager->GetSynclogin())
+	{
+		int teamMax = 4;
+		for (int i = 0; i < teamMax - 1; ++i)
+		{
+			int ID = playerManager->GetMyPlayer()->Getteamsid(i);
+
+			//チームに存在しなかったら
+			if (ID == 0)break;
+			//自分のIDじゃなかったら
+			if (playerManager->GetMyPlayerID() != ID)
+			{
+				//生成
+				Player* player = new Player();
+				player->SetPlayerID(ID);						//貰ったID情報をストック
+				player->SetPosition(DirectX::XMFLOAT3(1.5f * generateCount, 0, 0));			//発生位置
+				player->SetAngle({ 0.0f,3.0f,0.0f });
+				player->Setoperation(false);
+
+				playerManager->AddPlayer(player);
+				playerManager->GetPlayer(ID)->SetReady(true);
+				playerManager->AddPlayersGenerateCount();
+			}
+		}
+		playerManager->SetSynclogin(false);
+	}
+}
+
+void SceneStandby::LoginPlayerGenerate()
+{
+	//自分以外のプレイヤー生成join用
+	int generateCount = playerManager->GetPlayersGenerateCount();
+	//ログインしてきてかつ生成がまだだったら
+	if (generateCount < playerManager->GetLoginCount() && !playerManager->GetSynclogin())
+	{
+		//生成
+		int ID = playerManager->GetMyPlayer()->Getteamsid(generateCount);
+		Player* player = new Player();
+		player->SetPlayerID(ID);						//貰ったID情報をストック
+		player->SetPosition(DirectX::XMFLOAT3(1.5f * generateCount, 0, 0));			//生成位置
+		player->SetAngle({ 0.0f,3.0f,0.0f });
+		player->Setoperation(false);
+
+		playerManager->AddPlayer(player);
+		playerManager->GetPlayer(ID)->SetReady(true);
+		playerManager->AddPlayersGenerateCount();
 	}
 }
 

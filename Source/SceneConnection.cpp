@@ -115,7 +115,7 @@ void SceneConnection::Update(float elapsedTime)
     {
         ID = GetDataJson();
         isSignin = false;
-       // Signin();
+        //Signin();
         NameJson();
         playerManager->GetMyPlayer()->SetName(Name);
     }

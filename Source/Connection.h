@@ -71,6 +71,8 @@ public:
 
 	void SendUdpAddr();
 
+	void SendLogout();
+
 	// ネットワーク処理更新関数
 	void NetrowkUpdate(float elapsedTime);
 
@@ -277,8 +279,8 @@ public:
 	void SetPlayerManager(PlayerManager* playerManager) { this->playerManager = playerManager; }
 
 	bool isConnection = false;
-	std::vector<int> deleteID;
-	void DeleteID();
+	//std::vector<int> deleteID;
+	//void DeleteID();
 private:
 	PlayerManager* playerManager = nullptr;
 
@@ -286,7 +288,7 @@ private:
 	WSADATA wsaData{};
 	SOCKET sock{};
 	std::thread tcpTh;
-	bool loop = true;
+	std::atomic<bool> loop = true;
 	std::mutex mutex;
 	
 
