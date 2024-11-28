@@ -38,12 +38,12 @@ public:
 	int GetLoginCount() { return this->loginCount; }
 	void AddLoginCount() { ++this->loginCount; }
 	void SubtractLoginCount(){--this->loginCount;}
-	void ResetLoginCount() { this->loginCount = 1; }
+	//void ResetLoginCount() { this->loginCount = 1; }
 	
 	int GetPlayersGenerateCount() { return this->PlayerGenerateCount; }
 	void AddPlayersGenerateCount() { ++this->PlayerGenerateCount; }
 	void SubtractPlayersGenerateCount() { --this->PlayerGenerateCount; }
-	void ResetGenerateCount() {this->PlayerGenerateCount= 1;}
+	//void ResetGenerateCount() {this->PlayerGenerateCount= 1;}
 
 	bool GetSynclogin() { return this->syncLogin; }
 	void SetSynclogin(bool flag) { this->syncLogin = flag; }

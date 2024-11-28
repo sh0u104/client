@@ -617,6 +617,11 @@ void SceneGame::Logout(ID3D11DeviceContext* dc)
 
 	if (Uiclick(pos, size))
 	{
+		if (playerManager->GetMyPlayer()->Getteamnumber() > 0)
+		{
+			connection->SendTeamLeave(playerManager->GetMyPlayer()->GetTeamHost());
+			Sleep(10);
+		}
 		connection->SendLogout();
 		SceneManager::Instance().ChangeScene(new SceneLoading(new SceneTitle));
 	}
@@ -627,13 +632,13 @@ void SceneGame::TeamNotHost(ID3D11DeviceContext* dc)
 {
 	DirectX::XMFLOAT2 size, pos;
 	size = { 500,300 };
-	pos = { 25,150 };
+	pos = {0,0 };
 	//選択している縁描画
 	sprites[static_cast<int>(SpriteNumber::TeamDisbanded)]->Render(dc,
-		pos.x, pos.y,  //描画位置
-		size.x, size.y,  //表示サイズ
-		0, 0,              //切り取りはじめ位置
-		800, 200,           //元の画像サイズ
+		pos.x, pos.y,        //描画位置
+		size.x, size.y,      //表示サイズ
+		0, 0,                //切り取りはじめ位置
+		750, 500,            //元の画像サイズ
 		0.0f,
 		1, 1, 1, 1);
 
@@ -643,8 +648,8 @@ void SceneGame::TeamNotHost(ID3D11DeviceContext* dc)
 		playerManager->SetTeamDisbabded(false);
 		playerManager->GetMyPlayer()->ResetTeamsid();
 
-		playerManager->ResetGenerateCount();
-		playerManager->ResetLoginCount();
+		//playerManager->ResetGenerateCount();
+		//playerManager->ResetLoginCount();
 		//ロビーに戻る
 		SceneManager::Instance().ChangeScene(new SceneLoading(new SceneStandby));
 	}

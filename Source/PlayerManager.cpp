@@ -1,5 +1,5 @@
 #include "PlayerManager.h"
-
+#include "Logger.h"
 
 
 void PlayerManager::Update(float elapsedTime)
@@ -89,6 +89,9 @@ void PlayerManager::DeletePlayer()
 		if (it != players.end())
 		{
 			players.erase(it);
+			SubtractLoginCount();
+			SubtractPlayersGenerateCount();
+			Logger::Print("ƒvƒŒƒCƒ„[‚ğÁ‹");
 		}
 		delete player;
 	}

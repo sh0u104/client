@@ -123,7 +123,7 @@ public:
     short searchId = {};
     bool searchflag = false;
    
-    bool teamscreenflag = false;
+    bool teamRenderflag = true;
     bool numberinputflag = false;
 
     bool debugGameStart = false;

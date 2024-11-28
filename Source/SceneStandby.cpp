@@ -102,28 +102,13 @@ void SceneStandby::Initialize()
 		sceneManager.SetstandbyInitialized(true);
 		playerManager = sceneManager.GetPlayerManager();
 		connection = sceneManager.GetConnection();
-
-		////	サーバーとの接続前はID０
-		//Player* player = new Player();
-		//player->SetPlayerID(0);						//貰ったID情報をストック
-		//player->Setoperation(false);
-		//player->SetPosition(DirectX::XMFLOAT3(0, 0, 0)); //発生位置
-		//player->SetAngle({ 0.0f,3.0f,0.0f });
-		//
-		//playerManager->SetMyPlayerID(0);
-		//playerManager->AddPlayer(player);
-		//playerManager->GetPlayer(0)->SetReady(true);
-		//
-		////生成したら
-		//playerManager->AddPlayersGenerateCount();
-		//connection->SetplayerManager(playerManager);
-		//
 	}
 	else
 	{
-		
 		playerManager = sceneManager.GetPlayerManager();
 		connection = sceneManager.GetConnection();
+
+		playerManager->GetMyPlayer()->SetstartCheck(false);
 	    //ソロの場合　
 		if (playerManager->GetMyPlayer()->Getteamnumber() == 0)
 		{
@@ -145,8 +130,6 @@ void SceneStandby::Initialize()
 			}
 			else
 			{
-				//準備チェックを外す
-				playerManager->GetMyPlayer()->SetstartCheck(false);
 				teamjoin = true;
 			}
 		}
@@ -229,8 +212,7 @@ void SceneStandby::Update(float elapsedTime)
 	if(sendgamestart&& playerManager->GetMyPlayer()->GetTeamHost())
 	{
 		sendgamestart = false;
-		connection->SendGamestart
-		(playerManager->GetMyPlayer()->Getteamnumber());
+		connection->SendGamestart(playerManager->GetMyPlayer()->Getteamnumber());
 	}
 
 	playerManager->Update(elapsedTime);
@@ -248,6 +230,7 @@ void SceneStandby::Update(float elapsedTime)
 		}
 		playerManager->SetTeamDisbabded(false);
 		playerManager->GetMyPlayer()->ResetTeamsid();
+		teamRenderflag = true;
 	}
 	
 
@@ -257,8 +240,6 @@ void SceneStandby::Update(float elapsedTime)
 	//後から来たプレイヤーを生成
 	LoginPlayerGenerate();
 
-	//消去リストのIDのプレイヤーを消す
-	//connection->DeleteID();
 	//プレイヤー消去リストにあるものを消す
 	playerManager->DeletePlayer();
 
@@ -313,60 +294,63 @@ void SceneStandby::Render()
 		RenderMode(dc);
 
 		//ゲーム開始ボタン
-		if (playerManager->GetMyPlayer()->GetTeamHost() || playerManager->GetMyPlayer()->Getteamnumber()<1)
+		//チームのホストの時か チームを組んで無くチーム関連の処理をしていない時
+		if (playerManager->GetMyPlayer()->GetTeamHost() || playerManager->GetMyPlayer()->Getteamnumber() < 1&& teamRenderflag)
 		{
 			RenderGameStart(dc);
 		}
-
-		if (numberinputflag)
-	    {
-	    	RenderTeamJoin(dc);
-	    }
 
 		OprerationSelect(dc);
 		if(isSetting)
 		Logout(dc);
 
-		//ID表示
+		//名前が無ければ
 		if (playerManager->GetMyPlayerID() != 0 && !numberinputflag && playerManager->GetMyPlayer()->GetName()[0] == '\0')
 		{
+			//ID表示
 			RenderID(dc, rc.view, rc.projection);
 		}
 
+		//名前があれば
 		if (playerManager->GetMyPlayer()->GetName() != '\0'&& !numberinputflag)
 		{
+			//名前表示
 			RenderName(dc, rc.view, rc.projection);
 		}
 		
-		//
+		//チームを組んでいれば
 		if (playerManager->GetMyPlayer()->Getteamnumber() > 0)
 		{
 			//チーム番号表示
 			RenderTeamNumber(dc, rc.view, rc.projection);
-
+			//ホストじゃなければ
 			if (!playerManager->GetMyPlayer()->GetTeamHost())
 			{
 				//準備完了ボタン表示
 				RenderReady(dc, playerManager->GetMyPlayer()->GetstartCheck());
 			}
-			else
-			{
-			}
-
 		}
+		//チームを組んでなかったら
 		else
 		{
-			if (playerManager->GetMyPlayerID() > 0)
+			if (teamRenderflag)
 			{
-				if (!teamscreenflag)
+				RenderTeam(dc);
+			}
+			else
+			{
+				if (numberinputflag)
 				{
-					RenderTeam(dc);
+					RenderTeamJoin(dc);
 				}
 				else
 				{
 					RenderTeamSelect(dc);
 				}
 			}
+			
+
+
 		}
 	}
 	
@@ -400,24 +384,10 @@ void SceneStandby::Render()
 			{
 				
 				ImGui::Text("Name: %s", playerManager->GetMyPlayer()->GetName());
-				ImGui::InputInt("SendTeamNumber: %d", &TeamNumber);
-				ImGui::Text("RecvTeamNumber: %d", playerManager->GetMyPlayer()->Getteamnumber());
+				//ImGui::InputInt("SendTeamNumber: %d", &TeamNumber);
+				//ImGui::Text("RecvTeamNumber: %d", playerManager->GetMyPlayer()->Getteamnumber());
 			}
-			
-
-			if (playerManager->GetMyPlayerID() != 0)
-			{
-				if (!teamcreate && !teamjoin)
-				{
-					if (TeamNumber != 0)
-					{
-						if (ImGui::Button("Team Join"))
-						{
-							sendteamjoin = true;
-						}
-					}
-				}
-			}
+		
 			ImGui::InputInt4("TeamsID", guiteamsid);
 
 			//if (ImGui::Button("FriendList Update"))
@@ -558,17 +528,22 @@ void SceneStandby::Logout(ID3D11DeviceContext* dc)
 	DirectX::XMFLOAT2 size, pos;
 	size = { 100,50 };
 	pos = { 25,150 };
-	//選択している縁描画
+	//ログアウトボタン
 	sprites[static_cast<int>(Spritenumber::Logout)]->Render(dc,
-		pos.x, pos.y,  //描画位置
-		size.x, size.y,  //表示サイズ
-		0, 0,              //切り取りはじめ位置
-		500, 200,           //元の画像サイズ
+		pos.x, pos.y,        //描画位置
+		size.x, size.y,      //表示サイズ
+		0, 0,                //切り取りはじめ位置
+		500, 200,            //元の画像サイズ
 		0.0f,
 		1, 1, 1, 1);
 
 	if (Uiclick(pos.x,pos.y, size.x,size.y))
 	{
+		//チームを組んでたら抜けるを送る
+		if (playerManager->GetMyPlayer()->Getteamnumber() > 0)
+		{
+			connection->SendTeamLeave(playerManager->GetMyPlayer()->GetTeamHost());
+		}
 		connection->SendLogout();
 		SceneManager::Instance().ChangeScene(new SceneLoading(new SceneTitle));
 	}
@@ -782,9 +757,20 @@ void SceneStandby::RenderTeamNumber(ID3D11DeviceContext* dc, const DirectX::XMFL
 	{
 		playerManager->GetMyPlayer()->Setteamnumber(0);
 		teamcreate = false;
-		teamscreenflag = false;
+		teamRenderflag = true;
+
 		connection->SendTeamLeave(playerManager->GetMyPlayer()->GetTeamHost());
 		playerManager->GetMyPlayer()->SetTeamHost(false);
+		for (int i = 0; i < 3; ++i)
+		{
+			int ID = playerManager->GetMyPlayer()->Getteamsid(i);
+			if (ID != 0 && ID != playerManager->GetMyPlayerID())
+			{
+				playerManager->ErasePlayer(ID);
+			}
+			
+		}
+		playerManager->GetMyPlayer()->ResetTeamsid();
 	}
 
 
@@ -870,16 +856,16 @@ void SceneStandby::RenderTeam(ID3D11DeviceContext* dc)
 	float sizeX = 100;
 	float sizeY = 30;
 	sprites[static_cast<int>(Spritenumber::Team)]->Render(dc,
-		positionX, positionY,             //描画位置
+		positionX, positionY,     //描画位置
 		sizeX, sizeY,             //表示サイズ
-		0, 0,                //切り取りはじめ位置
-		243,100,             //画像サイズ
+		0, 0,                     //切り取りはじめ位置
+		243,100,                  //画像サイズ
 		0.0f,
 		1, 1, 1, 1);
 
-	if (!teamscreenflag&&Uiclick(positionX, positionY, sizeX, sizeY))
+	if(teamRenderflag &&Uiclick(positionX, positionY, sizeX, sizeY))
 	{
-		teamscreenflag = true;
+		teamRenderflag = false;
 	}
 }
 
@@ -910,13 +896,8 @@ void SceneStandby::RenderTeamSelect(ID3D11DeviceContext* dc)
 
 	if (Uiclick(positionX + 70, positionY + 60, 200, 150))
 	{
-		//teamscreenflag = false;
-		////sendteamcreate = true;
-		//sendteamjoin = false;
-		//teamjoin = true;
-		//connection->SendTeamJoin(TeamNumber);
-
 		teamcreate = true;
+		teamRenderflag = false;
 		connection->SendTeamcreate();
 		playerManager->GetMyPlayer()->SetTeamHost(true);
 	}
@@ -932,7 +913,7 @@ void SceneStandby::RenderTeamSelect(ID3D11DeviceContext* dc)
 	
 		if (Uiclick(positionX + 320, positionY + 60, sizeX, sizeY))
 		{
-			teamscreenflag = false;
+			teamRenderflag = false;
 			numberinputflag = true;
 		}
 	
@@ -947,7 +928,7 @@ void SceneStandby::RenderTeamSelect(ID3D11DeviceContext* dc)
 
 	if (Uiclick(positionX + 565, positionY - 5, 40, 40))
 	{
-		teamscreenflag = false;
+		teamRenderflag = true;
 	}
 }
 
@@ -1065,6 +1046,7 @@ void SceneStandby::RenderTeamJoin(ID3D11DeviceContext* dc)
 	if (Uiclick(positionX + 565.0f, positionY - 5.0f, 40.0f, 40.0f))
 	{
 		numberinputflag = false;
+		teamRenderflag = true;
 		numbers.erase(numbers.begin(), numbers.end());
 	}
 }

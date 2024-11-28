@@ -133,19 +133,25 @@ void Connection::Finalize()
 		loop = false;
 		PlayerLogout logout{};
 		logout.cmd = TcpTag::Logout;
-
+		
 
 		//ログイン処理が終わってたら
 		if (playerManager != nullptr)
 		{
-			logout.id = playerManager->GetMyPlayerID();
+			//チームを組んでたら抜けるを送る
+			if (playerManager->GetMyPlayer()->Getteamnumber() > 0)
+			{
+				SendTeamLeave(playerManager->GetMyPlayer()->GetTeamHost());
+			}
+			SendLogout();
 		}
 		//ログイン処理がまだなら
-		else
-		{
-			logout.id = -1;
-		}
-		int s = send(sock, reinterpret_cast<char*>(&logout), sizeof(PlayerLogout), 0);
+		//else
+		//{
+		//	logout.id = -1;
+		//}
+
+		//int s = send(sock, reinterpret_cast<char*>(&logout), sizeof(PlayerLogout), 0);
 
 		// ソケット終了処理
 		int c = closesocket(sock);
@@ -319,12 +325,12 @@ void Connection::TcpRecvThread()
 					PlayerLogout logout;
 					memcpy_s(&logout, sizeof(logout), buffer, sizeof(PlayerLogout));
 					//std::cout << " 退出id " << logout.id << std::endl;
-					Logger::Print("退出id \n",logout.id);
-					if (playerManager->GetMyPlayerID() != logout.id)
-					{
-						playerManager->ErasePlayer(logout.id);
-						//playerManager->DeletePlayer();
-					}
+					Logger::Print("退出id %d",logout.id);
+					//if (playerManager->GetMyPlayerID() != logout.id)
+					//{
+					//	playerManager->ErasePlayer(logout.id);
+					//	//playerManager->DeletePlayer();
+					//}
 
 				}
 				break;
@@ -394,48 +400,41 @@ void Connection::TcpRecvThread()
 					TeamLeave teamLeave;
 					memcpy_s(&teamLeave, sizeof(teamLeave), buffer, sizeof(TeamLeave));
 
-					//本人の時
-					if (teamLeave.id == playerManager->GetMyPlayerID())
+					//本人じゃない時
+					if (teamLeave.id != playerManager->GetMyPlayerID())
 					{
-						for (int i = 0; i < 3; ++i)
+						//ホストの時
+						if (teamLeave.isHost)
 						{
-							int ID = playerManager->GetMyPlayer()->Getteamsid(i);
-							if (ID != playerManager->GetMyPlayerID())
+							playerManager->GetMyPlayer()->Setteamnumber(0);
+							playerManager->SetTeamDisbabded(true);
+							for (int i = 0; i < 3; ++i)
 							{
-								playerManager->ErasePlayer(ID);
+								int ID = playerManager->GetMyPlayer()->Getteamsid(i);
+								if (ID != playerManager->GetMyPlayerID())
+								{
+									playerManager->ErasePlayer(ID);
+									playerManager->GetMyPlayer()->Setteamsid(i, 0);
+								}
+							}
+
+						}
+						//ホストじゃない時
+						else
+						{
+							for (int i = 0; i < 3; ++i)
+							{
+								int ID = playerManager->GetMyPlayer()->Getteamsid(i);
+								if (ID != playerManager->GetMyPlayerID())
+								{
+									playerManager->ErasePlayer(ID);
+									playerManager->GetMyPlayer()->Setteamsid(i, 0);
+								}
 							}
 						}
-						playerManager->GetMyPlayer()->Setteamnumber(0);
-						playerManager->ResetGenerateCount();
-						playerManager->ResetLoginCount();
-
-						break;
 					}
 
-					//リーダーかつ本人でもない時
-					if (teamLeave.isLeader)
-					{
-						playerManager->GetMyPlayer()->Setteamnumber(0);
-						playerManager->SetTeamDisbabded(true);
-						playerManager->ResetGenerateCount();
-						playerManager->ResetLoginCount();
-
-					}
-					//リーダーでも本人でもないとき
-					else
-					{
-						playerManager->SubtractLoginCount();
-						playerManager->SubtractPlayersGenerateCount();
-						for (int i = 0; i < 3; ++i)
-						{
-							int ID = playerManager->GetMyPlayer()->Getteamsid(i);
-							if (ID != playerManager->GetMyPlayerID())
-							{
-								playerManager->ErasePlayer(ID);
-							}
-						}
-
-					}
+					
 
 				}
 				break;
@@ -689,12 +688,12 @@ void Connection::SendTeamJoin(int teamnumber)
 	int s = send(sock, buffer, sizeof(buffer), 0);
 }
 
-void Connection::SendTeamLeave(bool isLeader)
+void Connection::SendTeamLeave(bool isHost)
 {
 	TeamLeave teamLeave;
 	teamLeave.cmd = TcpTag::Teamleave;
 	teamLeave.id = playerManager->GetMyPlayerID();
-	teamLeave.isLeader = isLeader;
+	teamLeave.isHost = isHost;
 
 	char buffer[sizeof(TeamLeave)];
 	memcpy_s(buffer, sizeof(buffer), &teamLeave, sizeof(TeamLeave));

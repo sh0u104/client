@@ -205,7 +205,7 @@ public:
 	{
 		TcpTag cmd;
 		int id;
-		bool isLeader;
+		bool isHost;
 	};
 
 	struct Teamsync
