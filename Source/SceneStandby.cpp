@@ -356,6 +356,7 @@ void SceneStandby::Render()
 	
 	
 	// 2Dデバッグ描画
+	//IMGUI描画
 	{
 		
 		ImGui::SetNextWindowPos(ImVec2(310, 10), ImGuiCond_FirstUseEver);
@@ -367,11 +368,11 @@ void SceneStandby::Render()
 			ImGui::Text("Disbanded: %d", playerManager->GetTeamDisbabded());
 			ImGui::Text("GenerateCount: %d", playerManager->GetPlayersGenerateCount());
 			ImGui::Text("LoginCount: %d", playerManager->GetLoginCount());
-
+		
 			ImGui::Text("LoginDay: %d", playerManager->GetMyPlayer()->GetLoginDay());
 			ImGui::Text("ID: %d", playerManager->GetMyPlayer()->GetPlayerID());
 			ImGui::Text("PlayersSize: %d", playerManager->GetPlayers().size());
-
+		
 		    ImGui::Text("State: %d", static_cast<int>(playerManager->GetMyPlayer()->GetState()));
 			if (ImGui::Button("debugGameStart"))
 			{
@@ -389,7 +390,7 @@ void SceneStandby::Render()
 			}
 		
 			ImGui::InputInt4("TeamsID", guiteamsid);
-
+		
 			//if (ImGui::Button("FriendList Update"))
 			//{
 			//	connection->SendSeeFriend();
@@ -401,40 +402,40 @@ void SceneStandby::Render()
 			//	ImGui::Text("ID: %d", playerManager->myFriendList.at(i).ID);
 			//	ImGui::Text("Name: %s", playerManager->myFriendList.at(i).name);
 			//}
-
+		
 			playerManager->DebugGUI();
 		}
 		ImGui::End();
-
-		//if (playerManager->GetLoginCount() > 1)
-		//{
-		//	ImGui::SetNextWindowPos(ImVec2(500, 10), ImGuiCond_Once);
-		//	ImGui::SetNextWindowSize(ImVec2(300, 320), ImGuiCond_Once);
-		//	if (ImGui::Begin("Chat", nullptr, ImGuiWindowFlags_None))
-			{
-				ImGui::Text("Message");
-				ImGui::BeginChild(ImGui::GetID((void*)0), ImVec2(250, 200), ImGuiWindowFlags_NoTitleBar);
-
-				for (std::string message : playerManager->Getmessages()) {
-					ImGui::Text(u8"%s", message.c_str());
-				}
-				ImGui::EndChild();
-				ImGui::Spacing();
-
-				ImGui::InputText("Message", input, sizeof(input));
-				if (playerManager->GetMyPlayer()->Getteamnumber() != 0)
-					if (ImGui::Button("Send"))
-					{
-						if (strcmp(input, "") != 0)
-						{
-							// 送信処理
-							connection->SendMessages(input);
-						}
-						input[0] = '\0';
-					}
-			}
-		//	ImGui::End();
-		//}
+		//
+		////if (playerManager->GetLoginCount() > 1)
+		////{
+		////	ImGui::SetNextWindowPos(ImVec2(500, 10), ImGuiCond_Once);
+		////	ImGui::SetNextWindowSize(ImVec2(300, 320), ImGuiCond_Once);
+		////	if (ImGui::Begin("Chat", nullptr, ImGuiWindowFlags_None))
+		//	{
+		//		ImGui::Text("Message");
+		//		ImGui::BeginChild(ImGui::GetID((void*)0), ImVec2(250, 200), ImGuiWindowFlags_NoTitleBar);
+		//
+		//		for (std::string message : playerManager->Getmessages()) {
+		//			ImGui::Text(u8"%s", message.c_str());
+		//		}
+		//		ImGui::EndChild();
+		//		ImGui::Spacing();
+		//
+		//		ImGui::InputText("Message", input, sizeof(input));
+		//		if (playerManager->GetMyPlayer()->Getteamnumber() != 0)
+		//			if (ImGui::Button("Send"))
+		//			{
+		//				if (strcmp(input, "") != 0)
+		//				{
+		//					// 送信処理
+		//					connection->SendMessages(input);
+		//				}
+		//				input[0] = '\0';
+		//			}
+		//	}
+		////	ImGui::End();
+		////}
 
 		
 	}
@@ -551,13 +552,12 @@ void SceneStandby::Logout(ID3D11DeviceContext* dc)
 
 void SceneStandby::SyncPlayerGenerate()
 {
-	int generateCount = playerManager->GetPlayersGenerateCount();
-
 	if (playerManager->GetSynclogin())
 	{
 		int teamMax = 4;
 		for (int i = 0; i < teamMax - 1; ++i)
 		{
+			int generateCount = playerManager->GetPlayersGenerateCount();
 			int ID = playerManager->GetMyPlayer()->Getteamsid(i);
 
 			//チームに存在しなかったら

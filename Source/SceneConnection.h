@@ -20,11 +20,16 @@ public:
     void Render() override;
 
     void Signin();
-    void Signup();
-    int GetDataJson();
-    void NameJson();
+    bool httpSignin();
 
-    void handleInput(char* inputBuffer, size_t bufferSize);
+    void Signup();
+    bool httpSignup();
+
+    int GetDataJson();
+    bool NameJson();
+    void pngDownload();
+    bool httpPngDownload();
+
 
     bool UiClick(float posX, float posY, float sizeX, float sizeY);
     void RenderNetError(ID3D11DeviceContext* dc);
@@ -61,5 +66,7 @@ private:
     int loginDay = 0;
 
     bool isname = false;
+
+    bool Getfile = false;
 };
 

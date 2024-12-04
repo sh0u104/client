@@ -28,9 +28,13 @@ void SceneTitle::Finalize()
 void SceneTitle::Update(float elapsedTime)
 {
     GamePad& gamePad = Input::Instance().GetGamePad();
+    Graphics& graphics = Graphics::Instance();
 
     //マウスの左クリック
     Mouse& mouse = Input::Instance().GetMouse();
+    if (mouse.GetPositionX() > graphics.GetScreenWidth() || mouse.GetPositionX() < 0 ||
+        mouse.GetPositionY() > graphics.GetScreenHeight() || mouse.GetPositionY() < 0)
+        return;
     if (mouse.GetButtonDown() & Mouse::BTN_LEFT)
     {
         SceneManager::Instance().ChangeScene(new SceneLoading(new SceneConnection));

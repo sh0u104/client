@@ -169,6 +169,20 @@ void Connection::Finalize()
 	}
 }
 
+bool Connection::UdpIdCheck(int Id)
+{
+	
+	for (int i = 0; i < 4; ++i)
+	{
+		if (Id == playerManager->GetMyPlayer()->Getteamsid(i)&&Id!= playerManager->GetMyPlayerID())
+		{
+			playerManager->SetudpRecvId(Id);
+			return true;
+		}
+	}
+	return false;
+}
+
 
 void Connection::NetrowkUpdate(float elapsedTime)
 {
@@ -177,6 +191,7 @@ void Connection::SendEnemy(Enemy* enemy)
 {
 	EnemyData enemyData;
 	enemyData.cmd = UdpTag::EnemyMove;
+	enemyData.PlayerId = playerManager->GetMyPlayerID();
 	enemyData.id = enemy->GetMyEnemyId();
 	enemyData.position = enemy->GetPosition();
 	enemyData.angle = enemy->GetAngle();
@@ -204,8 +219,8 @@ void Connection::UdpRecvThread()
 	    {
 	    	char Buffer[256]{};
 	    	int addrSize = sizeof(struct sockaddr_in);
-	    
-	    	int size = recvfrom(uSock, Buffer, sizeof(Buffer), 0, reinterpret_cast<sockaddr*>(&uAddr), &addrSize);
+			sockaddr_in temp;
+	    	int size = recvfrom(uSock, Buffer, sizeof(Buffer), 0, reinterpret_cast<sockaddr*>(&temp), &addrSize);
 			if (size == -1) {
 				int error = WSAGetLastError();
 				if (error == WSAEWOULDBLOCK) {
@@ -214,7 +229,7 @@ void Connection::UdpRecvThread()
 				}
 				else {
 					// 他のエラーの場合、ループを終了
-					Logger::Print("recvfrom error:\n",&error);
+					Logger::Print("recvfrom error:%d",&error);
 					break;
 				}
 			}
@@ -236,17 +251,20 @@ void Connection::UdpRecvThread()
 				{
 					PlayerInput input;
 					memcpy_s(&input, sizeof(PlayerInput), Buffer, sizeof(PlayerInput));
-					Player* player = playerManager->GetPlayer(input.id);
-
-					if (playerManager->GetMyPlayerID() != input.id)
+					if (UdpIdCheck(input.id))
 					{
-						player->SetAngle(input.angle);
-						player->SetPosition(input.position);
-						player->SetVelovity(input.velocity);
-						//アニメーションにいれる
-						if (player->GetState() != input.state)
+						Player* player = playerManager->GetPlayer(input.id);
+						//自分じゃなかったら
+						if (playerManager->GetMyPlayerID() != input.id)
 						{
-							player->GetStateMachine()->ChangeState(static_cast<int>(input.state));
+							player->SetAngle(input.angle);
+							player->SetPosition(input.position);
+							player->SetVelovity(input.velocity);
+							//アニメーションにいれる
+							if (player->GetState() != input.state)
+							{
+								player->GetStateMachine()->ChangeState(static_cast<int>(input.state));
+							}
 						}
 					}
 				}
@@ -255,16 +273,19 @@ void Connection::UdpRecvThread()
 				{
 					EnemyData enemyData;
 					memcpy_s(&enemyData, sizeof(EnemyData), Buffer, sizeof(EnemyData));
-					EnemyManager& enemyManager = EnemyManager::Instance();
-					Enemy* enemy = enemyManager.GetIDEnemy(enemyData.id);
-					if (enemy != nullptr)
+					if (UdpIdCheck(enemyData.PlayerId))
 					{
-						enemy->SetAngle(enemyData.angle);
-						enemy->SetPosition(enemyData.position);
-						//アニメーションにいれる
-						if (enemy->GetState() != enemyData.state)
+						EnemyManager& enemyManager = EnemyManager::Instance();
+						Enemy* enemy = enemyManager.GetIDEnemy(enemyData.id);
+						if (enemy != nullptr)
 						{
-							enemy->GetStateMachine()->ChangeState(static_cast<int>(enemyData.state));
+							enemy->SetAngle(enemyData.angle);
+							enemy->SetPosition(enemyData.position);
+							//アニメーションにいれる
+							if (enemy->GetState() != enemyData.state)
+							{
+								enemy->GetStateMachine()->ChangeState(static_cast<int>(enemyData.state));
+							}
 						}
 					}
 				}
@@ -288,9 +309,16 @@ void Connection::TcpRecvThread()
 			int r = recv(sock, buffer, sizeof(buffer), 0);
 			if (r == -1)
 			{
-				// エラーが発生した場合の処理
-				//std::cout << "recv エラー" << std::endl;
-				//Logger::Print("recv エラー");
+				int error = WSAGetLastError();
+				if (error == WSAEWOULDBLOCK) {
+					// データがまだ来ていない場合、処理をスキップして次のループへ
+					continue;
+				}
+				else {
+					// 他のエラーの場合、ループを終了
+					Logger::Print("recv error:%d", &error);
+					break;
+				}
 			}
 			else if (r == 0)
 			{
@@ -366,7 +394,6 @@ void Connection::TcpRecvThread()
 					//本人がチームに入れたら
 					if (teamjoin.id == playerManager->GetMyPlayerID())
 					{
-
 						playerManager->GetMyPlayer()->Setteamnumber(teamjoin.number);
 						break;
 					}
@@ -386,7 +413,6 @@ void Connection::TcpRecvThread()
 								playerManager->GetMyPlayer()->Setteamsid(i, teamjoin.id);
 								//ログイン数を加算
 								playerManager->AddLoginCount();
-
 								break;
 							}
 						}
@@ -422,15 +448,26 @@ void Connection::TcpRecvThread()
 						//ホストじゃない時
 						else
 						{
-							for (int i = 0; i < 3; ++i)
+							int ID = teamLeave.id;
+							if (ID != playerManager->GetMyPlayerID())
 							{
-								int ID = playerManager->GetMyPlayer()->Getteamsid(i);
-								if (ID != playerManager->GetMyPlayerID())
+								playerManager->ErasePlayer(ID);
+								for (int i = 0; i < 4; ++i)
 								{
-									playerManager->ErasePlayer(ID);
-									playerManager->GetMyPlayer()->Setteamsid(i, 0);
+									if (ID == playerManager->GetMyPlayer()->Getteamsid(i))
+									{
+										playerManager->GetMyPlayer()->Setteamsid(i, 0);
+										for (int j = i; j < 4 - 1; ++j) { // 現在の位置から順に移動
+											int nextValue = playerManager->GetMyPlayer()->Getteamsid(j + 1);
+											playerManager->GetMyPlayer()->Setteamsid(j, nextValue);
+										}
+										// 最後の要素に0をセット
+										playerManager->GetMyPlayer()->Setteamsid(4 - 1, 0);
+										break; // 対応が1回で十分ならループを抜ける
+									}
 								}
 							}
+
 						}
 					}
 
@@ -499,6 +536,7 @@ void Connection::TcpRecvThread()
 				case TcpTag::UdpAddr:
 				{
 					isUAddr = false;
+					Logger::Print("UDPアドレスをサーバーに保存した");
 				}
 				break;
 				/*case NetworkTag::Sync:

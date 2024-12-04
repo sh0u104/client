@@ -26,14 +26,10 @@ public:
 
 	void Initialize();
 	bool UDPInitialize();
-	struct Test
-	{
-		short id;
-	};
 
 	void Finalize();
 
-	
+	bool UdpIdCheck(int Id);
 	
 	void SendSignIn(int Id);
 
@@ -115,6 +111,7 @@ public:
 	struct EnemyData
 	{
 		UdpTag cmd;
+		int PlayerId;
 		int id;
 		//DirectX::XMFLOAT3 velocity;
 		DirectX::XMFLOAT3 position;

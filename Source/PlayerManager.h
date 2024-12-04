@@ -84,6 +84,8 @@ public:
 	void SetTeamDisbabded(bool Disbabded) { this->teamDisbabded = Disbabded; }
 	bool GetTeamDisbabded() {return teamDisbabded;}
 
+	void SetudpRecvId(int id) { this->udpRecvId = id; }
+	int GetudpRecvId() { return udpRecvId; }
 	struct User
 	{
 		short ID;
@@ -120,4 +122,5 @@ private:
 
 	bool teamDisbabded = false;
 
+	int udpRecvId = 0;
 };

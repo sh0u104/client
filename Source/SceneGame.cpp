@@ -235,7 +235,6 @@ void SceneGame::Update(float elapsedTime)
 	playerManager->DeletePlayer();
 
 	
-
 }
 
 
@@ -310,6 +309,8 @@ void SceneGame::Render()
 
 	// 3Dデバッグ描画
 	{
+
+		//IMGUI描画
 		ImGui::SetNextWindowPos(ImVec2(500, 10), ImGuiCond_FirstUseEver);
 		ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
 		// beginからendまでの内容が出来る
@@ -317,6 +318,7 @@ void SceneGame::Render()
 		std::vector<Enemy*> enemys = enemyManager.GetEnemys();
 		if (ImGui::Begin("Player", nullptr, ImGuiWindowFlags_None))
 		{
+			ImGui::Text("UdpRecvID: %d", playerManager->GetudpRecvId());
 			ImGui::Text("Disbanded: %d", playerManager->GetTeamDisbabded());
 			ImGui::Text("LoginCount: %d", playerManager->GetLoginCount());
 			ImGui::Text("PlayersSize: %d", playerManager->GetPlayers().size());
@@ -324,36 +326,36 @@ void SceneGame::Render()
 			{
 				ImGui::Text("EnemyHP: %d", enemy->GetHealth());
 				ImGui::Text("EnemyState: %d", enemy->GetState());
-
+		
 			}
 			ImGui::Text("Host: %d", playerManager->GetMyPlayer()->GetTeamHost());
 			
 			//ImGui::Text("State: %d", static_cast<int>(playerManager->GetMyPlayer()->GetState()));
-
+		
 			// トランスフォーム
-			if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
-			{
-				ImGui::Text("ID: %d", playerManager->GetMyPlayerID());
-				ImGui::Text("TeamNumber: %d", playerManager->GetMyPlayer()->Getteamnumber());
-				
-				if (ImGui::Button("Change Operation"))
-				{
-					sendFlag = !sendFlag;
-				}
-				if (sendFlag)
-				{
-					ImGui::Text("true");
-				}
-				else
-				{
-					ImGui::Text("false");
-				}
-				//ImGui::InputFloat3("GUIVelocity", &guiVelocity.x);
-				//ImGui::InputFloat3("RecvVelocity", &guiRecvVelocity.x);
-				//ImGui::InputFloat3("GUIPosition", &guiPosition.x);
-
-				ImGui::InputInt4("TeamsID", guiTeamsId);
-			}
+			//if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
+			//{
+			//	ImGui::Text("ID: %d", playerManager->GetMyPlayerID());
+			//	ImGui::Text("TeamNumber: %d", playerManager->GetMyPlayer()->Getteamnumber());
+			//	
+			//	if (ImGui::Button("Change Operation"))
+			//	{
+			//		sendFlag = !sendFlag;
+			//	}
+			//	if (sendFlag)
+			//	{
+			//		ImGui::Text("true");
+			//	}
+			//	else
+			//	{
+			//		ImGui::Text("false");
+			//	}
+			//	//ImGui::InputFloat3("GUIVelocity", &guiVelocity.x);
+			//	//ImGui::InputFloat3("RecvVelocity", &guiRecvVelocity.x);
+			//	//ImGui::InputFloat3("GUIPosition", &guiPosition.x);
+			//
+			//	ImGui::InputInt4("TeamsID", guiTeamsId);
+			//}
 		}
 		ImGui::End();
 
@@ -361,7 +363,8 @@ void SceneGame::Render()
 		{
 			if (playerManager->GetPlayers().size() > 0)
 			{
-				RenderTimer(dc, int(timer));
+				//RenderTimer(dc, int(timer));
+				//名前があるなら表示
 				if (playerManager->GetMyPlayer()->GetName()[0] == '\0')
 				{
 					RenderNumber(dc, rc.view, rc.projection);
@@ -400,7 +403,7 @@ void SceneGame::Render()
 				// 
 				//EnemyManager::Instance().Register(enemySlime);
 				//EnemyManager::Instance().DrawDebugGUI();
-				cameraController->DrawDebugGUI();
+				//cameraController->DrawDebugGUI();
 			}
 		}
 	}
