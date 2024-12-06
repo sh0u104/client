@@ -86,6 +86,9 @@ public:
 
 	void SetudpRecvId(int id) { this->udpRecvId = id; }
 	int GetudpRecvId() { return udpRecvId; }
+
+	void SetrecvSize(int size) { this->recvSize = size; }
+	int GetRecvSize() const{ return recvSize; }
 	struct User
 	{
 		short ID;
@@ -123,4 +126,5 @@ private:
 	bool teamDisbabded = false;
 
 	int udpRecvId = 0;
+	int recvSize = 0;
 };

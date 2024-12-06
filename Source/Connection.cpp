@@ -68,8 +68,9 @@ void Connection::Initialize()
 	}
 
 	//失敗したらtrueがくる
-	if (UDPInitialize())
+	if (!UDPInitialize())
 	{
+		Logger::Print("UDP初期化失敗");
 		udpTh.join();
 		isConnection = false;
 		closesocket(sock);
@@ -116,12 +117,12 @@ bool Connection::UDPInitialize()
 	while (isUAddr)
 	{
 		SendUdpAddr();
-		Sleep(10);
+		Sleep(100);
 		++count;
-		if (count > 10)
-			return true;
+		if (count > 100)
+	   return false;
 	}
-	return false;
+	return true;
 }
 
 void Connection::Finalize()
@@ -171,12 +172,12 @@ void Connection::Finalize()
 
 bool Connection::UdpIdCheck(int Id)
 {
-	
+	playerManager->SetudpRecvId(Id);
 	for (int i = 0; i < 4; ++i)
 	{
 		if (Id == playerManager->GetMyPlayer()->Getteamsid(i)&&Id!= playerManager->GetMyPlayerID())
 		{
-			playerManager->SetudpRecvId(Id);
+			
 			return true;
 		}
 	}
@@ -216,10 +217,11 @@ void Connection::UdpRecvThread()
 {
   do {
 	    //UDP
+	    if(!isUAddr)
 	    {
 	    	char Buffer[256]{};
 	    	int addrSize = sizeof(struct sockaddr_in);
-			sockaddr_in temp;
+			sockaddr_in temp{};
 	    	int size = recvfrom(uSock, Buffer, sizeof(Buffer), 0, reinterpret_cast<sockaddr*>(&temp), &addrSize);
 			if (size == -1) {
 				int error = WSAGetLastError();
@@ -229,7 +231,7 @@ void Connection::UdpRecvThread()
 				}
 				else {
 					// 他のエラーの場合、ループを終了
-					Logger::Print("recvfrom error:%d",&error);
+					Logger::Print("recvfrom error:%d",error);
 					break;
 				}
 			}
@@ -237,12 +239,13 @@ void Connection::UdpRecvThread()
 			{
 				// クライアントが接続を閉じた場合の処理
 				//std::cout << "接続を閉じた" << std::endl;
-				Logger::Print("TUDP接続を閉じた");
+				Logger::Print("UDP接続を閉じた");
 				break;
 			}
 			
 			if (size > 0)
 	    	{
+				playerManager->SetrecvSize(size);
 				short type = 0;
 				memcpy_s(&type, sizeof(type), Buffer, sizeof(short));
 				switch (static_cast<UdpTag>(type))
@@ -316,7 +319,7 @@ void Connection::TcpRecvThread()
 				}
 				else {
 					// 他のエラーの場合、ループを終了
-					Logger::Print("recv error:%d", &error);
+					Logger::Print("recv error:%d", error);
 					break;
 				}
 			}

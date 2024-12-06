@@ -318,7 +318,10 @@ void SceneGame::Render()
 		std::vector<Enemy*> enemys = enemyManager.GetEnemys();
 		if (ImGui::Begin("Player", nullptr, ImGuiWindowFlags_None))
 		{
+
 			ImGui::Text("UdpRecvID: %d", playerManager->GetudpRecvId());
+			ImGui::Text("UdpRecvSize: %d", playerManager->GetRecvSize());
+
 			ImGui::Text("Disbanded: %d", playerManager->GetTeamDisbabded());
 			ImGui::Text("LoginCount: %d", playerManager->GetLoginCount());
 			ImGui::Text("PlayersSize: %d", playerManager->GetPlayers().size());
