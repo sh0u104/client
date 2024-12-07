@@ -31,11 +31,22 @@ void Connection::Initialize()
 	addr.sin_family = AF_INET;
 	// 接続先ポート 
 	addr.sin_port = htons(7000);
-	// 接続先IP設定 
+	// 接続先IP設定
+#if 1
+	//自分のPC内
 	addr.sin_addr.S_un.S_un_b.s_b1 = 127;
 	addr.sin_addr.S_un.S_un_b.s_b2 = 0;
 	addr.sin_addr.S_un.S_un_b.s_b3 = 0;
 	addr.sin_addr.S_un.S_un_b.s_b4 = 1;
+#else
+	// 接続先IP設定(ブロードキャストアドレス)
+	//学校5の
+	addr.sin_addr.S_un.S_un_b.s_b1 = 10;
+	addr.sin_addr.S_un.S_un_b.s_b2 = 200;
+	addr.sin_addr.S_un.S_un_b.s_b3 = 1;
+	addr.sin_addr.S_un.S_un_b.s_b4 = 211;
+
+#endif
 
 	// ソケット作成
 	sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -51,7 +62,6 @@ void Connection::Initialize()
 
 	if (Connect == 0)
 	{
-
 		// 受信スレッド実装
 		std::cout << "thread" << std::endl;
 		tcpTh = std::thread(&Connection::TcpRecvThread, this);
@@ -72,10 +82,12 @@ void Connection::Initialize()
 	{
 		Logger::Print("UDP初期化失敗");
 		udpTh.join();
+		tcpTh.join();
 		isConnection = false;
 		closesocket(sock);
 		closesocket(uSock);
 		WSACleanup();
+		return;
 	}
 }
 
@@ -85,10 +97,18 @@ bool Connection::UDPInitialize()
 	uAddr.sin_family = AF_INET;
 	uAddr.sin_port = htons(8000);
 	// 接続先IP設定
+#if 1
 	uAddr.sin_addr.S_un.S_un_b.s_b1 = 127;
 	uAddr.sin_addr.S_un.S_un_b.s_b2 = 0;
 	uAddr.sin_addr.S_un.S_un_b.s_b3 = 0;
 	uAddr.sin_addr.S_un.S_un_b.s_b4 = 1;
+#else
+	uAddr.sin_addr.S_un.S_un_b.s_b1 = 10;
+	uAddr.sin_addr.S_un.S_un_b.s_b2 = 200;
+	uAddr.sin_addr.S_un.S_un_b.s_b3 = 1;
+	uAddr.sin_addr.S_un.S_un_b.s_b4 = 211;
+
+#endif
 
 	// socket作成
 	uSock = socket(AF_INET, SOCK_DGRAM, 0);
