@@ -48,7 +48,7 @@ public:
     void SetconnectionInitialized(bool flag) { this->connectionInitialized = flag; }
     bool GetconnectionInitialized() { return connectionInitialized; }
 
-
+    Scene* GetScene() { return currentScene; }
 private:
     Scene* currentScene = nullptr;
     Scene* nextScene = nullptr;

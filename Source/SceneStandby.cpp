@@ -121,7 +121,7 @@ void SceneStandby::Initialize()
 			{
 				int MYID = playerManager->GetMyPlayer()->Getteamsid(i);
 				playerManager->GetPlayer(MYID)->SetAngle({ 0.0f,3.0f,0.0f });
-				playerManager->GetPlayer(MYID)->SetPosition({ 1.0f * i,0.0f,0.0f });
+				playerManager->GetPlayer(MYID)->SetPosition({ 1.5f * i,0.0f,0.0f });
 			}
 			
 			if (playerManager->GetMyPlayer()->GetTeamHost())
@@ -348,9 +348,6 @@ void SceneStandby::Render()
 					RenderTeamSelect(dc);
 				}
 			}
-			
-
-
 		}
 	}
 	
@@ -391,6 +388,16 @@ void SceneStandby::Render()
 		
 			ImGui::InputInt4("TeamsID", guiteamsid);
 		
+			for (int i = 0; i < playerManager->GetPlayers().size(); ++i)
+			{
+				int id = playerManager->GetMyPlayer()->Getteamsid(i);
+				if (id != 0)
+				{
+					//ImGui::Text("pos.x %d", playerManager->GetPlayer(id)->GetPosition().x);
+					int pos = playerManager->GetPlayer(id)->GetPosition().x;
+					ImGui::InputInt("pos.x: %d", &pos);
+				}
+			}
 			//if (ImGui::Button("FriendList Update"))
 			//{
 			//	connection->SendSeeFriend();
@@ -555,6 +562,7 @@ void SceneStandby::SyncPlayerGenerate()
 	if (playerManager->GetSynclogin())
 	{
 		int teamMax = 4;
+		int count = 0;
 		for (int i = 0; i < teamMax - 1; ++i)
 		{
 			int generateCount = playerManager->GetPlayersGenerateCount();
@@ -568,7 +576,7 @@ void SceneStandby::SyncPlayerGenerate()
 				//生成
 				Player* player = new Player();
 				player->SetPlayerID(ID);						//貰ったID情報をストック
-				player->SetPosition(DirectX::XMFLOAT3(1.5f * generateCount, 0, 0));			//発生位置
+				player->SetPosition(DirectX::XMFLOAT3(1.5f *count, 0, 0));			//発生位置
 				player->SetAngle({ 0.0f,3.0f,0.0f });
 				player->Setoperation(false);
 
@@ -576,6 +584,11 @@ void SceneStandby::SyncPlayerGenerate()
 				playerManager->GetPlayer(ID)->SetReady(true);
 				playerManager->AddPlayersGenerateCount();
 			}
+			else
+			{
+				playerManager->GetPlayer(ID)->SetPosition(DirectX::XMFLOAT3(1.5f * count, 0, 0));
+			}
+			count++;
 		}
 		playerManager->SetSynclogin(false);
 	}

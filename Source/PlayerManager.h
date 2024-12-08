@@ -89,6 +89,10 @@ public:
 
 	void SetrecvSize(int size) { this->recvSize = size; }
 	int GetRecvSize() const{ return recvSize; }
+
+	void SetteamPlace(int teamPlace) { this->teamPlace = teamPlace; }
+	int GetteamPlace() { return this->teamPlace; }
+
 	struct User
 	{
 		short ID;
@@ -127,4 +131,6 @@ private:
 
 	int udpRecvId = 0;
 	int recvSize = 0;
+
+	int teamPlace = 0;
 };

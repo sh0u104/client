@@ -3,6 +3,7 @@
 #include "PlayerManager.h"
 #include "SceneManager.h"
 #include "StateMachine.h"
+#include "SceneStandby.h"
 #include "Logger.h"
 #pragma comment(lib, "ws2_32.lib")
 Connection::Connection()
@@ -466,7 +467,6 @@ void Connection::TcpRecvThread()
 									playerManager->GetMyPlayer()->Setteamsid(i, 0);
 								}
 							}
-
 						}
 						//ホストじゃない時
 						else
@@ -483,19 +483,23 @@ void Connection::TcpRecvThread()
 										for (int j = i; j < 4 - 1; ++j) { // 現在の位置から順に移動
 											int nextValue = playerManager->GetMyPlayer()->Getteamsid(j + 1);
 											playerManager->GetMyPlayer()->Setteamsid(j, nextValue);
+											if (nextValue != 0)
+											{
+												DirectX::XMFLOAT3 pos = playerManager->GetPlayer(nextValue)->GetPosition();
+												pos.x -= 1.5f;
+												Logger::Print("ずらす%d", nextValue);
+												playerManager->GetPlayer(nextValue)->SetPosition(pos);
+											}
+										
 										}
-										// 最後の要素に0をセット
+										 //最後の要素に0をセット
 										playerManager->GetMyPlayer()->Setteamsid(4 - 1, 0);
 										break; // 対応が1回で十分ならループを抜ける
 									}
 								}
 							}
-
 						}
 					}
-
-					
-
 				}
 				break;
 				case TcpTag::Teamsync:
