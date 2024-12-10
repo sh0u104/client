@@ -12,8 +12,6 @@ void EnemyManager::Update(float elapsedTime)
     {
         enemy->Update(elapsedTime);
     }
-
-   
     // 破棄処理 毎フレームここで一気に消す。
     // 注意projectilesの範囲for文中でerase()すると不具合が発生してしまうため、
     //  更新処理が終わった後に破棄リストに積まれたオブジェクトを削除する。
@@ -29,7 +27,6 @@ void EnemyManager::Update(float elapsedTime)
             enemies.erase(it);// 削除
             // 管理課から消えただけ
         }
-
         // 消えた訳じゃないので
         // 敵の破棄処理
         delete enemy;// 入れ物破棄

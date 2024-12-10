@@ -231,6 +231,9 @@
     <ClInclude Include="Source\EffectManager.h">
       <Filter>Source\Effect</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Graphics\SpriteManager.h">
+      <Filter>Source\Graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="External\imgui\imgui.cpp">
@@ -388,6 +391,9 @@
     </ClCompile>
     <ClCompile Include="Source\EffectManager.cpp">
       <Filter>Source\Effect</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Graphics\SpriteManager.cpp">
+      <Filter>Source\Graphics</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

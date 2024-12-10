@@ -6,22 +6,24 @@
 
 #include "SceneStandby.h"
 #include "SceneConnection.h"
+#include "Graphics/SpriteManager.h"
 // 初期化
 void SceneTitle::Initialize()
 {
+    g_SpriteManager.LoadSprites();
     // スプライト初期化
-    sprite = new Sprite("Data/Sprite/Title.png");
+   // sprite = new Sprite("Data/Sprite/Title.png");
     SceneManager::Instance().ConnectionClear();
 }
 // 終了化
 void SceneTitle::Finalize()
 {
     // スプライト終了化
-    if (this->sprite)
-    {
-        delete sprite;
-        sprite = nullptr;
-    }
+    //if (this->sprite)
+    //{
+    //    delete sprite;
+    //    sprite = nullptr;
+    //}
 
 }
 // 更新処理
@@ -59,10 +61,13 @@ void SceneTitle::Render()
     {
         float screenWidth = static_cast<float>(graphics.GetScreenWidth());
         float screenHeight = static_cast<float>(graphics.GetScreenHeight());
-        float textureWidth = static_cast<float>(sprite->GetTextureWidth());
-        float textureHeight = static_cast<float>(sprite->GetTextureHeight());
+
+        Sprite* titleSprite = g_SpriteManager.GetSprite(SpriteNumber::Title);
+ 
+        float textureWidth = static_cast<float>(titleSprite->GetTextureWidth());
+        float textureHeight = static_cast<float>(titleSprite->GetTextureHeight());
         // 描画
-        sprite->Render(dc,
+        titleSprite->Render(dc,
             0, 0, screenWidth, screenHeight,
             0, 0, textureWidth, textureHeight,
             0,

@@ -276,8 +276,7 @@ public:
 	void SetPlayerManager(PlayerManager* playerManager) { this->playerManager = playerManager; }
 
 	bool isConnection = false;
-	//std::vector<int> deleteID;
-	//void DeleteID();
+	bool GetIsConectionError() { return isConectionError; }
 private:
 	PlayerManager* playerManager = nullptr;
 
@@ -294,6 +293,6 @@ private:
 	SOCKET uSock{};
 	std::thread udpTh;
 
-	
+	bool isConectionError = false;
 };
 

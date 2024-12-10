@@ -18,7 +18,7 @@ public:
     void Render() override;
 
 private:
-    Sprite* sprite = nullptr;
+    //Sprite* sprite = nullptr;
 
    
 };

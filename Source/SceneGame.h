@@ -63,21 +63,21 @@ private:
 	Player* player = nullptr;
 	CameraController* cameraController = nullptr;
 
-	enum class SpriteNumber : int
-	{
-		Number,
-		BigCircle,
-		SmallCircle,
-		SelectEdge,
-		Mouse,
-		WASD,
-		Setting,
-		Name,
-		Logout,
-		TeamDisbanded,
-		Max
-	};
-	std::unique_ptr<Sprite> sprites[static_cast<int>(SpriteNumber::Max)] = {};
+	//enum class SpriteNumber : int
+	//{
+	//	Number,
+	//	BigCircle,
+	//	SmallCircle,
+	//	SelectEdge,
+	//	Mouse,
+	//	WASD,
+	//	Setting,
+	//	Name,
+	//	Logout,
+	//	TeamDisbanded,
+	//	Max
+	//};
+	//std::unique_ptr<Sprite> sprites[static_cast<int>(SpriteNumber::Max)] = {};
 
 
 

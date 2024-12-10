@@ -4,10 +4,12 @@
 
 #include "SceneConnection.h"
 #include "SceneManager.h"
-#include "Input/Input.h"
 #include "SceneLoading.h"
+#include "SceneTitle.h"
+#include "Input/Input.h"
 #include "SceneStandby.h"
 #include "Graphics/Graphics.h"
+#include "Graphics/SpriteManager.h"
 
 #include <thread>
 #include <fstream>
@@ -31,17 +33,17 @@ void SceneConnection::Initialize()
 {
   // スプライト初期化
     //エラー
-    sprites[static_cast<int>(SpriteNumber::NetError)] = std::make_unique<Sprite>("Data/Sprite/neterror.png");
-    //OKボタン
-    sprites[static_cast<int>(SpriteNumber::OK)] = std::make_unique<Sprite>("Data/Sprite/OK.png");
-    //ゲスト
-    sprites[static_cast<int>(SpriteNumber::Guest)] = std::make_unique<Sprite>("Data/Sprite/guest.png");
-    //ログイン
-    sprites[static_cast<int>(SpriteNumber::Login)] = std::make_unique<Sprite>("Data/Sprite/login.png");
-    //新規ログイン
-    sprites[static_cast<int>(SpriteNumber::NewLogin)] = std::make_unique<Sprite>("Data/Sprite/newlogin.png");
-    //名前
-    sprites[static_cast<int>(SpriteNumber::Name)] = std::make_unique<Sprite>("Data/Sprite/font1.png");
+    //sprites[static_cast<int>(SpriteNumber::NetError)] = std::make_unique<Sprite>("Data/Sprite/neterror.png");
+    ////OKボタン
+    //sprites[static_cast<int>(SpriteNumber::OK)] = std::make_unique<Sprite>("Data/Sprite/OK.png");
+    ////ゲスト
+    //sprites[static_cast<int>(SpriteNumber::Guest)] = std::make_unique<Sprite>("Data/Sprite/guest.png");
+    ////ログイン
+    //sprites[static_cast<int>(SpriteNumber::Login)] = std::make_unique<Sprite>("Data/Sprite/login.png");
+    ////新規ログイン
+    //sprites[static_cast<int>(SpriteNumber::NewLogin)] = std::make_unique<Sprite>("Data/Sprite/newlogin.png");
+    ////名前
+    //sprites[static_cast<int>(SpriteNumber::Name)] = std::make_unique<Sprite>("Data/Sprite/font1.png");
 
 
     //一度だけ
@@ -106,7 +108,14 @@ void SceneConnection::Update(float elapsedTime)
     if (Getfile)
     {
         Getfile = false;
-        httpPngDownload();
+        if(httpPngDownload())
+        {
+            Logger::Print("pngダウンロード成功");
+        }
+        else
+        {
+            Logger::Print("pngダウンロード失敗");
+        }
     }
 
     if (isSignup)
@@ -124,8 +133,6 @@ void SceneConnection::Update(float elapsedTime)
         }
        
         isSignup = false;
-
-       
     }
     if (isSignin)
     {
@@ -164,6 +171,13 @@ void SceneConnection::Update(float elapsedTime)
         //ログイン数を加算
         playerManager->AddLoginCount();
         SceneManager::Instance().ChangeScene(new SceneLoading(new SceneStandby));
+    }
+
+
+    //サーバーとの接続が切れたら
+    if (connection->GetIsConectionError())
+    {
+        SceneManager::Instance().ChangeScene(new SceneLoading(new SceneTitle));
     }
 }
 // 描画処理
@@ -381,7 +395,7 @@ void SceneConnection::Signin()
 
             // チャンクサイズを16進数から数値に変換
             std::string chunkSizeHex = response_body.substr(pos, chunkEnd - pos);
-            int chunkSize = std::stoi(chunkSizeHex, nullptr, 16);
+            size_t chunkSize = std::stoi(chunkSizeHex, nullptr, 16);
             pos = chunkEnd + 2; // チャンクサイズの後の `\r\n` をスキップ
 
             // チャンクデータの取得
@@ -430,7 +444,8 @@ void SceneConnection::Signin()
 
 bool SceneConnection::httpSignin()
 {
-    std::string hostname = "localhost";
+    //std::string hostname = "localhost";
+    std::string hostname = "10.200.2.236"; // サーバーのIPアドレスに変更
     std::string port = "5000";
     std::string path = "/Login/Login?userId=" + std::to_string(maxID);
 
@@ -516,7 +531,7 @@ bool SceneConnection::httpSignin()
             if (chunkEnd == std::string::npos) break;
 
             std::string chunkSizeHex = response_body.substr(pos, chunkEnd - pos);
-            int chunkSize = std::stoi(chunkSizeHex, nullptr, 16);
+            size_t chunkSize = std::stoi(chunkSizeHex, nullptr, 16);
             pos = chunkEnd + 2;
 
             cleaned_body += response_body.substr(pos, chunkSize);
@@ -702,7 +717,7 @@ void SceneConnection::Signup()
 
             // チャンクサイズを16進数から数値に変換
             std::string chunkSizeHex = response_body.substr(pos, chunkEnd - pos);
-            int chunkSize = std::stoi(chunkSizeHex, nullptr, 16);
+            size_t chunkSize = std::stoi(chunkSizeHex, nullptr, 16);
             pos = chunkEnd + 2; // チャンクサイズの後の `\r\n` をスキップ
 
             // チャンクデータの取得
@@ -754,7 +769,8 @@ void SceneConnection::Signup()
 
 bool SceneConnection::httpSignup()
 {
-    std::string hostname = "localhost";
+    //std::string hostname = "localhost";
+    std::string hostname = "10.200.2.236"; // サーバーのIPアドレスに変更
     std::string port = "5000";
     std::string path = "/Registry/Registration";
 
@@ -787,6 +803,7 @@ bool SceneConnection::httpSignup()
 
     if (connect(sock, addrInfo->ai_addr, static_cast<int>(addrInfo->ai_addrlen)) == SOCKET_ERROR) {
         Logger::Print("connectに失敗しました");
+        Logger::Print("エラーコード: %d", WSAGetLastError());
         closesocket(sock);
         freeaddrinfo(addrInfo);
         WSACleanup();
@@ -846,7 +863,7 @@ bool SceneConnection::httpSignup()
 
                 // チャンクサイズを16進数から数値に変換
                 std::string chunkSizeHex = response_body.substr(pos, chunkEnd - pos);
-                int chunkSize = std::stoi(chunkSizeHex, nullptr, 16);
+                size_t chunkSize = std::stoi(chunkSizeHex, nullptr, 16);
                 pos = chunkEnd + 2; // チャンクサイズの後の `\r\n` をスキップ
 
                 // チャンクデータの取得
@@ -947,7 +964,7 @@ bool SceneConnection::NameJson()
     if (jsonData.contains("user_profile") && jsonData["user_profile"].contains("userName")) {
         userName = jsonData["user_profile"]["userName"];
       
-        Logger::Print("userNameが見つかりません\%s", userName);
+        Logger::Print("userNameが見つかりません", userName);
         playerManager->GetMyPlayer()->SetLoginDay(jsonData["user_login"]["loginDay"]);
     }
     else {
@@ -1102,7 +1119,8 @@ void SceneConnection::pngDownload()
 
 bool SceneConnection::httpPngDownload()
 {
-    std::string hostname = "localhost";
+    //std::string hostname = "localhost";
+    std::string hostname = "10.200.2.236"; // サーバーのIPアドレスに変更
     std::string port = "5000";
     const std::string path = "/File/DownloadPng";
     const std::string outputFile = "login.png";
@@ -1210,9 +1228,9 @@ void SceneConnection::RenderNetError(ID3D11DeviceContext* dc)
 {
     float positionX = 50;
     float positionY = 0;
-
+    Sprite* NetErrorSprite = g_SpriteManager.GetSprite(SpriteNumber::NetError);
     //枠組み
-    sprites[static_cast<int>(SpriteNumber::NetError)]->Render(dc,
+    NetErrorSprite->Render(dc,
         positionX, positionY, //描画位置
         600, 350,               //表示サイズ
         0, 0,                 //切り取りはじめ位置
@@ -1221,7 +1239,8 @@ void SceneConnection::RenderNetError(ID3D11DeviceContext* dc)
         1, 1, 1, 1);
 
     //OKボタン
-    sprites[static_cast<int>(SpriteNumber::OK)]->Render(dc,
+    Sprite* OKSprite = g_SpriteManager.GetSprite(SpriteNumber::OK);
+    OKSprite->Render(dc,
         positionX + 190, positionY + 250, //描画位置
         150, 50,               //表示サイズ
         0, 0,                 //切り取りはじめ位置
@@ -1263,7 +1282,8 @@ void SceneConnection::RenderLogin(ID3D11DeviceContext* dc)
 
     float interval = 250;
     //枠組み
-    sprites[static_cast<int>(SpriteNumber::Guest)]->Render(dc,
+    Sprite* GuestSprite = g_SpriteManager.GetSprite(SpriteNumber::Guest);
+    GuestSprite->Render(dc,
         positionX, positionY, //描画位置
         sizeX,sizeY,              //表示サイズ
         0, 0,                 //切り取りはじめ位置
@@ -1276,7 +1296,8 @@ void SceneConnection::RenderLogin(ID3D11DeviceContext* dc)
         connection->SendGeustLogin();
     }
 
-    sprites[static_cast<int>(SpriteNumber::Login)]->Render(dc,
+    Sprite* LoginSprite = g_SpriteManager.GetSprite(SpriteNumber::Login);
+    LoginSprite->Render(dc,
         positionX+ interval, positionY, //描画位置
         sizeX, sizeY,                 //表示サイズ
         0, 0,                     //切り取りはじめ位置
@@ -1289,7 +1310,8 @@ void SceneConnection::RenderLogin(ID3D11DeviceContext* dc)
         isSignin = true;
     }
 
-    sprites[static_cast<int>(SpriteNumber::NewLogin)]->Render(dc,
+    Sprite* NewLoginSprite = g_SpriteManager.GetSprite(SpriteNumber::NewLogin);
+    NewLoginSprite->Render(dc,
         positionX + interval*2, positionY, //描画位置
         sizeX, sizeY,                  //表示サイズ
         0, 0,                      //切り取りはじめ位置
@@ -1318,7 +1340,8 @@ void SceneConnection::RenderName(ID3D11DeviceContext* dc)
         int number = static_cast<int>(name[i]);
         int width = number % 16;
         int height = number / 16;
-        sprites[static_cast<int>(SpriteNumber::Name)]->Render(dc,
+        Sprite* NameSprite = g_SpriteManager.GetSprite(SpriteNumber::Name);
+        NameSprite->Render(dc,
             positionX, positionY,      //描画位置
             sizeX, sizeY,              //表示サイズ
             sizeX*width, sizeY*height, //切り取りはじめ位置

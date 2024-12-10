@@ -53,31 +53,7 @@ void EnemySlime::Update(float elapsedTime)
 {
     if (SceneManager::Instance().GetPlayerManager()->GetMyPlayer()->GetTeamHost())
     {
-        // ステート毎の処理
-      /*  switch (state)
-        {
-        case State::Wander:
-            UpdateWanderState(elapsedTime);
-            break;
-        case State::Idle:
-            UpdateIdleState(elapsedTime);
-            break;
-        case State::Pursuit:
-            UpdatePursuitState(elapsedTime);
-            break;
-        case State::Attack:
-            UpdateAttackState(elapsedTime);
-            break;
-        case State::IdleBattle:
-            UpdateIdleBattleState(elapsedTime);
-            break;
-        case State::Damage:
-            UpdateDamageState(elapsedTime);
-            break;
-        case State::Death:
-            UpdateDeathState(elapsedTime);
-            break;
-        }*/
+       
         if(stateMachine)
         stateMachine->Update(elapsedTime);
 
@@ -89,8 +65,6 @@ void EnemySlime::Update(float elapsedTime)
     {
         stateMachine->Update(elapsedTime);
     }
-
-
         // 無敵時間更新
         UpdateInbincibleTimer(elapsedTime);
         // オブジェクト行列を更新

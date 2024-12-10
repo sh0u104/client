@@ -12,6 +12,7 @@
 #include "SceneGame.h"
 #include "SceneTitle.h"
 
+#include "Graphics/SpriteManager.h"
 void SceneStandby::Initialize()
 {
 	
@@ -28,7 +29,7 @@ void SceneStandby::Initialize()
 			DirectX::XMFLOAT3(0, 10, -10),
 			DirectX::XMFLOAT3(0, 0, 0),
 			DirectX::XMFLOAT3(0, 1, 0)
-
+			
 		);
 
 		// どの範囲をどれだけ見るか奥行含め
@@ -40,9 +41,10 @@ void SceneStandby::Initialize()
 		);
 		// カメラコントローラー初期化
 		cameraController = new CameraController();
-		DirectX::XMFLOAT3 target = { 0,0,0 };
-		target.y += 0.5f;// 足元から５０センチぐらい
-		cameraController->SetTarget(target);// プレイヤーの腰当たり
+		cameraController->SetRange(10.0f);
+		//DirectX::XMFLOAT3 target = { 0,0,0 };
+		//target.y += 0.5f;// 足元から５０センチぐらい
+		//cameraController->SetTarget(target);// プレイヤーの腰当たり
 	}
 
 	// スプライト表示するもの
@@ -50,49 +52,47 @@ void SceneStandby::Initialize()
 		// スプライト表示するもの
 		//sprites[static_cast<int>(Spritenumber:)] = std::make_unique<Sprite>("Data/Sprite/");
 		//数字
-		sprites[static_cast<int>(Spritenumber::Number)] = std::make_unique<Sprite>("Data/Sprite/number.png");
-		//旗
-		sprites[static_cast<int>(Spritenumber::Flag)] = std::make_unique<Sprite>("Data/Sprite/flag.png");
-		//チーム
-		sprites[static_cast<int>(Spritenumber::Team)] = std::make_unique<Sprite>("Data/Sprite/team.png");
-		//チームセレクト
-		sprites[static_cast<int>(Spritenumber::TeamSelect)] = std::make_unique<Sprite>("Data/Sprite/teamselect.png");
-		//チーム作成
-		sprites[static_cast<int>(Spritenumber::TeamCreate)] = std::make_unique<Sprite>("Data/Sprite/teamcreate.png");
-		//加入
-		sprites[static_cast<int>(Spritenumber::TeamJoin)] = std::make_unique<Sprite>("Data/Sprite/teamjoin.png");
-		//チーム加入する時のクリックできないとこ
-		sprites[static_cast<int>(Spritenumber::TeamJoinFrame)] = std::make_unique<Sprite>("Data/Sprite/teamjoinframe.png");
-		//チーム加入する時のクリックするとこ
-		sprites[static_cast<int>(Spritenumber::TeamjoinNumber)] = std::make_unique<Sprite>("Data/Sprite/teamjoinnumber.png");
-		//チーム番号
-		sprites[static_cast<int>(Spritenumber::TeamNumber)] = std::make_unique<Sprite>("Data/Sprite/teamnumber.png");
-		//閉じるボタン
-		sprites[static_cast<int>(Spritenumber::Close)] = std::make_unique<Sprite>("Data/Sprite/close.png");
-		//準備完了
-		sprites[static_cast<int>(Spritenumber::Ready)] = std::make_unique<Sprite>("Data/Sprite/ready.png");
-		//準備キャンセル
-		sprites[static_cast<int>(Spritenumber::ReadyzCancel)] = std::make_unique<Sprite>("Data/Sprite/readycancel.png");
-		//ソロモード
-		sprites[static_cast<int>(Spritenumber::Solo)] = std::make_unique<Sprite>("Data/Sprite/solo.png");
-		//マルチモード
-		sprites[static_cast<int>(Spritenumber::Multi)] = std::make_unique<Sprite>("Data/Sprite/multi.png");
-		//スタート
-		sprites[static_cast<int>(Spritenumber::Start)] = std::make_unique<Sprite>("Data/Sprite/start.png");
-		//名前
-		sprites[static_cast<int>(Spritenumber::Name)] = std::make_unique<Sprite>("Data/Sprite/font1.png");
-
-
-		sprites[static_cast<int>(Spritenumber::WASD)] = std::make_unique<Sprite>("Data/Sprite/WASD.png");
-
-		sprites[static_cast<int>(Spritenumber::SelectEdge)] = std::make_unique<Sprite>("Data/Sprite/selectedge.png");
-
-		sprites[static_cast<int>(Spritenumber::Setting)] = std::make_unique<Sprite>("Data/Sprite/setting.png");
-
-		sprites[static_cast<int>(Spritenumber::Mouse)] = std::make_unique<Sprite>("Data/Sprite/mouse.png");
-
-		//ログアウト
-		sprites[static_cast<int>(Spritenumber::Logout)] = std::make_unique<Sprite>("Data/Sprite/logout.png");
+		//sprites[static_cast<int>(Spritenumber::Number)] = std::make_unique<Sprite>("Data/Sprite/number.png");
+		////旗
+		//sprites[static_cast<int>(Spritenumber::Flag)] = std::make_unique<Sprite>("Data/Sprite/flag.png");
+		////チーム
+		//sprites[static_cast<int>(Spritenumber::Team)] = std::make_unique<Sprite>("Data/Sprite/team.png");
+		////チームセレクト
+		//sprites[static_cast<int>(Spritenumber::TeamSelect)] = std::make_unique<Sprite>("Data/Sprite/teamselect.png");
+		////チーム作成
+		//sprites[static_cast<int>(Spritenumber::TeamCreate)] = std::make_unique<Sprite>("Data/Sprite/teamcreate.png");
+		////加入
+		//sprites[static_cast<int>(Spritenumber::TeamJoin)] = std::make_unique<Sprite>("Data/Sprite/teamjoin.png");
+		////チーム加入する時のクリックできないとこ
+		//sprites[static_cast<int>(Spritenumber::TeamJoinFrame)] = std::make_unique<Sprite>("Data/Sprite/teamjoinframe.png");
+		////チーム加入する時のクリックするとこ
+		//sprites[static_cast<int>(Spritenumber::TeamjoinNumber)] = std::make_unique<Sprite>("Data/Sprite/teamjoinnumber.png");
+		////チーム番号
+		//sprites[static_cast<int>(Spritenumber::TeamNumber)] = std::make_unique<Sprite>("Data/Sprite/teamnumber.png");
+		////閉じるボタン
+		//sprites[static_cast<int>(Spritenumber::Close)] = std::make_unique<Sprite>("Data/Sprite/close.png");
+		////準備完了
+		//sprites[static_cast<int>(Spritenumber::Ready)] = std::make_unique<Sprite>("Data/Sprite/ready.png");
+		////準備キャンセル
+		//sprites[static_cast<int>(Spritenumber::ReadyzCancel)] = std::make_unique<Sprite>("Data/Sprite/readycancel.png");
+		////ソロモード
+		//sprites[static_cast<int>(Spritenumber::Solo)] = std::make_unique<Sprite>("Data/Sprite/solo.png");
+		////マルチモード
+		//sprites[static_cast<int>(Spritenumber::Multi)] = std::make_unique<Sprite>("Data/Sprite/multi.png");
+		////スタート
+		//sprites[static_cast<int>(Spritenumber::Start)] = std::make_unique<Sprite>("Data/Sprite/start.png");
+		////名前
+		//sprites[static_cast<int>(Spritenumber::Name)] = std::make_unique<Sprite>("Data/Sprite/font1.png");
+		//sprites[static_cast<int>(Spritenumber::WASD)] = std::make_unique<Sprite>("Data/Sprite/WASD.png");
+		//
+		//sprites[static_cast<int>(Spritenumber::SelectEdge)] = std::make_unique<Sprite>("Data/Sprite/selectedge.png");
+		//
+		//sprites[static_cast<int>(Spritenumber::Setting)] = std::make_unique<Sprite>("Data/Sprite/setting.png");
+		//
+		//sprites[static_cast<int>(Spritenumber::Mouse)] = std::make_unique<Sprite>("Data/Sprite/mouse.png");
+		//
+		////ログアウト
+		//sprites[static_cast<int>(Spritenumber::Logout)] = std::make_unique<Sprite>("Data/Sprite/logout.png");
 	}
 
 	SceneManager& sceneManager = SceneManager::Instance();
@@ -230,6 +230,7 @@ void SceneStandby::Update(float elapsedTime)
 		}
 		playerManager->SetTeamDisbabded(false);
 		playerManager->GetMyPlayer()->ResetTeamsid();
+		playerManager->GetMyPlayer()->SetPosition(DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f));
 		teamRenderflag = true;
 	}
 	
@@ -249,6 +250,22 @@ void SceneStandby::Update(float elapsedTime)
 	{
 		guiteamsid[i] = playerManager->GetMyPlayer()->Getteamsid(i);
 	}
+
+	// カメラコントローラー更新処理
+	DirectX::XMFLOAT3 target = playerManager->GetMyPlayer()->GetPosition();
+	target.y += 0.5f;// 足元から５０センチぐらい
+	cameraController->SetTarget(target);// プレイヤーの腰当たり
+	cameraController->Update(elapsedTime);
+
+	// ステージ更新処理
+	StageManager::instance().Update(elapsedTime);
+
+	//サーバーとの接続が切れたら
+	if (connection->GetIsConectionError())
+	{
+		SceneManager::Instance().ChangeScene(new SceneLoading(new SceneTitle));
+	}
+
 }
 
 void SceneStandby::Render()
@@ -394,8 +411,8 @@ void SceneStandby::Render()
 				if (id != 0)
 				{
 					//ImGui::Text("pos.x %d", playerManager->GetPlayer(id)->GetPosition().x);
-					int pos = playerManager->GetPlayer(id)->GetPosition().x;
-					ImGui::InputInt("pos.x: %d", &pos);
+					float pos = playerManager->GetPlayer(id)->GetPosition().x;
+					ImGui::InputFloat("pos.x: %d", &pos);
 				}
 			}
 			//if (ImGui::Button("FriendList Update"))
@@ -455,7 +472,9 @@ void SceneStandby::OprerationSelect(ID3D11DeviceContext* dc)
 		DirectX::XMFLOAT2 size, pos;
 		pos = { 410,10 };
 		size = { 30,30 };
-		sprites[static_cast<int>(Spritenumber::Setting)]->Render(dc,
+
+		Sprite* SettingSprite = g_SpriteManager.GetSprite(SpriteNumber::Setting);
+		SettingSprite->Render(dc,
 			pos.x, pos.y,  //描画位置
 			size.x, size.y,  //表示サイズ
 			0, 0,      //切り取りはじめ位置
@@ -480,7 +499,8 @@ void SceneStandby::OprerationSelect(ID3D11DeviceContext* dc)
 		WASDPos = { 175,25 };
 
 		//マウスのイラスト描画
-		sprites[static_cast<int>(Spritenumber::Mouse)]->Render(dc,
+		Sprite* MouseSprite = g_SpriteManager.GetSprite(SpriteNumber::Mouse);
+		MouseSprite->Render(dc,
 			mousePos.x, mousePos.y,  //描画位置
 			size.x, size.y,  //表示サイズ
 			0, 0,      //切り取りはじめ位置
@@ -489,7 +509,8 @@ void SceneStandby::OprerationSelect(ID3D11DeviceContext* dc)
 			1, 1, 1, 1);
 
 		//WASDボタンの描画
-		sprites[static_cast<int>(Spritenumber::WASD)]->Render(dc,
+		Sprite* WASDSprite = g_SpriteManager.GetSprite(SpriteNumber::WASD);
+		WASDSprite->Render(dc,
 			WASDPos.x, WASDPos.y,  //描画位置
 			size.x, size.y,  //表示サイズ
 			0, 0,    //切り取りはじめ位置
@@ -520,7 +541,8 @@ void SceneStandby::OprerationSelect(ID3D11DeviceContext* dc)
 		edgePos.y -= size.y / 4;
 
 		//選択している縁描画
-		sprites[static_cast<int>(Spritenumber::SelectEdge)]->Render(dc,
+		Sprite* SelectEdgeSprite = g_SpriteManager.GetSprite(SpriteNumber::SelectEdge);
+		SelectEdgeSprite->Render(dc,
 			edgePos.x, edgePos.y,  //描画位置
 			size.x * 1.5f, size.y * 1.5f,  //表示サイズ
 			0, 0,      //切り取りはじめ位置
@@ -537,7 +559,8 @@ void SceneStandby::Logout(ID3D11DeviceContext* dc)
 	size = { 100,50 };
 	pos = { 25,150 };
 	//ログアウトボタン
-	sprites[static_cast<int>(Spritenumber::Logout)]->Render(dc,
+	Sprite* LogoutSprite = g_SpriteManager.GetSprite(SpriteNumber::Logout);
+	LogoutSprite->Render(dc,
 		pos.x, pos.y,        //描画位置
 		size.x, size.y,      //表示サイズ
 		0, 0,                //切り取りはじめ位置
@@ -691,7 +714,8 @@ void SceneStandby::RenderID(ID3D11DeviceContext* dc,
 			digit = (ID / static_cast<int>(pow(10, i))) % 10;
 
 			// スプライトを描画
-			sprites[static_cast<int>(Spritenumber::Number)]->Render(dc,
+			Sprite* NumberSprite = g_SpriteManager.GetSprite(SpriteNumber::Number);
+			NumberSprite->Render(dc,
 				numberposX, numberposY,
 				30, 30,
 				gaugeWidth * digit + digit, 0,
@@ -708,9 +732,14 @@ void SceneStandby::RenderID(ID3D11DeviceContext* dc,
 void SceneStandby::RenderTeamNumber(ID3D11DeviceContext* dc, const DirectX::XMFLOAT4X4& view, const DirectX::XMFLOAT4X4& projection)
 {
 
+	
+	// g_SpriteManager を使ってスプライトを取得
+	Sprite* numberSprite = g_SpriteManager.GetSprite(SpriteNumber::TeamNumber);
+	// 取得したスプライトで Render メソッドを呼び出す
+	//numberSprite->Render();
 	float positionX = 150;
 	float positionY = 70;
-	sprites[static_cast<int>(Spritenumber::TeamNumber)]->Render(dc,
+	numberSprite->Render(dc,
 		positionX, positionY,  //描画位置
 		200,40,                //表示サイズ
 		0, 0,                  //切り取りはじめ位置
@@ -745,7 +774,8 @@ void SceneStandby::RenderTeamNumber(ID3D11DeviceContext* dc, const DirectX::XMFL
 		digit = (ID / static_cast<int>(pow(10, i))) % 10;
 
 		// スプライトを描画
-		sprites[static_cast<int>(Spritenumber::Number)]->Render(dc,
+		Sprite* NumberSprite = g_SpriteManager.GetSprite(SpriteNumber::Number);
+		NumberSprite->Render(dc,
 			numberposX, numberposY,
 			30, 30,
 			gaugeWidth * digit+ digit, 0,
@@ -758,7 +788,8 @@ void SceneStandby::RenderTeamNumber(ID3D11DeviceContext* dc, const DirectX::XMFL
 	}
 	
 	//閉じるボタン
-	sprites[static_cast<int>(Spritenumber::Close)]->Render(dc,
+	Sprite* CloseSprite = g_SpriteManager.GetSprite(SpriteNumber::Close);
+	CloseSprite->Render(dc,
 		positionX + 160, positionY, //描画位置
 		40, 40,               //表示サイズ
 		0, 0,                 //切り取りはじめ位置
@@ -850,7 +881,9 @@ void SceneStandby::RenderName(ID3D11DeviceContext* dc, const DirectX::XMFLOAT4X4
 		int number = static_cast<int>(name[i]);
 		int width = number % 16;
 		int height = number / 16;
-		sprites[static_cast<int>(Spritenumber::Name)]->Render(dc,
+
+		Sprite* NameSprite = g_SpriteManager.GetSprite(SpriteNumber::Name);
+		NameSprite->Render(dc,
 			positionX, positionY,      //描画位置
 			24,24,              //表示サイズ
 			sizeX * width, sizeY * height, //切り取りはじめ位置
@@ -868,7 +901,9 @@ void SceneStandby::RenderTeam(ID3D11DeviceContext* dc)
 	float positionY = 10;
 	float sizeX = 100;
 	float sizeY = 30;
-	sprites[static_cast<int>(Spritenumber::Team)]->Render(dc,
+
+	Sprite* TeamSprite = g_SpriteManager.GetSprite(SpriteNumber::Team);
+	TeamSprite->Render(dc,
 		positionX, positionY,     //描画位置
 		sizeX, sizeY,             //表示サイズ
 		0, 0,                     //切り取りはじめ位置
@@ -887,7 +922,8 @@ void SceneStandby::RenderTeamSelect(ID3D11DeviceContext* dc)
 	float positionX = 80;
 	float positionY = 50;
 	//枠組み
-	sprites[static_cast<int>(Spritenumber::TeamSelect)]->Render(dc,
+	Sprite* TeamSelectSprite = g_SpriteManager.GetSprite(SpriteNumber::TeamSelect);
+	TeamSelectSprite->Render(dc,
 		positionX, positionY, //描画位置
 		600, 250,               //表示サイズ
 		0, 0,                 //切り取りはじめ位置
@@ -899,7 +935,8 @@ void SceneStandby::RenderTeamSelect(ID3D11DeviceContext* dc)
 	float sizeX = 200;
 	float sizeY = 150;
 	//チーム作成ボタン
-	sprites[static_cast<int>(Spritenumber::TeamCreate)]->Render(dc,
+	Sprite* TeamCreate = g_SpriteManager.GetSprite(SpriteNumber::TeamCreate);
+	TeamCreate->Render(dc,
 		positionX + 70, positionY + 60, //描画位置
 		sizeX, sizeY,               //表示サイズ
 		0, 0,                 //切り取りはじめ位置
@@ -916,7 +953,8 @@ void SceneStandby::RenderTeamSelect(ID3D11DeviceContext* dc)
 	}
 
 	//チーム加入ボタン
-	sprites[static_cast<int>(Spritenumber::TeamJoin)]->Render(dc,
+	Sprite* TeamJoinCreate = g_SpriteManager.GetSprite(SpriteNumber::TeamJoin);
+	TeamJoinCreate->Render(dc,
 		positionX+320, positionY+60, //描画位置
 		sizeX, sizeY,               //表示サイズ
 		0, 0,                 //切り取りはじめ位置
@@ -931,7 +969,8 @@ void SceneStandby::RenderTeamSelect(ID3D11DeviceContext* dc)
 		}
 	
 	//閉じるボタン
-	sprites[static_cast<int>(Spritenumber::Close)]->Render(dc,
+		Sprite* CloseCreate = g_SpriteManager.GetSprite(SpriteNumber::Close);
+		CloseCreate->Render(dc,
 		positionX + 565, positionY-5, //描画位置
 		40,40,               //表示サイズ
 		0, 0,                 //切り取りはじめ位置
@@ -950,7 +989,8 @@ void SceneStandby::RenderTeamJoin(ID3D11DeviceContext* dc)
 	float positionX = 80;
 	float positionY = 30;
 	//枠組み
-	sprites[static_cast<int>(Spritenumber::TeamJoinFrame)]->Render(dc,
+	Sprite* TeamJoinFrameCreate = g_SpriteManager.GetSprite(SpriteNumber::TeamJoinFrame);
+	TeamJoinFrameCreate->Render(dc,
 		positionX, positionY,   //描画位置
 		600, 300,               //表示サイズ
 		0, 0,                   //切り取りはじめ位置
@@ -969,7 +1009,9 @@ void SceneStandby::RenderTeamJoin(ID3D11DeviceContext* dc)
 		for (float j = 0; j < 3; ++j)
 		{
 			++count;
-			sprites[static_cast<int>(Spritenumber::TeamjoinNumber)]->Render(dc,
+
+			Sprite* TeamjoinNumberCreate = g_SpriteManager.GetSprite(SpriteNumber::TeamjoinNumber);
+			TeamjoinNumberCreate->Render(dc,
 				positionX + 130.0f + (j * 100.0f), positionY + 140.0f+(i*40.0f), //描画位置
 				sizeX, sizeY,                      //表示サイズ
 				(j * 300.0f), (i*100.0f),    //切り取りはじめ位置
@@ -1036,7 +1078,8 @@ void SceneStandby::RenderTeamJoin(ID3D11DeviceContext* dc)
 				int number = numbers.at(i);
 
 				// スプライトを描画
-				sprites[static_cast<int>(Spritenumber::Number)]->Render(dc,
+				Sprite* NumberCreate = g_SpriteManager.GetSprite(SpriteNumber::Number);
+				NumberCreate->Render(dc,
 					numberposX+(51*i), numberposY,
 					30, 30,
 					gaugeWidth * number, 0,
@@ -1048,7 +1091,8 @@ void SceneStandby::RenderTeamJoin(ID3D11DeviceContext* dc)
 	}
 
 	//閉じるボタン
-	sprites[static_cast<int>(Spritenumber::Close)]->Render(dc,
+	Sprite* CloseCreate = g_SpriteManager.GetSprite(SpriteNumber::Close);
+	CloseCreate->Render(dc,
 		positionX + 565, positionY - 5, //描画位置
 		40, 40,               //表示サイズ
 		0, 0,                 //切り取りはじめ位置
@@ -1072,7 +1116,8 @@ void SceneStandby::RenderReady(ID3D11DeviceContext* dc, bool isready)
 	//
 	if (!isready)
 	{
-		sprites[static_cast<int>(Spritenumber::Ready)]->Render(dc,
+		Sprite* ReadyCreate = g_SpriteManager.GetSprite(SpriteNumber::Ready);
+		ReadyCreate->Render(dc,
 			positionX, positionY, //描画位置
 			150, 50,               //表示サイズ
 			0, 0,                 //切り取りはじめ位置
@@ -1088,7 +1133,8 @@ void SceneStandby::RenderReady(ID3D11DeviceContext* dc, bool isready)
 	}
 	else
 	{
-		sprites[static_cast<int>(Spritenumber::ReadyzCancel)]->Render(dc,
+		Sprite* ReadyzCancelCreate = g_SpriteManager.GetSprite(SpriteNumber::ReadyzCancel);
+		ReadyzCancelCreate->Render(dc,
 			positionX, positionY, //描画位置
 			150, 50,             //表示サイズ
 			0, 0,                 //切り取りはじめ位置
@@ -1112,7 +1158,8 @@ void SceneStandby::RenderMode(ID3D11DeviceContext* dc)
 	//
 	if (playerManager->GetMyPlayer()->Getteamnumber() > 0)
 	{
-		sprites[static_cast<int>(Spritenumber::Multi)]->Render(dc,
+		Sprite* MultiCreate = g_SpriteManager.GetSprite(SpriteNumber::Multi);
+		MultiCreate->Render(dc,
 			positionX, positionY, //描画位置
 			150, 50,               //表示サイズ
 			0, 0,                 //切り取りはじめ位置
@@ -1123,7 +1170,8 @@ void SceneStandby::RenderMode(ID3D11DeviceContext* dc)
 	}
 	else
 	{
-		sprites[static_cast<int>(Spritenumber::Solo)]->Render(dc,
+		Sprite* SoloCreate = g_SpriteManager.GetSprite(SpriteNumber::Solo);
+		SoloCreate->Render(dc,
 			positionX, positionY, //描画位置
 			150, 50,               //表示サイズ
 			0, 0,                 //切り取りはじめ位置
@@ -1138,7 +1186,9 @@ void SceneStandby::RenderGameStart(ID3D11DeviceContext* dc)
 {
 	float positionX = 10;
 	float positionY = 300;
-	sprites[static_cast<int>(Spritenumber::Start)]->Render(dc,
+
+	Sprite* StartCreate = g_SpriteManager.GetSprite(SpriteNumber::Start);
+	StartCreate->Render(dc,
 		positionX, positionY, //描画位置
 		150, 50,             //表示サイズ
 		0, 0,                 //切り取りはじめ位置

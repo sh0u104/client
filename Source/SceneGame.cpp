@@ -21,6 +21,7 @@
 
 #include "SceneStandby.h"
 #include "Logger.h"
+#include "Graphics/SpriteManager.h"
 // 初期化
 void SceneGame::Initialize()
 {
@@ -28,12 +29,6 @@ void SceneGame::Initialize()
 	StageManager& stageManager = StageManager::instance();
 	StageMain* stageMain = new StageMain();
 	stageManager.Register(stageMain);
-
-	//StageMoveFloor* stageMoveFloor = new StageMoveFloor();
-	//stageMoveFloor->SetStartPosint(DirectX::XMFLOAT3(0, 1, 3));
-	//stageMoveFloor->SetGoalPoint(DirectX::XMFLOAT3(10, 2, 3));
-	//stageMoveFloor->SetTorque(DirectX::XMFLOAT3(0, 1.0f, 0));
-	//stageManager.Register(stageMoveFloor);
 
 	// カメラ初期設定 見える位置追いかけるものなど
 	Graphics& graphics = Graphics::Instance();
@@ -60,26 +55,26 @@ void SceneGame::Initialize()
     //スプライト
 	{
 		//数字
-		sprites[static_cast<int>(SpriteNumber::Number)] = std::make_unique<Sprite>("Data/Sprite/number.png");
-
-		sprites[static_cast<int>(SpriteNumber::BigCircle)] = std::make_unique<Sprite>("Data/Sprite/bigcircle.png");
-
-		sprites[static_cast<int>(SpriteNumber::SmallCircle)] = std::make_unique<Sprite>("Data/Sprite/smallcircle.png");
-
-		sprites[static_cast<int>(SpriteNumber::Mouse)] = std::make_unique<Sprite>("Data/Sprite/mouse.png");
-
-		sprites[static_cast<int>(SpriteNumber::WASD)] = std::make_unique<Sprite>("Data/Sprite/WASD.png");
-
-		sprites[static_cast<int>(SpriteNumber::SelectEdge)] = std::make_unique<Sprite>("Data/Sprite/selectedge.png");
-
-		sprites[static_cast<int>(SpriteNumber::Setting)] = std::make_unique<Sprite>("Data/Sprite/setting.png");
-
-		//文字フォント
-		sprites[static_cast<int>(SpriteNumber::Name)] = std::make_unique<Sprite>("Data/Sprite/font1.png");
-		//ログアウト
-		sprites[static_cast<int>(SpriteNumber::Logout)] = std::make_unique<Sprite>("Data/Sprite/logout.png");
-		//チーム解散
-		sprites[static_cast<int>(SpriteNumber::TeamDisbanded)] = std::make_unique<Sprite>("Data/Sprite/teamdisbanded.png");
+		//sprites[static_cast<int>(SpriteNumber::Number)] = std::make_unique<Sprite>("Data/Sprite/number.png");
+		//
+		//sprites[static_cast<int>(SpriteNumber::BigCircle)] = std::make_unique<Sprite>("Data/Sprite/bigcircle.png");
+		//
+		//sprites[static_cast<int>(SpriteNumber::SmallCircle)] = std::make_unique<Sprite>("Data/Sprite/smallcircle.png");
+		//
+		//sprites[static_cast<int>(SpriteNumber::Mouse)] = std::make_unique<Sprite>("Data/Sprite/mouse.png");
+		//
+		//sprites[static_cast<int>(SpriteNumber::WASD)] = std::make_unique<Sprite>("Data/Sprite/WASD.png");
+		//
+		//sprites[static_cast<int>(SpriteNumber::SelectEdge)] = std::make_unique<Sprite>("Data/Sprite/selectedge.png");
+		//
+		//sprites[static_cast<int>(SpriteNumber::Setting)] = std::make_unique<Sprite>("Data/Sprite/setting.png");
+		//
+		////文字フォント
+		//sprites[static_cast<int>(SpriteNumber::Name)] = std::make_unique<Sprite>("Data/Sprite/font1.png");
+		////ログアウト
+		//sprites[static_cast<int>(SpriteNumber::Logout)] = std::make_unique<Sprite>("Data/Sprite/logout.png");
+		////チーム解散
+		//sprites[static_cast<int>(SpriteNumber::TeamDisbanded)] = std::make_unique<Sprite>("Data/Sprite/teamdisbanded.png");
 		
 	}
 
@@ -234,7 +229,11 @@ void SceneGame::Update(float elapsedTime)
 	//プレイヤー消去リストにあるものを消す
 	playerManager->DeletePlayer();
 
-	
+	//サーバーとの接続が切れたら
+	if (connection->GetIsConectionError())
+	{
+		SceneManager::Instance().ChangeScene(new SceneLoading(new SceneTitle));
+	}
 }
 
 
@@ -486,8 +485,8 @@ void SceneGame::MouseOpreration(ID3D11DeviceContext* dc)
 
 		//描画
 		{
-
-			sprites[static_cast<int>(SpriteNumber::BigCircle)]->Render(dc,
+			Sprite* BigCircleSprite = g_SpriteManager.GetSprite(SpriteNumber::BigCircle);
+			BigCircleSprite->Render(dc,
 				clickPos.x - 50, clickPos.y - 50, //描画位置
 				100, 100,             //表示サイズ
 				0, 0,                 //切り取りはじめ位置
@@ -512,8 +511,8 @@ void SceneGame::MouseOpreration(ID3D11DeviceContext* dc)
 			//補正後を代入
 			playerManager->GetMyPlayer()->mouselength = length;
 
-
-			sprites[static_cast<int>(SpriteNumber::SmallCircle)]->Render(dc,
+			Sprite* SmallCircleSprite = g_SpriteManager.GetSprite(SpriteNumber::SmallCircle);
+			SmallCircleSprite->Render(dc,
 				oldMousePos.x - 15, oldMousePos.y - 15, //描画位置
 				30, 30,             //表示サイズ
 				0, 0,                 //切り取りはじめ位置
@@ -531,7 +530,9 @@ void SceneGame::OprerationSelect(ID3D11DeviceContext* dc)
 		DirectX::XMFLOAT2 size, pos;
 		pos = { 10,10 };
 		size = { 30,30 };
-		sprites[static_cast<int>(SpriteNumber::Setting)]->Render(dc,
+
+		Sprite* SettingSprite = g_SpriteManager.GetSprite(SpriteNumber::Setting);
+		SettingSprite->Render(dc,
 			pos.x, pos.y,  //描画位置
 			size.x, size.y,  //表示サイズ
 			0, 0,      //切り取りはじめ位置
@@ -556,7 +557,8 @@ void SceneGame::OprerationSelect(ID3D11DeviceContext* dc)
 		WASDPos = { 175,25 };
 
 		//マウスのイラスト描画
-		sprites[static_cast<int>(SpriteNumber::Mouse)]->Render(dc,
+		Sprite* MouseSprite = g_SpriteManager.GetSprite(SpriteNumber::Mouse);
+		MouseSprite->Render(dc,
 			mousePos.x, mousePos.y,  //描画位置
 			size.x, size.y,  //表示サイズ
 			0, 0,      //切り取りはじめ位置
@@ -565,7 +567,8 @@ void SceneGame::OprerationSelect(ID3D11DeviceContext* dc)
 			1, 1, 1, 1);
 
 		//WASDボタンの描画
-		sprites[static_cast<int>(SpriteNumber::WASD)]->Render(dc,
+		Sprite* WASDSprite = g_SpriteManager.GetSprite(SpriteNumber::WASD);
+		WASDSprite->Render(dc,
 			WASDPos.x, WASDPos.y,  //描画位置
 			size.x, size.y,  //表示サイズ
 			0, 0,    //切り取りはじめ位置
@@ -596,7 +599,8 @@ void SceneGame::OprerationSelect(ID3D11DeviceContext* dc)
 		edgePos.y -= size.y / 4;
 
 		//選択している縁描画
-		sprites[static_cast<int>(SpriteNumber::SelectEdge)]->Render(dc,
+		Sprite* SelectEdgeSprite = g_SpriteManager.GetSprite(SpriteNumber::SelectEdge);
+		SelectEdgeSprite->Render(dc,
 			edgePos.x, edgePos.y,  //描画位置
 			size.x * 1.5f, size.y * 1.5f,  //表示サイズ
 			0, 0,      //切り取りはじめ位置
@@ -613,7 +617,8 @@ void SceneGame::Logout(ID3D11DeviceContext* dc)
 	size = { 100,50 };
 	pos = { 25,150 };
 	//選択している縁描画
-	sprites[static_cast<int>(SpriteNumber::Logout)]->Render(dc,
+	Sprite* LogoutSprite = g_SpriteManager.GetSprite(SpriteNumber::Logout);
+	LogoutSprite->Render(dc,
 		pos.x, pos.y,  //描画位置
 		size.x , size.y ,  //表示サイズ
 		0, 0,              //切り取りはじめ位置
@@ -640,7 +645,8 @@ void SceneGame::TeamNotHost(ID3D11DeviceContext* dc)
 	size = { 500,300 };
 	pos = {0,0 };
 	//選択している縁描画
-	sprites[static_cast<int>(SpriteNumber::TeamDisbanded)]->Render(dc,
+	Sprite* TeamDisbandedSprite = g_SpriteManager.GetSprite(SpriteNumber::TeamDisbanded);
+	TeamDisbandedSprite->Render(dc,
 		pos.x, pos.y,        //描画位置
 		size.x, size.y,      //表示サイズ
 		0, 0,                //切り取りはじめ位置
@@ -757,7 +763,8 @@ void SceneGame::RenderNumber(ID3D11DeviceContext* dc,
 			digit = (ID / static_cast<int>(pow(10, i))) % 10;
 
 			// スプライトを描画
-			sprites[static_cast<int>(SpriteNumber::Number)]->Render(dc,
+			Sprite* NumberSprite = g_SpriteManager.GetSprite(SpriteNumber::Number);
+			NumberSprite->Render(dc,
 				numberposX, numberposY,
 				30, 30,
 				gaugeWidth * digit + digit, 0,
@@ -802,7 +809,8 @@ void SceneGame::RenderTimer(ID3D11DeviceContext* dc, int timer)
 			digit = (ID / static_cast<int>(pow(10, i))) % 10;
 
 			// スプライトを描画
-			sprites[static_cast<int>(SpriteNumber::Number)]->Render(dc,
+			Sprite* NumberSprite = g_SpriteManager.GetSprite(SpriteNumber::Number);
+			NumberSprite->Render(dc,
 				positionX, positionY,
 				15, 15,
 				gaugeWidth * digit,0,
@@ -877,11 +885,13 @@ void SceneGame::RenderName(ID3D11DeviceContext* dc, const DirectX::XMFLOAT4X4& v
 		int number = static_cast<int>(name[i]);
 		int width = number % 16;
 		int height = number / 16;
-		sprites[static_cast<int>(SpriteNumber::Name)]->Render(dc,
-			positionX, positionY,      //描画位置
-			24, 24,              //表示サイズ
+
+		Sprite* NameSprite = g_SpriteManager.GetSprite(SpriteNumber::Name);
+		NameSprite->Render(dc,
+			positionX, positionY,          //描画位置
+			24, 24,                        //表示サイズ
 			sizeX * width, sizeY * height, //切り取りはじめ位置
-			sizeX, sizeY,              //画像サイズ
+			sizeX, sizeY,                  //画像サイズ
 			0.0f,
 			1, 1, 1, 1);
 

@@ -34,33 +34,33 @@ public:
 
     bool isSetting = false;
 private:
-    enum class Spritenumber : int
-    {
-        Number,
-        Flag,
-        Team,
-        TeamSelect,
-        TeamCreate,
-        TeamJoin,
-        TeamJoinFrame,
-        TeamjoinNumber,
-        TeamNumber,
-        Close,
-        Ready,
-        ReadyzCancel,
-        Solo,
-        Multi,
-        Start,
-        Name,
-        Logout,
-        WASD,
-        SelectEdge,
-        Setting,
-        Mouse,
-      //ModeSelect,
-        Max
-    };
-    std::unique_ptr<Sprite> sprites[static_cast<int>(Spritenumber::Max)] = {};
+   //enum class Spritenumber : int
+   //{
+   //    Number,
+   //    Flag,
+   //    Team,
+   //    TeamSelect,
+   //    TeamCreate,
+   //    TeamJoin,
+   //    TeamJoinFrame,
+   //    TeamjoinNumber,
+   //    TeamNumber,
+   //    Close,
+   //    Ready,
+   //    ReadyzCancel,
+   //    Solo,
+   //    Multi,
+   //    Start,
+   //    Name,
+   //    Logout,
+   //    WASD,
+   //    SelectEdge,
+   //    Setting,
+   //    Mouse,
+   //  //ModeSelect,
+   //    Max
+   //};
+    //std::unique_ptr<Sprite> sprites[static_cast<int>(Spritenumber::Max)] = {};
 
     CameraController* cameraController = nullptr;
 
@@ -101,7 +101,7 @@ private:
     void RenderReady(ID3D11DeviceContext* dc,bool isready);
     void RenderMode(ID3D11DeviceContext* dc);
     void RenderGameStart(ID3D11DeviceContext* dc);
-    char input[32];
+    char input[32] = {};
 
     bool Uiclick(float posX,float posY,float sizeX,float size);
     std::vector<int>numbers;

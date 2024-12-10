@@ -109,8 +109,6 @@ void Player::Update(float elapsedTime)
 
 }
 
-
-
 // デバッグプリミティブ描画
 void Player::DrawDebugPrimitive()
 {

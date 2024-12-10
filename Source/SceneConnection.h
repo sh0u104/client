@@ -42,27 +42,27 @@ private:
     PlayerManager* playerManager = nullptr;
     Connection* connection = nullptr;
 
-    enum class SpriteNumber : int
-    {
-        NetError,
-        OK,
-        Guest,
-        Login,
-        NewLogin,
-        Name,
-        Max
-    };
-    std::unique_ptr<Sprite> sprites[(int)SpriteNumber::Max] = {};
+   //enum class SpriteNumber : int
+   //{
+   //    NetError,
+   //    OK,
+   //    Guest,
+   //    Login,
+   //    NewLogin,
+   //    Name,
+   //    Max
+   //};
+    //std::unique_ptr<Sprite> sprites[(int)SpriteNumber::Max] = {};
 
     bool isGuest = false;
     bool isSignin = false;
     bool isSignup = false;
-    char name[10];
-    char pass[10];
+    char name[10] = {};
+    char pass[10] = {};
 
     int maxID = 0;
     int ID = 0;
-    char Name[10];
+    char Name[10] = {};
     int loginDay = 0;
 
     bool isname = false;

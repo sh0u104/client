@@ -253,6 +253,11 @@ void Connection::UdpRecvThread()
 				else {
 					// 他のエラーの場合、ループを終了
 					Logger::Print("recvfrom error:%d",error);
+					if (error == WSAECONNRESET)
+					{
+						//サーバーとの接続切れ
+						isConectionError = true;
+					}
 					break;
 				}
 			}
@@ -341,6 +346,10 @@ void Connection::TcpRecvThread()
 				else {
 					// 他のエラーの場合、ループを終了
 					Logger::Print("recv error:%d", error);
+					if (error == WSAECONNRESET)
+					{
+						isConectionError = true;
+					}
 					break;
 				}
 			}

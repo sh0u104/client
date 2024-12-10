@@ -23,7 +23,7 @@ public:
     // デバッグ用GUI描画
     void DrawDebugGUI();
 
-
+    void SetRange(float range) { this->range = range; }
 private:
     // 範囲
     float                   range = 15.0f;
