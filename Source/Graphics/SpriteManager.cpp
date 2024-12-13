@@ -65,6 +65,8 @@ void SpriteManager::LoadSprites() {
 	//ƒ`[ƒ€‰ğU
 	sprites[SpriteNumber::TeamDisbanded] = std::make_unique<Sprite>("Data/Sprite/teamdisbanded.png");
 
+	sprites[SpriteNumber::ConnectionError] = std::make_unique<Sprite>("Data/Sprite/ConnectionError.png");
+
 }
 
 Sprite* SpriteManager::GetSprite(SpriteNumber number) {

@@ -31,21 +31,6 @@ using json = nlohmann::json;
 // 初期化
 void SceneConnection::Initialize()
 {
-  // スプライト初期化
-    //エラー
-    //sprites[static_cast<int>(SpriteNumber::NetError)] = std::make_unique<Sprite>("Data/Sprite/neterror.png");
-    ////OKボタン
-    //sprites[static_cast<int>(SpriteNumber::OK)] = std::make_unique<Sprite>("Data/Sprite/OK.png");
-    ////ゲスト
-    //sprites[static_cast<int>(SpriteNumber::Guest)] = std::make_unique<Sprite>("Data/Sprite/guest.png");
-    ////ログイン
-    //sprites[static_cast<int>(SpriteNumber::Login)] = std::make_unique<Sprite>("Data/Sprite/login.png");
-    ////新規ログイン
-    //sprites[static_cast<int>(SpriteNumber::NewLogin)] = std::make_unique<Sprite>("Data/Sprite/newlogin.png");
-    ////名前
-    //sprites[static_cast<int>(SpriteNumber::Name)] = std::make_unique<Sprite>("Data/Sprite/font1.png");
-
-
     //一度だけ
     if (!SceneManager::Instance().GetconnectionInitialized())
     {
@@ -93,11 +78,12 @@ void SceneConnection::Initialize()
 // 終了化
 void SceneConnection::Finalize()
 {
-  
 }
 // 更新処理
 void SceneConnection::Update(float elapsedTime)
 { 
+
+   
     //接続成功
     //サインインサインアップで受け取りが終わったらに変更する
     if (connection->isConnection && playerManager->GetMyPlayerID()>0)
@@ -173,12 +159,8 @@ void SceneConnection::Update(float elapsedTime)
         SceneManager::Instance().ChangeScene(new SceneLoading(new SceneStandby));
     }
 
-
-    //サーバーとの接続が切れたら
-    if (connection->GetIsConectionError())
-    {
-        SceneManager::Instance().ChangeScene(new SceneLoading(new SceneTitle));
-    }
+   
+   
 }
 // 描画処理
 void SceneConnection::Render()
@@ -195,9 +177,10 @@ void SceneConnection::Render()
     dc->OMSetRenderTargets(1, &rtv, dsv);
 
     // 2Dスプライト描画
+    if (!connection->GetIsConectionError())
     {
         //名前
-        RenderName(dc);
+        //RenderName(dc);
 
         //接続できなかったら
         if (!connection->isConnection)
@@ -210,7 +193,14 @@ void SceneConnection::Render()
         {
             RenderLogin(dc);
         }
+        
     }
+    else
+    {
+        //サーバーとの接続が切れたら
+        connection->ConnectionCheck(dc);
+    }
+
    ImGui::SetNextWindowPos(ImVec2(500, -10), ImGuiCond_FirstUseEver);
    ImGui::SetNextWindowSize(ImVec2(300, 500), ImGuiCond_FirstUseEver);
    // beginからendまでの内容が出来る
@@ -444,8 +434,8 @@ void SceneConnection::Signin()
 
 bool SceneConnection::httpSignin()
 {
-    //std::string hostname = "localhost";
-    std::string hostname = "10.200.2.236"; // サーバーのIPアドレスに変更
+    std::string hostname = "localhost";
+    //std::string hostname = "10.200.2.236"; // サーバーのIPアドレスに変更
     std::string port = "5000";
     std::string path = "/Login/Login?userId=" + std::to_string(maxID);
 
@@ -565,6 +555,10 @@ bool SceneConnection::httpSignin()
     std::string userName = json["user_profile"]["userName"];
 
     strcpy_s(Name, sizeof(Name), userName.c_str());
+    
+    int loginDay = json["user_login"]["loginDay"];
+
+    playerManager->GetMyPlayer()->SetLoginDay(loginDay);
 
     closesocket(sock);
     freeaddrinfo(addrInfo);
@@ -769,8 +763,8 @@ void SceneConnection::Signup()
 
 bool SceneConnection::httpSignup()
 {
-    //std::string hostname = "localhost";
-    std::string hostname = "10.200.2.236"; // サーバーのIPアドレスに変更
+    std::string hostname = "localhost";
+    //std::string hostname = "10.200.2.236"; // サーバーのIPアドレスに変更
     std::string port = "5000";
     std::string path = "/Registry/Registration";
 
@@ -1119,8 +1113,8 @@ void SceneConnection::pngDownload()
 
 bool SceneConnection::httpPngDownload()
 {
-    //std::string hostname = "localhost";
-    std::string hostname = "10.200.2.236"; // サーバーのIPアドレスに変更
+    std::string hostname = "localhost";
+    //std::string hostname = "10.200.2.236"; // サーバーのIPアドレスに変更
     std::string port = "5000";
     const std::string path = "/File/DownloadPng";
     const std::string outputFile = "login.png";

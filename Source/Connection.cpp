@@ -4,6 +4,12 @@
 #include "SceneManager.h"
 #include "StateMachine.h"
 #include "SceneStandby.h"
+#include "SceneLoading.h"
+#include "SceneTitle.h"
+#include "Graphics/Graphics.h"
+#include "Graphics/SpriteManager.h"
+
+#include "Input/Input.h"
 #include "Logger.h"
 #pragma comment(lib, "ws2_32.lib")
 Connection::Connection()
@@ -188,6 +194,37 @@ void Connection::Finalize()
 
 		// WSA終了処理
 		int wsaCleanup = WSACleanup();
+	}
+}
+
+void Connection::ConnectionCheck(ID3D11DeviceContext* dc)
+{
+	if (isConectionError)
+	{
+		Graphics& graphics = Graphics::Instance();
+
+		float positionX = 50;
+		float positionY = 0;
+		//枠組み
+		Sprite* ConnectionError = g_SpriteManager.GetSprite(SpriteNumber::ConnectionError);
+		ConnectionError->Render(dc,
+			positionX, positionY, //描画位置
+			600, 350,               //表示サイズ
+			0, 0,                 //切り取りはじめ位置
+			750, 500,           //画像サイズ
+			0.0f,
+			1, 1, 1, 1);
+
+		Mouse& mouse = Input::Instance().GetMouse();
+		if (mouse.GetPositionX() > graphics.GetScreenWidth() || mouse.GetPositionX() < 0 ||
+			mouse.GetPositionY() > graphics.GetScreenHeight() || mouse.GetPositionY() < 0)
+			return;
+
+		if (mouse.GetButtonDown() & Mouse::BTN_LEFT)
+		{
+			SceneManager::Instance().ChangeScene(new SceneLoading(new SceneTitle));
+		}
+
 	}
 }
 
@@ -550,7 +587,7 @@ void Connection::TcpRecvThread()
 				case TcpTag::Login:
 				{
 					PlayerLogin login;
-					std::cout << "login " << std::endl;
+					Logger::Print("ログインした");
 					memcpy_s(&login, sizeof(PlayerLogin), buffer, sizeof(PlayerLogin));
 					std::cout << " id " << login.id << std::endl;
 					if (playerManager->GetMyPlayerID() == 0)
@@ -561,6 +598,8 @@ void Connection::TcpRecvThread()
 						//ログイン数を加算
 						playerManager->AddLoginCount();
 						std::cout << std::endl;
+
+						playerManager->GetMyPlayer()->SetName("Guest");
 
 					}
 					else
@@ -631,48 +670,21 @@ void Connection::TcpRecvThread()
 					}
 				}
 				break;
-				//case TcpTag::Attack:
-				//{
-				//	PlayerInput input;
-				//	memcpy_s(&input, sizeof(PlayerInput), buffer, sizeof(PlayerInput));
-				//	Player* player = playerManager->GetPlayer(input.id);
-				//	std::cout << "受信 Attack " << std::endl;
-				//	std::cout << "id " << input.id << std::endl;
-				//	std::cout << std::endl;
-				//}
-				//break;
-				//case TcpTag::Message:
-				//{
-				//	Message message;
-				//	memcpy_s(&message, sizeof(Message), buffer, sizeof(Message));
-				//	//メッセージがきたら
-				//	playerManager->Setmessages(message.text);
-				//	playerManager->SetmessageEraseTime(5.0f);
-				//}
-				//break;
+				case TcpTag::Message:
+				{
+					Message message;
+					memcpy_s(&message, sizeof(Message), buffer, sizeof(Message));
+					//メッセージがきたら
+					playerManager->Setmessages(message.text);
+					playerManager->SetmessageEraseTime(30.0f);
+				}
+				break;
 				}
 			}
 		}
 
 	} while (loop);
 }
-
-
-
-//void Connection::DeleteID()
-//{
-//	//消去リストのIDのプレイヤーを消す
-//	for (int i = 0; i <deleteID.size(); ++i)
-//	{
-//		if (deleteID.at(i) != playerManager->GetMyPlayerID())
-//		{
-//			playerManager->ErasePlayer(deleteID.at(i));
-//			//playerManager->DeletePlayer();
-//		}
-//		deleteID.erase(deleteID.begin() + i);
-//
-//	}
-//}
 
 
 void Connection::SendSignIn(int Id)
@@ -789,7 +801,7 @@ void Connection::SendGamestart(int teamnumber)
 void Connection::SendMessages(char input[32])
 {
 	Message message;
-	message.cmd = UdpTag::Message;
+	message.cmd = TcpTag::Message;
 	for (int i = 0; i < sizeof(input - 1); ++i)
 	{
 		message.text[i] = input[i];

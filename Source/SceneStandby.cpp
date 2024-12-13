@@ -160,7 +160,8 @@ void SceneStandby::Finalize()
 
 void SceneStandby::Update(float elapsedTime)
 {
-	playerManager->GetMyPlayer()->GetStateMachine()->ChangeState(static_cast<int>(Player::State::Idle));
+	
+	//playerManager->GetMyPlayer()->GetStateMachine()->ChangeState(static_cast<int>(Player::State::Idle));
 		
 	//シーン遷移
 	if (playerManager->GetGameStart())
@@ -260,11 +261,6 @@ void SceneStandby::Update(float elapsedTime)
 	// ステージ更新処理
 	StageManager::instance().Update(elapsedTime);
 
-	//サーバーとの接続が切れたら
-	if (connection->GetIsConectionError())
-	{
-		SceneManager::Instance().ChangeScene(new SceneLoading(new SceneTitle));
-	}
 
 }
 
@@ -306,7 +302,9 @@ void SceneStandby::Render()
 	}
 
 	// 2Dスプライト描画
+	if (!connection->GetIsConectionError())
 	{
+
 		//現在のモード
 		RenderMode(dc);
 
@@ -317,9 +315,9 @@ void SceneStandby::Render()
 			RenderGameStart(dc);
 		}
 
-		OprerationSelect(dc);
-		if(isSetting)
-		Logout(dc);
+		//OprerationSelect(dc);
+		//if(isSetting)
+		//Logout(dc);
 
 		//名前が無ければ
 		if (playerManager->GetMyPlayerID() != 0 && !numberinputflag && playerManager->GetMyPlayer()->GetName()[0] == '\0')
@@ -367,6 +365,11 @@ void SceneStandby::Render()
 			}
 		}
 	}
+	else
+	{
+		//サーバーとの接続が切れたら
+		connection->ConnectionCheck(dc);
+	}
 	
 	
 	// 2Dデバッグ描画
@@ -378,43 +381,45 @@ void SceneStandby::Render()
 		// beginからendまでの内容が出来る
 		if (ImGui::Begin("Player", nullptr, ImGuiWindowFlags_None))
 		{
-			ImGui::Text("Host: %d", playerManager->GetMyPlayer()->GetTeamHost());
-			ImGui::Text("Disbanded: %d", playerManager->GetTeamDisbabded());
-			ImGui::Text("GenerateCount: %d", playerManager->GetPlayersGenerateCount());
-			ImGui::Text("LoginCount: %d", playerManager->GetLoginCount());
-		
+			ImGui::Text("UserID: %d", playerManager->GetMyPlayer()->GetPlayerID());
 			ImGui::Text("LoginDay: %d", playerManager->GetMyPlayer()->GetLoginDay());
-			ImGui::Text("ID: %d", playerManager->GetMyPlayer()->GetPlayerID());
-			ImGui::Text("PlayersSize: %d", playerManager->GetPlayers().size());
-		
-		    ImGui::Text("State: %d", static_cast<int>(playerManager->GetMyPlayer()->GetState()));
-			if (ImGui::Button("debugGameStart"))
+			ImGui::Text("Name: %s", playerManager->GetMyPlayer()->GetName());
+			
+			
+			if (playerManager->GetMyPlayer()->Getteamnumber() != 0)
 			{
-				debugGameStart = true;
-				
-			}
-				//ImGui::Text("LoginCount: %d", playerManager->GetLoginCount());
-				//ImGui::Text("GenerateCount: %d", playerManager->GetPlayersGenerateCount());
-			if (playerManager->GetMyPlayerID() != 0)
-			{
-				
-				ImGui::Text("Name: %s", playerManager->GetMyPlayer()->GetName());
-				//ImGui::InputInt("SendTeamNumber: %d", &TeamNumber);
-				//ImGui::Text("RecvTeamNumber: %d", playerManager->GetMyPlayer()->Getteamnumber());
-			}
-		
-			ImGui::InputInt4("TeamsID", guiteamsid);
-		
-			for (int i = 0; i < playerManager->GetPlayers().size(); ++i)
-			{
-				int id = playerManager->GetMyPlayer()->Getteamsid(i);
-				if (id != 0)
+				ImGui::Text("Host: %d", playerManager->GetMyPlayer()->GetTeamHost());
+				ImGui::InputText("Message", input, sizeof(input));
+				if (ImGui::Button("Send"))
 				{
-					//ImGui::Text("pos.x %d", playerManager->GetPlayer(id)->GetPosition().x);
-					float pos = playerManager->GetPlayer(id)->GetPosition().x;
-					ImGui::InputFloat("pos.x: %d", &pos);
+					if (strcmp(input, "") != 0)
+					{
+						// 送信処理
+						connection->SendMessages(input);
+					}
+					input[0] = '\0';
+				}
+				ImGui::Text("Messeages");
+				for (std::string message : playerManager->Getmessages())
+				{
+					ImGui::Text(u8"%s", message.c_str());
 				}
 			}
+				
+			
+			//ImGui::Text("Disbanded: %d", playerManager->GetTeamDisbabded());
+			//ImGui::Text("GenerateCount: %d", playerManager->GetPlayersGenerateCount());
+			//ImGui::Text("LoginCount: %d", playerManager->GetLoginCount());
+			//
+			//ImGui::Text("PlayersSize: %d", playerManager->GetPlayers().size());
+			//
+		    //ImGui::Text("State: %d", static_cast<int>(playerManager->GetMyPlayer()->GetState()));
+			//if (ImGui::Button("debugGameStart"))
+			//{
+			//	debugGameStart = true;
+			//	
+			//}
+			//ImGui::InputInt4("TeamsID", guiteamsid);
 			//if (ImGui::Button("FriendList Update"))
 			//{
 			//	connection->SendSeeFriend();

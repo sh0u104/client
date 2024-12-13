@@ -36,7 +36,8 @@ enum class SpriteNumber {
     Logout,
     BigCircle,
     SmallCircle,
-    TeamDisbanded
+    TeamDisbanded,
+    ConnectionError
     // 他のスプライトを追加
 };
 

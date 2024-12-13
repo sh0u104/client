@@ -18,16 +18,18 @@ public:
 
 
 	// 唯一のインスタンス取得
-	static Connection& Instance()
-	{
-		static Connection instance;
-		return instance;
-	}
+	//static Connection& Instance()
+	//{
+	//	static Connection instance;
+	//	return instance;
+	//}
 
 	void Initialize();
 	bool UDPInitialize();
 
 	void Finalize();
+
+	void ConnectionCheck(ID3D11DeviceContext* dc);
 
 	bool UdpIdCheck(int Id);
 	
@@ -97,6 +99,7 @@ public:
 		Login,
 		UdpAddr,        //サーバーでUDPのアドレス保存用
 		EnemyDamage,    //敵がダメージを受けたら
+		Message,
 		
 	};
 	enum class UdpTag : unsigned short
@@ -127,7 +130,7 @@ public:
 
 	struct Message
 	{
-		UdpTag cmd;
+		TcpTag cmd;
 		char text[32];
 	};
 

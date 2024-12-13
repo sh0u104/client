@@ -90,20 +90,6 @@ public:
         JumpFlip,
         Attack,
     };
-    // ステート
-    //enum class State
-    //{
-    //    Idle,
-    //    Move,
-    //    Jump,
-    //    Land,
-    //    JumpFlip,
-    //    Attack,
-    //    Damage,
-    //    Death,
-    //    Revive,
-    //    None,
-    //};
     StateMachine* GetStateMachine() { return stateMachine.get(); }
     Model* GetModel() { return model; }
 public:
@@ -129,69 +115,12 @@ public:
     // 攻撃入力
     bool InputAttack();
 
-    //// 待機ステートへ遷移
-    //void TransitionIdleState();
-    //// 待機ステート更新
-    //void UpdateIdleState(float elapsedTime);
-    //
-    //// 移動ステートへ更新
-    //void UpdateMoveState(float elapsedTime);
-    //
-    //// ジャンプステート更新処理
-    //void UpdateJumpState(float elapsedTime);
-    //
-    //// 着地ステートへ遷移
-    //void TransitionLandState();
-    //
-    //// 着地ステージ更新処理
-    //void UpdateLandState(float elapsedTime);
-    //
-    //// 二段ジャンプステート更新
-    //void UpdatejumpFlipState(float elapsedTime);
-    //
-    //
-    //// 攻撃ステートへ遷移
-    //void TransitionAttackState();
-    //
-    //// 攻撃ステージ更新処理
-    //void UpdateAttackState(float elapsedTime);
-    //
-    //// ダメージステートへ遷移
-    //void TransitionDamageState();
-    //
-    //// ダメージステートへ更新処理
-    //void UpdateDamageState(float elapsedTime);
-    //
-    //// 死亡ステートへ遷移
-    //void TransitionDeathState();
-    //
-    //// 死亡ステート更新処理
-    //void UpdateDeathState(float elapsedTime);
-    //
-    //// 復活ステートへ遷移
-    //void TransitionReviveState();
-    //
-    //// 復活ステート更新処理
-    //void UpdateReviveState(float elapsedTime);
-    //
-    //// 二段ジャンプステートへ遷移
-    //void TransitionJumpFlipState();
-    //
-    //// ジャンプステートへ遷移
-    //void TransitionJumpState();
-    //
-    //// 移動ステートへ遷移    
-    //void TransitionMoveState();
-
     int            jumpCount = 0;
 
     void SetState(State state) { this->state = state; }
-    //void SetStated(State stated) { this->stated = stated; }
-    //State GetStated() {return  this->stated; }
     
 private:
     std::shared_ptr<StateMachine> stateMachine;
-   // StateMachine* stateMachine = nullptr;
     Model* model = nullptr;
 
     float          moveSpeed = 5.0f;
@@ -271,18 +200,18 @@ public:
 
     float GetLeftHandRadius() { return this->leftHandRadius; }
 protected:
+    int playerID = 0;
+    char Name[10] = {};
+    int loginDay = 0;
   
     int teamNumber = 0;
     int teamsId[4] = {};
     bool teamHost = false;
 
     bool operation = false;
-    int playerID = 0;
     bool ready = false;
     bool startCheck = false;
-    char Name[10] = {};
     bool isMouseOperation = true;
-    int loginDay = 0;
 
     bool attackCollisionFlag = false;
     float leftHandRadius = 0.4f;

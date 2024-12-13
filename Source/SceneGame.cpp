@@ -147,6 +147,8 @@ void SceneGame::Finalize()
 // 更新処理
 void SceneGame::Update(float elapsedTime)
 {
+
+
 	if (playerManager->GetMyPlayer()->GetTeamHost() && playerManager->GetMyPlayer()->Getteamnumber() > 1000)
 	{
 		EnemyManager& enemyManager = EnemyManager::Instance();
@@ -229,11 +231,6 @@ void SceneGame::Update(float elapsedTime)
 	//プレイヤー消去リストにあるものを消す
 	playerManager->DeletePlayer();
 
-	//サーバーとの接続が切れたら
-	if (connection->GetIsConectionError())
-	{
-		SceneManager::Instance().ChangeScene(new SceneLoading(new SceneTitle));
-	}
 }
 
 
@@ -277,6 +274,7 @@ void SceneGame::Render()
 		shader->End(dc);
 	}
 	//2D
+	if (!connection->GetIsConectionError())
 	{
 		if (playerManager->GetMyPlayer()->GetisMouseOperation())
 		{
@@ -301,6 +299,12 @@ void SceneGame::Render()
 		}
 		
 	}
+	else
+	{
+		//サーバーとの接続が切れたら
+		connection->ConnectionCheck(dc);
+	}
+
 	// 3Dエフェクト描画
 	{
 		EffectManager::Instance().Render(rc.view, rc.projection);
@@ -310,27 +314,27 @@ void SceneGame::Render()
 	{
 
 		//IMGUI描画
-		ImGui::SetNextWindowPos(ImVec2(500, 10), ImGuiCond_FirstUseEver);
-		ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
-		// beginからendまでの内容が出来る
-		EnemyManager& enemyManager = EnemyManager::Instance();
-		std::vector<Enemy*> enemys = enemyManager.GetEnemys();
-		if (ImGui::Begin("Player", nullptr, ImGuiWindowFlags_None))
-		{
-
-			ImGui::Text("UdpRecvID: %d", playerManager->GetudpRecvId());
-			ImGui::Text("UdpRecvSize: %d", playerManager->GetRecvSize());
-
-			ImGui::Text("Disbanded: %d", playerManager->GetTeamDisbabded());
-			ImGui::Text("LoginCount: %d", playerManager->GetLoginCount());
-			ImGui::Text("PlayersSize: %d", playerManager->GetPlayers().size());
-			for (Enemy* enemy : enemys)
-			{
-				ImGui::Text("EnemyHP: %d", enemy->GetHealth());
-				ImGui::Text("EnemyState: %d", enemy->GetState());
-		
-			}
-			ImGui::Text("Host: %d", playerManager->GetMyPlayer()->GetTeamHost());
+		//ImGui::SetNextWindowPos(ImVec2(500, 10), ImGuiCond_FirstUseEver);
+		//ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
+		//// beginからendまでの内容が出来る
+		//EnemyManager& enemyManager = EnemyManager::Instance();
+		//std::vector<Enemy*> enemys = enemyManager.GetEnemys();
+		//if (ImGui::Begin("Player", nullptr, ImGuiWindowFlags_None))
+		//{
+		//
+		//	ImGui::Text("UdpRecvID: %d", playerManager->GetudpRecvId());
+		//	ImGui::Text("UdpRecvSize: %d", playerManager->GetRecvSize());
+		//
+		//	ImGui::Text("Disbanded: %d", playerManager->GetTeamDisbabded());
+		//	ImGui::Text("LoginCount: %d", playerManager->GetLoginCount());
+		//	ImGui::Text("PlayersSize: %d", playerManager->GetPlayers().size());
+		//	for (Enemy* enemy : enemys)
+		//	{
+		//		ImGui::Text("EnemyHP: %d", enemy->GetHealth());
+		//		ImGui::Text("EnemyState: %d", enemy->GetState());
+		//
+		//	}
+		//	ImGui::Text("Host: %d", playerManager->GetMyPlayer()->GetTeamHost());
 			
 			//ImGui::Text("State: %d", static_cast<int>(playerManager->GetMyPlayer()->GetState()));
 		
@@ -358,8 +362,8 @@ void SceneGame::Render()
 			//
 			//	ImGui::InputInt4("TeamsID", guiTeamsId);
 			//}
-		}
-		ImGui::End();
+		//}
+		//ImGui::End();
 
 		// 2Dスプライト描画
 		{
