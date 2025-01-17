@@ -37,7 +37,9 @@ enum class SpriteNumber {
     BigCircle,
     SmallCircle,
     TeamDisbanded,
-    ConnectionError
+    ConnectionError,
+    Ping,
+    Point,
     // 他のスプライトを追加
 };
 

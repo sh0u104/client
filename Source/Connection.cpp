@@ -12,6 +12,8 @@
 #include "Input/Input.h"
 #include "Logger.h"
 #pragma comment(lib, "ws2_32.lib")
+
+#include <chrono>
 Connection::Connection()
 {
 	input[0] = '\0';
@@ -271,6 +273,18 @@ void Connection::SendEnemyDamage(int enemuID)
 	int s = send(sock, buffer, sizeof(buffer), 0);
 }
 
+void Connection::SendPing()
+{
+	Ping ping;
+	ping.cmd = UdpTag::Ping;
+
+	char buffer[sizeof(Ping)];
+	memcpy_s(buffer, sizeof(buffer), &ping, sizeof(Ping));
+
+	start = std::chrono::high_resolution_clock::now();
+	sendto(uSock, buffer, sizeof(buffer), 0, (struct sockaddr*)&uAddr, sizeof(struct sockaddr_in));
+}
+
 void Connection::UdpRecvThread()
 {
   do {
@@ -354,6 +368,15 @@ void Connection::UdpRecvThread()
 							}
 						}
 					}
+				}
+				break;
+				case UdpTag::Ping:
+				{
+					end = std::chrono::high_resolution_clock::now();
+					std::chrono::duration<float, std::milli> duration = end - start;
+					float durationMs = duration.count();
+
+					playerManager->GetMyPlayer()->SetPing(durationMs);
 				}
 				break;
 				}

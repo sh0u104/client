@@ -52,7 +52,6 @@ public:
 
 	void SendGamestart(int teamnumber);
 
-
 	void SendMessages(char input[32]);
 
 	void SendStartCheck(bool check);
@@ -70,6 +69,14 @@ public:
 	void SendUdpAddr();
 
 	void SendLogout();
+	void SendEnemy(Enemy* enemy);
+	void SendEnemyDamage(int enemuID);
+
+	void SendPing();
+
+	std::chrono::high_resolution_clock::time_point start;
+	std::chrono::high_resolution_clock::time_point end;
+	std::chrono::milliseconds duration;
 
 	// ネットワーク処理更新関数
 	void NetrowkUpdate(float elapsedTime);
@@ -77,8 +84,7 @@ public:
 	void TcpRecvThread();
 	void UdpRecvThread();
 
-	void SendEnemy(Enemy* enemy);
-	void SendEnemyDamage(int enemuID);
+	
 
 	
 	enum class TcpTag : unsigned short
@@ -109,6 +115,12 @@ public:
 		EnemyMove,       //敵の移動
 		Attack,			// 攻撃
 		UdpAddr,          //サーバーでUDPのアドレス保存用
+		Ping,
+	};
+
+	struct Ping
+	{
+		UdpTag cmd;
 	};
 	
 	struct EnemyData

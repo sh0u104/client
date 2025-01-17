@@ -41,7 +41,6 @@ void EnemyManager::Update(float elapsedTime)
 
 void EnemyManager::DrawDebugPrimitive()
 {
-    // ‘S‚Ä‚Ì“z‚ð‚â‚Á‚Ä‚­‚ê
     for (Enemy* enemy : enemies)
     {
         enemy->DrawDebugPrimitive();

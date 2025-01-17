@@ -199,10 +199,16 @@ public:
     bool GetAttackCollisionFlag() { return this->attackCollisionFlag; }
 
     float GetLeftHandRadius() { return this->leftHandRadius; }
+
+    float GetPing() { return this->ping; }
+    void SetPing(float ping) { this->ping = ping; }
+
 protected:
     int playerID = 0;
     char Name[10] = {};
     int loginDay = 0;
+  
+    float ping = 0;
   
     int teamNumber = 0;
     int teamsId[4] = {};

@@ -25,6 +25,10 @@ public:
 	// XVˆ—
 	void Update(float elapsedTime) override;
 
+	void PingUpdate(float elapsedTime);
+
+	void RenderPing(ID3D11DeviceContext* dc);
+
 	// •`‰æˆ—
 	void Render() override;
 
@@ -114,4 +118,6 @@ private:
 	bool isSetting = false;
 
 	int enemyCount = 0;
+
+	float pingTimer = 0.0f;
 };

@@ -67,6 +67,10 @@ void SpriteManager::LoadSprites() {
 
 	sprites[SpriteNumber::ConnectionError] = std::make_unique<Sprite>("Data/Sprite/ConnectionError.png");
 
+	sprites[SpriteNumber::Ping] = std::make_unique<Sprite>("Data/Sprite/ping.png");
+
+	sprites[SpriteNumber::Point] = std::make_unique<Sprite>("Data/Sprite/Point.png");
+
 }
 
 Sprite* SpriteManager::GetSprite(SpriteNumber number) {

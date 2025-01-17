@@ -374,100 +374,100 @@ void SceneStandby::Render()
 	
 	// 2Dデバッグ描画
 	//IMGUI描画
-	{
-		
-		ImGui::SetNextWindowPos(ImVec2(310, 10), ImGuiCond_FirstUseEver);
-		ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
-		// beginからendまでの内容が出来る
-		if (ImGui::Begin("Player", nullptr, ImGuiWindowFlags_None))
-		{
-			ImGui::Text("UserID: %d", playerManager->GetMyPlayer()->GetPlayerID());
-			ImGui::Text("LoginDay: %d", playerManager->GetMyPlayer()->GetLoginDay());
-			ImGui::Text("Name: %s", playerManager->GetMyPlayer()->GetName());
-			
-			
-			if (playerManager->GetMyPlayer()->Getteamnumber() != 0)
-			{
-				ImGui::Text("Host: %d", playerManager->GetMyPlayer()->GetTeamHost());
-				ImGui::InputText("Message", input, sizeof(input));
-				if (ImGui::Button("Send"))
-				{
-					if (strcmp(input, "") != 0)
-					{
-						// 送信処理
-						connection->SendMessages(input);
-					}
-					input[0] = '\0';
-				}
-				ImGui::Text("Messeages");
-				for (std::string message : playerManager->Getmessages())
-				{
-					ImGui::Text(u8"%s", message.c_str());
-				}
-			}
-				
-			
-			//ImGui::Text("Disbanded: %d", playerManager->GetTeamDisbabded());
-			//ImGui::Text("GenerateCount: %d", playerManager->GetPlayersGenerateCount());
-			//ImGui::Text("LoginCount: %d", playerManager->GetLoginCount());
-			//
-			//ImGui::Text("PlayersSize: %d", playerManager->GetPlayers().size());
-			//
-		    //ImGui::Text("State: %d", static_cast<int>(playerManager->GetMyPlayer()->GetState()));
-			//if (ImGui::Button("debugGameStart"))
-			//{
-			//	debugGameStart = true;
-			//	
-			//}
-			//ImGui::InputInt4("TeamsID", guiteamsid);
-			//if (ImGui::Button("FriendList Update"))
-			//{
-			//	connection->SendSeeFriend();
-			//}
-			//
-			//ImGui::Text("FriendList");
-			//for (int i = 0; i < playerManager->myFriendList.size(); ++i)
-			//{
-			//	ImGui::Text("ID: %d", playerManager->myFriendList.at(i).ID);
-			//	ImGui::Text("Name: %s", playerManager->myFriendList.at(i).name);
-			//}
-		
-			playerManager->DebugGUI();
-		}
-		ImGui::End();
-		//
-		////if (playerManager->GetLoginCount() > 1)
-		////{
-		////	ImGui::SetNextWindowPos(ImVec2(500, 10), ImGuiCond_Once);
-		////	ImGui::SetNextWindowSize(ImVec2(300, 320), ImGuiCond_Once);
-		////	if (ImGui::Begin("Chat", nullptr, ImGuiWindowFlags_None))
-		//	{
-		//		ImGui::Text("Message");
-		//		ImGui::BeginChild(ImGui::GetID((void*)0), ImVec2(250, 200), ImGuiWindowFlags_NoTitleBar);
-		//
-		//		for (std::string message : playerManager->Getmessages()) {
-		//			ImGui::Text(u8"%s", message.c_str());
-		//		}
-		//		ImGui::EndChild();
-		//		ImGui::Spacing();
-		//
-		//		ImGui::InputText("Message", input, sizeof(input));
-		//		if (playerManager->GetMyPlayer()->Getteamnumber() != 0)
-		//			if (ImGui::Button("Send"))
-		//			{
-		//				if (strcmp(input, "") != 0)
-		//				{
-		//					// 送信処理
-		//					connection->SendMessages(input);
-		//				}
-		//				input[0] = '\0';
-		//			}
-		//	}
-		////	ImGui::End();
-		////}
+	//{
+	//	
+	//	ImGui::SetNextWindowPos(ImVec2(310, 10), ImGuiCond_FirstUseEver);
+	//	ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
+	//	// beginからendまでの内容が出来る
+	//	if (ImGui::Begin("Player", nullptr, ImGuiWindowFlags_None))
+	//	{
+	//		ImGui::Text("UserID: %d", playerManager->GetMyPlayer()->GetPlayerID());
+	//		ImGui::Text("LoginDay: %d", playerManager->GetMyPlayer()->GetLoginDay());
+	//		ImGui::Text("Name: %s", playerManager->GetMyPlayer()->GetName());
+	//		
+	//		
+	//		if (playerManager->GetMyPlayer()->Getteamnumber() != 0)
+	//		{
+	//			ImGui::Text("Host: %d", playerManager->GetMyPlayer()->GetTeamHost());
+	//			ImGui::InputText("Message", input, sizeof(input));
+	//			if (ImGui::Button("Send"))
+	//			{
+	//				if (strcmp(input, "") != 0)
+	//				{
+	//					// 送信処理
+	//					connection->SendMessages(input);
+	//				}
+	//				input[0] = '\0';
+	//			}
+	//			ImGui::Text("Messeages");
+	//			for (std::string message : playerManager->Getmessages())
+	//			{
+	//				ImGui::Text(u8"%s", message.c_str());
+	//			}
+	//		}
+	//			
+	//		
+	//		//ImGui::Text("Disbanded: %d", playerManager->GetTeamDisbabded());
+	//		//ImGui::Text("GenerateCount: %d", playerManager->GetPlayersGenerateCount());
+	//		//ImGui::Text("LoginCount: %d", playerManager->GetLoginCount());
+	//		//
+	//		//ImGui::Text("PlayersSize: %d", playerManager->GetPlayers().size());
+	//		//
+	//	    //ImGui::Text("State: %d", static_cast<int>(playerManager->GetMyPlayer()->GetState()));
+	//		//if (ImGui::Button("debugGameStart"))
+	//		//{
+	//		//	debugGameStart = true;
+	//		//	
+	//		//}
+	//		//ImGui::InputInt4("TeamsID", guiteamsid);
+	//		//if (ImGui::Button("FriendList Update"))
+	//		//{
+	//		//	connection->SendSeeFriend();
+	//		//}
+	//		//
+	//		//ImGui::Text("FriendList");
+	//		//for (int i = 0; i < playerManager->myFriendList.size(); ++i)
+	//		//{
+	//		//	ImGui::Text("ID: %d", playerManager->myFriendList.at(i).ID);
+	//		//	ImGui::Text("Name: %s", playerManager->myFriendList.at(i).name);
+	//		//}
+	//	
+	//		playerManager->DebugGUI();
+	//	}
+	//	ImGui::End();
+	//	//
+	//	////if (playerManager->GetLoginCount() > 1)
+	//	////{
+	//	////	ImGui::SetNextWindowPos(ImVec2(500, 10), ImGuiCond_Once);
+	//	////	ImGui::SetNextWindowSize(ImVec2(300, 320), ImGuiCond_Once);
+	//	////	if (ImGui::Begin("Chat", nullptr, ImGuiWindowFlags_None))
+	//	//	{
+	//	//		ImGui::Text("Message");
+	//	//		ImGui::BeginChild(ImGui::GetID((void*)0), ImVec2(250, 200), ImGuiWindowFlags_NoTitleBar);
+	//	//
+	//	//		for (std::string message : playerManager->Getmessages()) {
+	//	//			ImGui::Text(u8"%s", message.c_str());
+	//	//		}
+	//	//		ImGui::EndChild();
+	//	//		ImGui::Spacing();
+	//	//
+	//	//		ImGui::InputText("Message", input, sizeof(input));
+	//	//		if (playerManager->GetMyPlayer()->Getteamnumber() != 0)
+	//	//			if (ImGui::Button("Send"))
+	//	//			{
+	//	//				if (strcmp(input, "") != 0)
+	//	//				{
+	//	//					// 送信処理
+	//	//					connection->SendMessages(input);
+	//	//				}
+	//	//				input[0] = '\0';
+	//	//			}
+	//	//	}
+	//	////	ImGui::End();
+	//	////}
 
-		
-	}
+	//	
+	//}
 }
 
 void SceneStandby::OprerationSelect(ID3D11DeviceContext* dc)
@@ -896,7 +896,7 @@ void SceneStandby::RenderName(ID3D11DeviceContext* dc, const DirectX::XMFLOAT4X4
 			0.0f,
 			1, 1, 1, 1);
 
-		positionX += sizeX / 2;
+		positionX += sizeX / 2-5;
 	}
 }
 

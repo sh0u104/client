@@ -13,6 +13,7 @@
 EnemySlime::EnemySlime()
 {
     model = new Model("Data/Model/Slime/Slime.mdl");
+   // model = new Model("Data/Model/TurtleShellPolyart/TurtleShellPolyart.mdl");
 
     // モデルがおおきいのでスケーリング
     scale.x = scale.y = scale.z = 0.01f;
@@ -20,13 +21,7 @@ EnemySlime::EnemySlime()
     // 幅、高さ設定(円柱)
     radius = 0.5f;
     height = 1.0f;
-    //Wander,
-    //    Idle,
-    //    Pursuit,
-    //    Attack,
-    //    IdleBattle,
-    //    Damage,
-    //    Death
+   
     stateMachine = std::make_shared<StateMachine>();
     stateMachine->RegisterState(new EnemyWanderState(this));
     stateMachine->RegisterState(new EnemyIdleState(this));
