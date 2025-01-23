@@ -540,7 +540,26 @@ void SceneGame::MouseOpreration(ID3D11DeviceContext* dc)
 		else
 		{
 			length = 0.0f;
-			playerManager->GetMyPlayer()->mouselength = length;
+			playerManager->GetMyPlayer()->mouselength = 0.0f;
+
+			const DirectX::XMFLOAT2 defaultpos = { 600,220 };
+			const float adjustmentsize = 35;
+			Sprite* BigCircleSprite = g_SpriteManager.GetSprite(SpriteNumber::BigCircle);
+			BigCircleSprite->Render(dc,
+				defaultpos.x, defaultpos.y, //描画位置
+				100, 100,             //表示サイズ
+				0, 0,                 //切り取りはじめ位置
+				300, 300,           //画像サイズ
+				0.0f,
+				1, 1, 1, 1);
+			Sprite* SmallCircleSprite = g_SpriteManager.GetSprite(SpriteNumber::SmallCircle);
+			SmallCircleSprite->Render(dc,
+				defaultpos.x+ adjustmentsize, defaultpos.y+ adjustmentsize, //描画位置
+				30, 30,             //表示サイズ
+				0, 0,                 //切り取りはじめ位置
+				100, 100,           //画像サイズ
+				0.0f,
+				1, 1, 1, 1);
 			return;
 		}
 		//クリック時
@@ -631,6 +650,7 @@ void SceneGame::MouseOpreration(ID3D11DeviceContext* dc)
 				1, 1, 1, 1);
 		}
 	}
+	
 }
 
 void SceneGame::OprerationSelect(ID3D11DeviceContext* dc)
