@@ -216,10 +216,10 @@ void SceneGame::RenderPing(ID3D11DeviceContext* dc)
 		const float gaugeWidth = 25.0f;
 		const float gaugeHeight = 33.0f;
 
-		// プレイヤーIDの桁数を求める
+		// pingの桁数を求める
 		int numDigits = 1;
-		float fping = playerManager->GetMyPlayer()->GetPing();
-		int ping = static_cast<int>(fping);
+		float savePing = playerManager->GetMyPlayer()->GetPing();
+		int ping = static_cast<int>(savePing);
 		int number = ping;
 		while (number >= 10)
 		{
@@ -262,29 +262,12 @@ void SceneGame::RenderPing(ID3D11DeviceContext* dc)
 				0.0f,
 				1, 1, 1, 1);
 
-
-
-			//Sprite* Circle = g_SpriteManager.GetSprite(SpriteNumber::SmallCircle);
-			//Circle->Render(dc,
-			//	positionX + 3, positionY + 12,
-			//	5, 5,
-			//	0, 0,
-			//	100, 100,
-			//	0.0f,
-			//	1, 1, 1, 1);
-			//positionX += 5;
 		}
 		{
-			numDigits = 1;
-			ping = static_cast<int>(fping * 100);
-			number = ping % 100;
-			while (number >= 10)
-			{
-				number /= 10;
-				numDigits++;
-			}
+			numDigits = 2;
+			ping = static_cast<int>(savePing * 1000);
 			// 各桁を描画するループ
-			for (int i = numDigits - 1; i >= 0; --i)
+			for (int i = numDigits ; i > 0; --i)
 			{
 				// 各桁の数値を取得
 				digit = (ping / static_cast<int>(pow(10, i))) % 10;
