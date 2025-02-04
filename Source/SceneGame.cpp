@@ -292,10 +292,10 @@ void SceneGame::RenderPing(ID3D11DeviceContext* dc)
 	{
 		int pingRank = 0;
 		float ping = playerManager->GetMyPlayer()->GetPing();
-		if (ping < 0.15f)pingRank = 0;
-		if (ping >= 0.15f)pingRank = 1;
-		if (ping > 0.20f)pingRank = 2;
-		if (ping > 1.00f)pingRank = 3;
+		
+		if (ping >= 1.0f)pingRank = 1;
+		if (ping >= 10.0f)pingRank = 2;
+		if (ping > 20.0f)pingRank = 3;
 
 
 		float positionX = 10;
@@ -400,108 +400,108 @@ void SceneGame::Render()
 	}
 
 	// 3Dデバッグ描画
-	{
+	//{
 
-		//IMGUI描画
-		ImGui::SetNextWindowPos(ImVec2(500, 10), ImGuiCond_FirstUseEver);
-		ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
-		// beginからendまでの内容が出来る
-		EnemyManager& enemyManager = EnemyManager::Instance();
-		std::vector<Enemy*> enemys = enemyManager.GetEnemys();
-		if (ImGui::Begin("Player", nullptr, ImGuiWindowFlags_None))
-		{
-			ImGui::Text("ms: %f", playerManager->GetMyPlayer()->GetPing());
-			ImGui::Text("UdpRecvID: %d", playerManager->GetudpRecvId());
-			ImGui::Text("UdpRecvSize: %d", playerManager->GetRecvSize());
-		
-			ImGui::Text("Disbanded: %d", playerManager->GetTeamDisbabded());
-			ImGui::Text("LoginCount: %d", playerManager->GetLoginCount());
-			ImGui::Text("PlayersSize: %d", playerManager->GetPlayers().size());
-			for (Enemy* enemy : enemys)
-			{
-				ImGui::Text("EnemyHP: %d", enemy->GetHealth());
-				ImGui::Text("EnemyState: %d", enemy->GetState());
-		
-			}
-			ImGui::Text("Host: %d", playerManager->GetMyPlayer()->GetTeamHost());
-			
-			ImGui::Text("State: %d", static_cast<int>(playerManager->GetMyPlayer()->GetState()));
-		
-			 //トランスフォーム
-			//if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
-			//{
-			//	ImGui::Text("ID: %d", playerManager->GetMyPlayerID());
-			//	ImGui::Text("TeamNumber: %d", playerManager->GetMyPlayer()->Getteamnumber());
-			//	
-			//	if (ImGui::Button("Change Operation"))
-			//	{
-			//		sendFlag = !sendFlag;
-			//	}
-			//	if (sendFlag)
-			//	{
-			//		ImGui::Text("true");
-			//	}
-			//	else
-			//	{
-			//		ImGui::Text("false");
-			//	}
-			//	//ImGui::InputFloat3("GUIVelocity", &guiVelocity.x);
-			//	//ImGui::InputFloat3("RecvVelocity", &guiRecvVelocity.x);
-			//	//ImGui::InputFloat3("GUIPosition", &guiPosition.x);
-			//
-			//	ImGui::InputInt4("TeamsID", guiTeamsId);
-			//}
-		}
-		ImGui::End();
+	//	//IMGUI描画
+	//	ImGui::SetNextWindowPos(ImVec2(500, 10), ImGuiCond_FirstUseEver);
+	//	ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
+	//	// beginからendまでの内容が出来る
+	//	EnemyManager& enemyManager = EnemyManager::Instance();
+	//	std::vector<Enemy*> enemys = enemyManager.GetEnemys();
+	//	if (ImGui::Begin("Player", nullptr, ImGuiWindowFlags_None))
+	//	{
+	//		ImGui::Text("ms: %f", playerManager->GetMyPlayer()->GetPing());
+	//		ImGui::Text("UdpRecvID: %d", playerManager->GetudpRecvId());
+	//		ImGui::Text("UdpRecvSize: %d", playerManager->GetRecvSize());
+	//	
+	//		ImGui::Text("Disbanded: %d", playerManager->GetTeamDisbabded());
+	//		ImGui::Text("LoginCount: %d", playerManager->GetLoginCount());
+	//		ImGui::Text("PlayersSize: %d", playerManager->GetPlayers().size());
+	//		for (Enemy* enemy : enemys)
+	//		{
+	//			ImGui::Text("EnemyHP: %d", enemy->GetHealth());
+	//			ImGui::Text("EnemyState: %d", enemy->GetState());
+	//	
+	//		}
+	//		ImGui::Text("Host: %d", playerManager->GetMyPlayer()->GetTeamHost());
+	//		
+	//		ImGui::Text("State: %d", static_cast<int>(playerManager->GetMyPlayer()->GetState()));
+	//	
+	//		 //トランスフォーム
+	//		//if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
+	//		//{
+	//		//	ImGui::Text("ID: %d", playerManager->GetMyPlayerID());
+	//		//	ImGui::Text("TeamNumber: %d", playerManager->GetMyPlayer()->Getteamnumber());
+	//		//	
+	//		//	if (ImGui::Button("Change Operation"))
+	//		//	{
+	//		//		sendFlag = !sendFlag;
+	//		//	}
+	//		//	if (sendFlag)
+	//		//	{
+	//		//		ImGui::Text("true");
+	//		//	}
+	//		//	else
+	//		//	{
+	//		//		ImGui::Text("false");
+	//		//	}
+	//		//	//ImGui::InputFloat3("GUIVelocity", &guiVelocity.x);
+	//		//	//ImGui::InputFloat3("RecvVelocity", &guiRecvVelocity.x);
+	//		//	//ImGui::InputFloat3("GUIPosition", &guiPosition.x);
+	//		//
+	//		//	ImGui::InputInt4("TeamsID", guiTeamsId);
+	//		//}
+	//	}
+	//	ImGui::End();
 
-		// 2Dスプライト描画
-		{
-			if (playerManager->GetPlayers().size() > 0)
-			{
-				//RenderTimer(dc, int(timer));
-				//名前があるなら表示
-				if (playerManager->GetMyPlayer()->GetName()[0] == '\0')
-				{
-					RenderNumber(dc, rc.view, rc.projection);
-				}
-				else
-				{
-					RenderName(dc, rc.view, rc.projection);
-				}
-			}
-		}
-
-
-		if (connection && playerManager->GetPlayers().size() > 0)
-		{
-			// 当たり判定の形をうつ
-			// プレイヤーデバッグプリミティブ描画
-			//playerManager->GetMyPlayer()->DrawDebugPrimitive();
-
-			// エネミーデバッグプリミティブ描画
-			//EnemyManager::Instance().DrawDebugPrimitive();
-
-			// ラインレンダラ描画実行
-			graphics.GetLineRenderer()->Render(dc, rc.view, rc.projection);
-
-			// 実際の当たり判定描画
-			// デバッグレンダラ描画実行
-			graphics.GetDebugRenderer()->Render(dc, rc.view, rc.projection);
+	//	// 2Dスプライト描画
+	//	{
+	//		if (playerManager->GetPlayers().size() > 0)
+	//		{
+	//			//RenderTimer(dc, int(timer));
+	//			//名前があるなら表示
+	//			if (playerManager->GetMyPlayer()->GetName()[0] == '\0')
+	//			{
+	//				RenderNumber(dc, rc.view, rc.projection);
+	//			}
+	//			else
+	//			{
+	//				RenderName(dc, rc.view, rc.projection);
+	//			}
+	//		}
+	//	}
 
 
-			
-			// 2DデバッグGUI描画
-			{
-				// プレイヤーデバッグ描画
-				//player->DrawDebugGUI();
-				//cameraController->DrawDebugGUI();
-				// 
-				//EnemyManager::Instance().Register(enemySlime);
-				//EnemyManager::Instance().DrawDebugGUI();
-				//cameraController->DrawDebugGUI();
-			}
-		}
-	}
+	//	if (connection && playerManager->GetPlayers().size() > 0)
+	//	{
+	//		// 当たり判定の形をうつ
+	//		// プレイヤーデバッグプリミティブ描画
+	//		//playerManager->GetMyPlayer()->DrawDebugPrimitive();
+
+	//		// エネミーデバッグプリミティブ描画
+	//		//EnemyManager::Instance().DrawDebugPrimitive();
+
+	//		// ラインレンダラ描画実行
+	//		graphics.GetLineRenderer()->Render(dc, rc.view, rc.projection);
+
+	//		// 実際の当たり判定描画
+	//		// デバッグレンダラ描画実行
+	//		graphics.GetDebugRenderer()->Render(dc, rc.view, rc.projection);
+
+
+	//		
+	//		// 2DデバッグGUI描画
+	//		{
+	//			// プレイヤーデバッグ描画
+	//			//player->DrawDebugGUI();
+	//			//cameraController->DrawDebugGUI();
+	//			// 
+	//			//EnemyManager::Instance().Register(enemySlime);
+	//			//EnemyManager::Instance().DrawDebugGUI();
+	//			//cameraController->DrawDebugGUI();
+	//		}
+	//	}
+	//}
 	
 
 	
@@ -754,8 +754,11 @@ void SceneGame::Logout(ID3D11DeviceContext* dc)
 
 void SceneGame::TeamNotHost(ID3D11DeviceContext* dc)
 {
+	Graphics& graphics = Graphics::Instance();
+	float screenWidth = static_cast<float>(graphics.GetScreenWidth());
+	float screenHeight = static_cast<float>(graphics.GetScreenHeight());
 	DirectX::XMFLOAT2 size, pos;
-	size = { 500,300 };
+	size = { screenWidth,screenHeight };
 	pos = {0,0 };
 	//選択している縁描画
 	Sprite* TeamDisbandedSprite = g_SpriteManager.GetSprite(SpriteNumber::TeamDisbanded);

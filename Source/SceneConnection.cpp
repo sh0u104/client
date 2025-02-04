@@ -261,7 +261,8 @@ void SceneConnection::Render()
 void SceneConnection::Signin()
 {
 
-    std::string hostname = "localhost";
+    //std::string hostname = "localhost";
+    //std::string hostname = "10.200.1.195"; // サーバーのIPアドレスに変更
     std::string port = "5000";
     std::string path = "/Login/Login?userId=" + std::to_string(maxID);
 
@@ -437,8 +438,8 @@ void SceneConnection::Signin()
 
 bool SceneConnection::httpSignin()
 {
-    std::string hostname = "localhost";
-    //std::string hostname = "10.200.2.236"; // サーバーのIPアドレスに変更
+    //std::string hostname = "localhost";
+    //std::string hostname = "10.200.1.195"; // サーバーのIPアドレスに変更
     std::string port = "5000";
     std::string path = "/Login/Login?userId=" + std::to_string(maxID);
 
@@ -766,8 +767,8 @@ void SceneConnection::Signup()
 
 bool SceneConnection::httpSignup()
 {
-    std::string hostname = "localhost";
-    //std::string hostname = "10.200.2.236"; // サーバーのIPアドレスに変更
+    //std::string hostname = "localhost";
+    //std::string hostname = "10.200.1.195"; // サーバーのIPアドレスに変更
     std::string port = "5000";
     std::string path = "/Registry/Registration";
 
@@ -923,12 +924,15 @@ int SceneConnection::GetDataJson()
 
     if (!file.is_open()) {
         Logger::Print("ファイルを開けませんでした");
+        return 0;
     }
+    
     json jsonData;
     file >> jsonData;
     file.close();
     int userId = 0;
-    if (jsonData.contains("user_profile") && jsonData["user_profile"].contains("userId")) {
+    if (jsonData.contains("user_profile") && jsonData["user_profile"].contains("userId")) 
+    {
         std::string userIdStr = jsonData["user_profile"]["userId"];
         maxID = std::stoi(userIdStr);
 
@@ -976,7 +980,8 @@ bool SceneConnection::NameJson()
 
 void SceneConnection::pngDownload()
 {
-    std::string hostname = "localhost";
+    //std::string hostname = "localhost";
+    std::string hostname = "10.200.1.195";
     std::string port = "5000";
     const std::string path = "/File/DownloadPng";
     const std::string outputFile = "login.png";
@@ -1116,8 +1121,8 @@ void SceneConnection::pngDownload()
 
 bool SceneConnection::httpPngDownload()
 {
-    std::string hostname = "localhost";
-    //std::string hostname = "10.200.2.236"; // サーバーのIPアドレスに変更
+    //std::string hostname = "localhost";
+    std::string hostname = "10.200.1.195"; // サーバーのIPアドレスに変更
     std::string port = "5000";
     const std::string path = "/File/DownloadPng";
     const std::string outputFile = "login.png";

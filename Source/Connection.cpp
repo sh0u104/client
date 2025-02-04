@@ -41,7 +41,7 @@ void Connection::Initialize()
 	// 接続先ポート 
 	addr.sin_port = htons(7000);
 	// 接続先IP設定
-#if 1
+#if 0
 	//自分のPC内
 	addr.sin_addr.S_un.S_un_b.s_b1 = 127;
 	addr.sin_addr.S_un.S_un_b.s_b2 = 0;
@@ -53,8 +53,9 @@ void Connection::Initialize()
 	addr.sin_addr.S_un.S_un_b.s_b1 = 10;
 	addr.sin_addr.S_un.S_un_b.s_b2 = 200;
 	addr.sin_addr.S_un.S_un_b.s_b3 = 1;
-	addr.sin_addr.S_un.S_un_b.s_b4 = 211;
-
+	addr.sin_addr.S_un.S_un_b.s_b4 = 195;
+	//10.108.0.40
+	// 10.200.1.195
 #endif
 
 	// ソケット作成
@@ -106,7 +107,7 @@ bool Connection::UDPInitialize()
 	uAddr.sin_family = AF_INET;
 	uAddr.sin_port = htons(8000);
 	// 接続先IP設定
-#if 1
+#if 0
 	uAddr.sin_addr.S_un.S_un_b.s_b1 = 127;
 	uAddr.sin_addr.S_un.S_un_b.s_b2 = 0;
 	uAddr.sin_addr.S_un.S_un_b.s_b3 = 0;
@@ -115,7 +116,7 @@ bool Connection::UDPInitialize()
 	uAddr.sin_addr.S_un.S_un_b.s_b1 = 10;
 	uAddr.sin_addr.S_un.S_un_b.s_b2 = 200;
 	uAddr.sin_addr.S_un.S_un_b.s_b3 = 1;
-	uAddr.sin_addr.S_un.S_un_b.s_b4 = 211;
+	uAddr.sin_addr.S_un.S_un_b.s_b4 = 195;
 
 #endif
 

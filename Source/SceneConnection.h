@@ -68,5 +68,7 @@ private:
     bool isname = false;
 
     bool Getfile = false;
+
+    std::string hostname = "10.200.1.195";
 };
 
