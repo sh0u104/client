@@ -148,6 +148,10 @@ public:
     // ID
     int GetPlayerID() const { return playerID; }
     void SetPlayerID(int id) { playerID = id; }
+
+    //9Œ…
+    int GetMaxID()const { return maxID; }
+    void SetMaxMyID(int id) { maxID = id; }
     
     // €”õƒtƒ‰ƒO
     bool GetReady() { return ready; }
@@ -205,6 +209,7 @@ public:
 
 protected:
     int playerID = 0;
+    int maxID = 0;
     char Name[10] = {};
     int loginDay = 0;
   

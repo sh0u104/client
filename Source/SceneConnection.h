@@ -32,8 +32,9 @@ public:
 
 
     bool UiClick(float posX, float posY, float sizeX, float sizeY);
-    void RenderNetError(ID3D11DeviceContext* dc);
-    void RenderLogin(ID3D11DeviceContext* dc);
+
+    void RenderNetError(ID3D11DeviceContext* dc,float screenWidth,float screenHeight);
+    void RenderLogin(ID3D11DeviceContext* dc, float screenWidth, float screenHeight);
     void RenderName(ID3D11DeviceContext* dc);
 
 
@@ -41,18 +42,6 @@ public:
 private:
     PlayerManager* playerManager = nullptr;
     Connection* connection = nullptr;
-
-   //enum class SpriteNumber : int
-   //{
-   //    NetError,
-   //    OK,
-   //    Guest,
-   //    Login,
-   //    NewLogin,
-   //    Name,
-   //    Max
-   //};
-    //std::unique_ptr<Sprite> sprites[(int)SpriteNumber::Max] = {};
 
     bool isGuest = false;
     bool isSignin = false;
@@ -69,6 +58,7 @@ private:
 
     bool Getfile = false;
 
-    std::string hostname = "10.200.1.195";
+   //std::string hostname = "10.108.0.18";
+   std::string hostname = "localhost";
 };
 

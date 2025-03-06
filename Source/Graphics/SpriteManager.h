@@ -40,6 +40,7 @@ enum class SpriteNumber {
     ConnectionError,
     Ping,
     Point,
+    Gameclear,
     // 他のスプライトを追加
 };
 

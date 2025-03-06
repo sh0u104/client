@@ -85,6 +85,9 @@ void SceneGame::Initialize()
 	{
 		guiTeamsId[i] = playerManager->GetMyPlayer()->Getteamsid(i);
 	}
+
+	//操作権を与える
+	playerManager->GetMyPlayer()->Setoperation(true);
 }
 
 // 終了化
@@ -109,8 +112,25 @@ void SceneGame::Finalize()
 // 更新処理
 void SceneGame::Update(float elapsedTime)
 {
+	
 	PingUpdate(elapsedTime);
 	
+	//敵全部死んだらロビーに戻る	
+	if (EnemyManager::Instance().GetEnemys().size() <= 0)
+	{
+		//ホストだけゲーム終わったを送る　クリア画面をUpdateで描画するため一度だけ送信
+		if (playerManager->GetMyPlayer()->GetTeamHost() && playerManager->GetMyPlayer()->Getoperation())
+		{
+			//ゲーム終了を送る
+			connection->SendGameEnd(playerManager->GetMyPlayer()->Getteamnumber());
+		}
+		//操作権をきる
+		playerManager->GetMyPlayer()->Setoperation(false);
+		//SceneManager::Instance().ChangeScene(new SceneLoading(new SceneStandby));
+		return;
+	}
+
+	//エネミーの送信処理
 
 	if (playerManager->GetMyPlayer()->GetTeamHost() && playerManager->GetMyPlayer()->Getteamnumber() > 0)
 	{
@@ -122,29 +142,15 @@ void SceneGame::Update(float elapsedTime)
 		}
 	}
 
-	//敵全部死んだらロビーに戻る	
-	if (EnemyManager::Instance().GetEnemys().size() <= 0)
-	{
-		if(playerManager->GetMyPlayer()->GetTeamHost())
-		//ホストだけゲーム終わったを送る
-		connection->SendGameEnd(playerManager->GetMyPlayer()->Getteamnumber());
-
-		SceneManager::Instance().ChangeScene(new SceneLoading(new SceneStandby));
-	}
-
-	//timer -= elapsedTime;
-	//ゲーム終了を送る
-
+	elapsedTimeSum += elapsedTime;
+	sendInterval = 1.0f / sendIntervalCount;
 	//プレイヤーが存在してたら
-	if (connection&& playerManager->GetPlayers().size()>0)
+	if (connection && playerManager->GetPlayers().size() > 0)
 	{
-
-		if (sendFlag)
+		//プレイヤーの送信処理
+		while (elapsedTimeSum >= sendInterval)
 		{
-			if (!playerManager->GetMyPlayer()->Getoperation())
-			{
-				playerManager->GetMyPlayer()->Setoperation(true);
-			}
+			elapsedTimeSum -= sendInterval;
 
 			if (connection != nullptr && playerManager->GetMyPlayer()->Getteamnumber() > 1000)
 			{
@@ -156,12 +162,6 @@ void SceneGame::Update(float elapsedTime)
 
 			}
 		}
-		//操作停止時
-		else if (playerManager->GetMyPlayer()->Getoperation())
-		{
-			playerManager->GetMyPlayer()->Setoperation(false);
-		}
-
 		//imgui用
 		{
 			guiPosition = playerManager->GetMyPlayer()->GetPosition();
@@ -174,9 +174,8 @@ void SceneGame::Update(float elapsedTime)
 		target.y += 0.5f;// 足元から５０センチぐらい
 		cameraController->SetTarget(target);// プレイヤーの腰当たり
 		cameraController->Update(elapsedTime);
+
 		// プレイヤー更新処理
-		//player->Update(elapsedTime);
-		
 		playerManager->Update(elapsedTime);
 	}
 
@@ -227,8 +226,8 @@ void SceneGame::RenderPing(ID3D11DeviceContext* dc)
 			numDigits++;
 		}
 
-		float positionX = 50;
-		float positionY = 330;
+		float positionX = 30;
+		float positionY = 460;
 		int digit = 0;
 
 		// 各桁を描画するループ
@@ -241,22 +240,22 @@ void SceneGame::RenderPing(ID3D11DeviceContext* dc)
 			Sprite* NumberSprite = g_SpriteManager.GetSprite(SpriteNumber::Number);
 			NumberSprite->Render(dc,
 				positionX, positionY,
-				20, 20,
+				30, 30,
 				gaugeWidth * digit + digit, 0,
 				gaugeWidth, gaugeHeight,
 				0.0f,
 				1, 1, 1, 1);
 
 			// 次の桁の位置に移動
-			positionX += 15;
+			positionX += 25;
 		}
 		{
 			float sizeX = 50;
 			float sizeY = 50;
 			Sprite* PointSprite = g_SpriteManager.GetSprite(SpriteNumber::Point);
 			PointSprite->Render(dc,
-				positionX+2, positionY+14,     //描画位置
-				2, 2,                          //表示サイズ
+				positionX+2, positionY+20,     //描画位置
+				4, 4,                          //表示サイズ
 				0,0,                           //切り取りはじめ位置
 				sizeX, sizeY,                  //画像サイズ
 				0.0f,
@@ -276,14 +275,14 @@ void SceneGame::RenderPing(ID3D11DeviceContext* dc)
 				Sprite* NumberSprite = g_SpriteManager.GetSprite(SpriteNumber::Number);
 				NumberSprite->Render(dc,
 					positionX, positionY,
-					20, 20,
+					30, 30,
 					gaugeWidth * digit + digit, 0,
 					gaugeWidth, gaugeHeight,
 					0.0f,
 					1, 1, 1, 1);
 
 				// 次の桁の位置に移動
-				positionX += 15;
+				positionX += 25;
 			}
 		}
 
@@ -293,13 +292,13 @@ void SceneGame::RenderPing(ID3D11DeviceContext* dc)
 		int pingRank = 0;
 		float ping = playerManager->GetMyPlayer()->GetPing();
 		
-		if (ping >= 1.0f)pingRank = 1;
-		if (ping >= 10.0f)pingRank = 2;
-		if (ping > 20.0f)pingRank = 3;
+		if (ping >= 30.0f)pingRank = 1;
+		if (ping >= 50.0f)pingRank = 2;
+		if (ping > 100.0f)pingRank = 3;
 
 
 		float positionX = 10;
-		float positionY = 330;
+		float positionY = 460;
 		// 画像の長さ
 		const float gaugeWidth = 50.0f;
 		const float gaugeHeight = 50.0f;
@@ -329,6 +328,9 @@ void SceneGame::Render()
 	ID3D11DeviceContext* dc = graphics.GetDeviceContext();
 	ID3D11RenderTargetView* rtv = graphics.GetRenderTargetView();
 	ID3D11DepthStencilView* dsv = graphics.GetDepthStencilView();
+
+	float screenWidth = static_cast<float>(graphics.GetScreenWidth());
+	float screenHeight = static_cast<float>(graphics.GetScreenHeight());
 
 	// 画面クリア＆レンダーターゲット設定
 	FLOAT color[] = { 0.0f, 0.0f, 0.5f, 1.0f };	// RGBA(0.0～1.0)
@@ -363,6 +365,7 @@ void SceneGame::Render()
 	//2D
 	RenderPing(dc);
 
+	//サーバーと接続されていたら
 	if (!connection->GetIsConectionError())
 	{
 		if (playerManager->GetMyPlayer()->GetisMouseOperation())
@@ -387,6 +390,12 @@ void SceneGame::Render()
 			Logout(dc);
 		}
 		
+		//操作を切っていたら(その間はゲーム外)
+		if (!playerManager->GetMyPlayer()->Getoperation())
+		{
+			RenderGameClear(dc, screenWidth, screenHeight);
+		}
+
 	}
 	else
 	{
@@ -401,59 +410,59 @@ void SceneGame::Render()
 
 	// 3Dデバッグ描画
 	//{
+		//IMGUI描画
+		ImGui::SetNextWindowPos(ImVec2(500, 10), ImGuiCond_FirstUseEver);
+		ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
+		// beginからendまでの内容が出来る
+		EnemyManager& enemyManager = EnemyManager::Instance();
+		std::vector<Enemy*> enemys = enemyManager.GetEnemys();
+		if (ImGui::Begin("Player", nullptr, ImGuiWindowFlags_None))
+		{
+			ImGui::SliderInt("sendInterval", &sendIntervalCount, 1, 60);
 
-	//	//IMGUI描画
-	//	ImGui::SetNextWindowPos(ImVec2(500, 10), ImGuiCond_FirstUseEver);
-	//	ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
-	//	// beginからendまでの内容が出来る
-	//	EnemyManager& enemyManager = EnemyManager::Instance();
-	//	std::vector<Enemy*> enemys = enemyManager.GetEnemys();
-	//	if (ImGui::Begin("Player", nullptr, ImGuiWindowFlags_None))
-	//	{
-	//		ImGui::Text("ms: %f", playerManager->GetMyPlayer()->GetPing());
-	//		ImGui::Text("UdpRecvID: %d", playerManager->GetudpRecvId());
-	//		ImGui::Text("UdpRecvSize: %d", playerManager->GetRecvSize());
-	//	
-	//		ImGui::Text("Disbanded: %d", playerManager->GetTeamDisbabded());
-	//		ImGui::Text("LoginCount: %d", playerManager->GetLoginCount());
-	//		ImGui::Text("PlayersSize: %d", playerManager->GetPlayers().size());
-	//		for (Enemy* enemy : enemys)
-	//		{
-	//			ImGui::Text("EnemyHP: %d", enemy->GetHealth());
-	//			ImGui::Text("EnemyState: %d", enemy->GetState());
-	//	
-	//		}
-	//		ImGui::Text("Host: %d", playerManager->GetMyPlayer()->GetTeamHost());
-	//		
-	//		ImGui::Text("State: %d", static_cast<int>(playerManager->GetMyPlayer()->GetState()));
-	//	
-	//		 //トランスフォーム
-	//		//if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
-	//		//{
-	//		//	ImGui::Text("ID: %d", playerManager->GetMyPlayerID());
-	//		//	ImGui::Text("TeamNumber: %d", playerManager->GetMyPlayer()->Getteamnumber());
-	//		//	
-	//		//	if (ImGui::Button("Change Operation"))
-	//		//	{
-	//		//		sendFlag = !sendFlag;
-	//		//	}
-	//		//	if (sendFlag)
-	//		//	{
-	//		//		ImGui::Text("true");
-	//		//	}
-	//		//	else
-	//		//	{
-	//		//		ImGui::Text("false");
-	//		//	}
-	//		//	//ImGui::InputFloat3("GUIVelocity", &guiVelocity.x);
-	//		//	//ImGui::InputFloat3("RecvVelocity", &guiRecvVelocity.x);
-	//		//	//ImGui::InputFloat3("GUIPosition", &guiPosition.x);
-	//		//
-	//		//	ImGui::InputInt4("TeamsID", guiTeamsId);
-	//		//}
-	//	}
-	//	ImGui::End();
-
+			ImGui::Text("ms: %f", playerManager->GetMyPlayer()->GetPing());
+			ImGui::Text("UdpRecvID: %d", playerManager->GetudpRecvId());
+			//ImGui::Text("UdpRecvSize: %d", playerManager->GetRecvSize());
+		
+			//ImGui::Text("Disbanded: %d", playerManager->GetTeamDisbabded());
+			//ImGui::Text("LoginCount: %d", playerManager->GetLoginCount());
+			ImGui::Text("PlayersSize: %d", playerManager->GetPlayers().size());
+			for (Enemy* enemy : enemys)
+			{
+				ImGui::Text("EnemyHP: %d", enemy->GetHealth());
+				ImGui::Text("EnemyState: %d", enemy->GetState());
+		
+			}
+			ImGui::Text("Host: %d", playerManager->GetMyPlayer()->GetTeamHost());
+			
+			ImGui::Text("State: %d", static_cast<int>(playerManager->GetMyPlayer()->GetState()));
+		
+			 //トランスフォーム
+			//if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
+			//{
+			//	ImGui::Text("ID: %d", playerManager->GetMyPlayerID());
+			//	ImGui::Text("TeamNumber: %d", playerManager->GetMyPlayer()->Getteamnumber());
+			//	
+			//	if (ImGui::Button("Change Operation"))
+			//	{
+			//		sendFlag = !sendFlag;
+			//	}
+			//	if (sendFlag)
+			//	{
+			//		ImGui::Text("true");
+			//	}
+			//	else
+			//	{
+			//		ImGui::Text("false");
+			//	}
+			//	//ImGui::InputFloat3("GUIVelocity", &guiVelocity.x);
+			//	//ImGui::InputFloat3("RecvVelocity", &guiRecvVelocity.x);
+			//	//ImGui::InputFloat3("GUIPosition", &guiPosition.x);
+			//
+			//	ImGui::InputInt4("TeamsID", guiTeamsId);
+			//}
+		}
+		ImGui::End();
 	//	// 2Dスプライト描画
 	//	{
 	//		if (playerManager->GetPlayers().size() > 0)
@@ -470,25 +479,18 @@ void SceneGame::Render()
 	//			}
 	//		}
 	//	}
-
-
 	//	if (connection && playerManager->GetPlayers().size() > 0)
 	//	{
 	//		// 当たり判定の形をうつ
 	//		// プレイヤーデバッグプリミティブ描画
 	//		//playerManager->GetMyPlayer()->DrawDebugPrimitive();
-
 	//		// エネミーデバッグプリミティブ描画
 	//		//EnemyManager::Instance().DrawDebugPrimitive();
-
 	//		// ラインレンダラ描画実行
 	//		graphics.GetLineRenderer()->Render(dc, rc.view, rc.projection);
-
 	//		// 実際の当たり判定描画
 	//		// デバッグレンダラ描画実行
 	//		graphics.GetDebugRenderer()->Render(dc, rc.view, rc.projection);
-
-
 	//		
 	//		// 2DデバッグGUI描画
 	//		{
@@ -525,7 +527,7 @@ void SceneGame::MouseOpreration(ID3D11DeviceContext* dc)
 			length = 0.0f;
 			playerManager->GetMyPlayer()->mouselength = 0.0f;
 
-			const DirectX::XMFLOAT2 defaultpos = { 600,220 };
+			const DirectX::XMFLOAT2 defaultpos = { 880,340 };
 			const float adjustmentsize = 35;
 			Sprite* BigCircleSprite = g_SpriteManager.GetSprite(SpriteNumber::BigCircle);
 			BigCircleSprite->Render(dc,
@@ -865,8 +867,6 @@ void SceneGame::RenderNumber(ID3D11DeviceContext* dc,
 		numDigits++;
 	}
 
-	
-	
 	{
 		float numberposX = scereenPosition.x-10;
 		float numberposY = scereenPosition.y-10;
@@ -901,7 +901,7 @@ void SceneGame::RenderTimer(ID3D11DeviceContext* dc, int timer)
 	const float gaugeHeight = 33.0f;
 	int ID = timer;
 
-	// プレイヤーIDの桁数を求める
+	//桁数を求める
 	int numDigits = 1;
 	int tempID = ID;
 	while (tempID >= 10)
@@ -909,8 +909,6 @@ void SceneGame::RenderTimer(ID3D11DeviceContext* dc, int timer)
 		tempID /= 10;
 		numDigits++;
 	}
-
-	
 
 	// 2Dスプライト描画
 	{
@@ -1012,6 +1010,48 @@ void SceneGame::RenderName(ID3D11DeviceContext* dc, const DirectX::XMFLOAT4X4& v
 			1, 1, 1, 0.5);
 
 		positionX += sizeX / 2 - 5;
+	}
+}
+
+void SceneGame::RenderGameClear(ID3D11DeviceContext* dc, float screenWidth, float screenHeight)
+{
+	Sprite* clearSprite = g_SpriteManager.GetSprite(SpriteNumber::Gameclear);
+
+	float textureWidth = static_cast<float>(clearSprite->GetTextureWidth());
+	float textureHeight = static_cast<float>(clearSprite->GetTextureHeight());
+
+	clearSprite->Render(dc,
+		0,0,
+		screenWidth, screenHeight,
+		0, 0,
+		textureWidth, textureHeight,
+		0.0f,
+		1, 1, 1, 1);
+
+	Sprite* okSprite = g_SpriteManager.GetSprite(SpriteNumber::OK);
+	textureWidth  = static_cast<float>(okSprite->GetTextureWidth());
+	textureHeight = static_cast<float>(okSprite->GetTextureHeight());
+
+
+	DirectX::XMFLOAT2 size,position;
+
+	size.x = 200;
+	size.y = 100;
+	position.x = screenWidth / 2 - (size.x / 2);
+	position.y = screenHeight / 2;
+
+	okSprite->Render(dc,
+		position.x,position.y,
+		size.x,size.y,
+		0, 0,
+		textureWidth, textureHeight,
+		0.0f,
+		1, 1, 1, 1);
+
+	//OKをクリックしたら
+	if (Uiclick(position, size))
+	{
+		SceneManager::Instance().ChangeScene(new SceneLoading(new SceneStandby));
 	}
 }
 

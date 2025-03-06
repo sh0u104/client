@@ -223,20 +223,7 @@ void Character::UpdateVelocity(float elapsedTime)
 
     // 水平移動更新処理
     UpdateHorizontalMove(elapsedTime);
-    //if (isEnemy)
-    //{
-    //    EnemyVerticalMove(elapsedTime);
-    //   EnemyHorizontalMove(elapsedTime);
-    //}
-    //recv後の値を使う
-    //else
-    //{
-    //    // 垂直移動更新処理
-    //    UpdateVerticalMove(elapsedTime);
-    //
-    //    // 水平移動更新処理
-    //    UpdateHorizontalMove(elapsedTime);
-    //}
+   
 }
 
 // 無敵時間更新

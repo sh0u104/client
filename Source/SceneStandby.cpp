@@ -29,7 +29,6 @@ void SceneStandby::Initialize()
 			DirectX::XMFLOAT3(0, 10, -10),
 			DirectX::XMFLOAT3(0, 0, 0),
 			DirectX::XMFLOAT3(0, 1, 0)
-			
 		);
 
 		// どの範囲をどれだけ見るか奥行含め
@@ -47,55 +46,8 @@ void SceneStandby::Initialize()
 		//cameraController->SetTarget(target);// プレイヤーの腰当たり
 	}
 
-	// スプライト表示するもの
-	{
-		// スプライト表示するもの
-		//sprites[static_cast<int>(Spritenumber:)] = std::make_unique<Sprite>("Data/Sprite/");
-		//数字
-		//sprites[static_cast<int>(Spritenumber::Number)] = std::make_unique<Sprite>("Data/Sprite/number.png");
-		////旗
-		//sprites[static_cast<int>(Spritenumber::Flag)] = std::make_unique<Sprite>("Data/Sprite/flag.png");
-		////チーム
-		//sprites[static_cast<int>(Spritenumber::Team)] = std::make_unique<Sprite>("Data/Sprite/team.png");
-		////チームセレクト
-		//sprites[static_cast<int>(Spritenumber::TeamSelect)] = std::make_unique<Sprite>("Data/Sprite/teamselect.png");
-		////チーム作成
-		//sprites[static_cast<int>(Spritenumber::TeamCreate)] = std::make_unique<Sprite>("Data/Sprite/teamcreate.png");
-		////加入
-		//sprites[static_cast<int>(Spritenumber::TeamJoin)] = std::make_unique<Sprite>("Data/Sprite/teamjoin.png");
-		////チーム加入する時のクリックできないとこ
-		//sprites[static_cast<int>(Spritenumber::TeamJoinFrame)] = std::make_unique<Sprite>("Data/Sprite/teamjoinframe.png");
-		////チーム加入する時のクリックするとこ
-		//sprites[static_cast<int>(Spritenumber::TeamjoinNumber)] = std::make_unique<Sprite>("Data/Sprite/teamjoinnumber.png");
-		////チーム番号
-		//sprites[static_cast<int>(Spritenumber::TeamNumber)] = std::make_unique<Sprite>("Data/Sprite/teamnumber.png");
-		////閉じるボタン
-		//sprites[static_cast<int>(Spritenumber::Close)] = std::make_unique<Sprite>("Data/Sprite/close.png");
-		////準備完了
-		//sprites[static_cast<int>(Spritenumber::Ready)] = std::make_unique<Sprite>("Data/Sprite/ready.png");
-		////準備キャンセル
-		//sprites[static_cast<int>(Spritenumber::ReadyzCancel)] = std::make_unique<Sprite>("Data/Sprite/readycancel.png");
-		////ソロモード
-		//sprites[static_cast<int>(Spritenumber::Solo)] = std::make_unique<Sprite>("Data/Sprite/solo.png");
-		////マルチモード
-		//sprites[static_cast<int>(Spritenumber::Multi)] = std::make_unique<Sprite>("Data/Sprite/multi.png");
-		////スタート
-		//sprites[static_cast<int>(Spritenumber::Start)] = std::make_unique<Sprite>("Data/Sprite/start.png");
-		////名前
-		//sprites[static_cast<int>(Spritenumber::Name)] = std::make_unique<Sprite>("Data/Sprite/font1.png");
-		//sprites[static_cast<int>(Spritenumber::WASD)] = std::make_unique<Sprite>("Data/Sprite/WASD.png");
-		//
-		//sprites[static_cast<int>(Spritenumber::SelectEdge)] = std::make_unique<Sprite>("Data/Sprite/selectedge.png");
-		//
-		//sprites[static_cast<int>(Spritenumber::Setting)] = std::make_unique<Sprite>("Data/Sprite/setting.png");
-		//
-		//sprites[static_cast<int>(Spritenumber::Mouse)] = std::make_unique<Sprite>("Data/Sprite/mouse.png");
-		//
-		////ログアウト
-		//sprites[static_cast<int>(Spritenumber::Logout)] = std::make_unique<Sprite>("Data/Sprite/logout.png");
-	}
-
 	SceneManager& sceneManager = SceneManager::Instance();
+
 	//初期化が一度目かどうか
 	if (!sceneManager.GetstandbyInitialized())
 	{
@@ -103,6 +55,7 @@ void SceneStandby::Initialize()
 		playerManager = sceneManager.GetPlayerManager();
 		connection = sceneManager.GetConnection();
 	}
+	//二度目以降
 	else
 	{
 		playerManager = sceneManager.GetPlayerManager();
@@ -114,6 +67,7 @@ void SceneStandby::Initialize()
 		{
 			playerManager->GetMyPlayer()->SetAngle({ 0.0f,3.0f,0.0f });
 			playerManager->GetMyPlayer()->SetPosition({ 0.0f,0.0f,0.0f });
+			playerManager->GetMyPlayer()->GetStateMachine()->ChangeState(static_cast<int>(Player::State::Idle));
 		}
 		else
 		{
@@ -122,6 +76,9 @@ void SceneStandby::Initialize()
 				int MYID = playerManager->GetMyPlayer()->Getteamsid(i);
 				playerManager->GetPlayer(MYID)->SetAngle({ 0.0f,3.0f,0.0f });
 				playerManager->GetPlayer(MYID)->SetPosition({ 1.5f * i,0.0f,0.0f });
+				playerManager->GetPlayer(MYID)->GetStateMachine()->ChangeState(static_cast<int>(Player::State::Idle));
+				playerManager->GetPlayer(MYID)->SetstartCheck(false);
+
 			}
 			
 			if (playerManager->GetMyPlayer()->GetTeamHost())
@@ -159,10 +116,7 @@ void SceneStandby::Finalize()
 }
 
 void SceneStandby::Update(float elapsedTime)
-{
-	
-	//playerManager->GetMyPlayer()->GetStateMachine()->ChangeState(static_cast<int>(Player::State::Idle));
-		
+{		
 	//シーン遷移
 	if (playerManager->GetGameStart())
 	{
@@ -182,17 +136,14 @@ void SceneStandby::Update(float elapsedTime)
 				playerManager->GetMyPlayer()->SetTeamHost(true);
 			}
 		}
-		
 	}
 
-	//チームを作る時
-	//if (sendteamcreate&&!teamcreate)
-	//{
-	//	sendteamcreate = false;
-	//	teamcreate = true;
-	//	connection->SendTeamcreate();
-	//	playerManager->SetteamLeader(true);
-	//}
+	//ゲームスタート申請
+	if (sendgamestart && playerManager->GetMyPlayer()->GetTeamHost())
+	{
+		sendgamestart = false;
+		connection->SendGamestart(playerManager->GetMyPlayer()->Getteamnumber());
+	}
 
 	//チームに参加するとき
 	if (sendteamjoin && !teamcreate && !teamjoin)
@@ -201,20 +152,8 @@ void SceneStandby::Update(float elapsedTime)
 		teamjoin = true;
 		connection->SendTeamJoin(TeamNumber);
 	}
-	
-	//準備OK
-	//if (startcheck != sendstartcheck)
-	//{
-	//	sendstartcheck = !sendstartcheck;
-	//	connection->SendStartCheck(sendstartcheck);
-	//}
 
-	//ゲームスタート申請
-	if(sendgamestart&& playerManager->GetMyPlayer()->GetTeamHost())
-	{
-		sendgamestart = false;
-		connection->SendGamestart(playerManager->GetMyPlayer()->Getteamnumber());
-	}
+	
 
 	playerManager->Update(elapsedTime);
 
@@ -294,7 +233,6 @@ void SceneStandby::Render()
 		// ステージ描画
 		StageManager::instance().Render(dc, shader);
 		// プレイヤー描画
-		//player->Render(dc, shader);
 		//if (playerManager->GetMyPlayerID() != 0)
 		playerManager->Render(dc, shader);
 
@@ -304,34 +242,32 @@ void SceneStandby::Render()
 	// 2Dスプライト描画
 	if (!connection->GetIsConectionError())
 	{
-
+		float screenWidth = static_cast<float>(graphics.GetScreenWidth());
+		float screenHeight = static_cast<float>(graphics.GetScreenHeight());
 		//現在のモード
-		RenderMode(dc);
+		RenderMode(dc, screenHeight);
 
 		//ゲーム開始ボタン
 		//チームのホストの時か チームを組んで無くチーム関連の処理をしていない時
 		if (playerManager->GetMyPlayer()->GetTeamHost() || playerManager->GetMyPlayer()->Getteamnumber() < 1&& teamRenderflag)
 		{
-			RenderGameStart(dc);
+			RenderGameStart(dc, screenHeight);
 		}
-
-		//OprerationSelect(dc);
-		//if(isSetting)
-		//Logout(dc);
 
 		//名前が無ければ
-		if (playerManager->GetMyPlayerID() != 0 && !numberinputflag && playerManager->GetMyPlayer()->GetName()[0] == '\0')
-		{
-			//ID表示
-			RenderID(dc, rc.view, rc.projection);
-		}
-
-		//名前があれば
-		if (playerManager->GetMyPlayer()->GetName() != '\0'&& !numberinputflag)
-		{
-			//名前表示
+		//if (playerManager->GetMyPlayerID() != 0 && !numberinputflag && playerManager->GetMyPlayer()->GetName()[0] == '\0')
+		//{
+		//	//ID表示
+		//	RenderID(dc, rc.view, rc.projection);
+		//}
+		//名前表示
 			RenderName(dc, rc.view, rc.projection);
-		}
+		//名前があれば
+		//if (playerManager->GetMyPlayer()->GetName() != '\0'&& !numberinputflag)
+		//{
+		//	//名前表示
+		//	RenderName(dc, rc.view, rc.projection);
+		//}
 		
 		//チームを組んでいれば
 		if (playerManager->GetMyPlayer()->Getteamnumber() > 0)
@@ -342,7 +278,7 @@ void SceneStandby::Render()
 			if (!playerManager->GetMyPlayer()->GetTeamHost())
 			{
 				//準備完了ボタン表示
-				RenderReady(dc, playerManager->GetMyPlayer()->GetstartCheck());
+				RenderReady(dc,screenHeight, playerManager->GetMyPlayer()->GetstartCheck());
 			}
 		}
 		//チームを組んでなかったら
@@ -356,11 +292,11 @@ void SceneStandby::Render()
 			{
 				if (numberinputflag)
 				{
-					RenderTeamJoin(dc);
+					RenderTeamJoin(dc,screenWidth,screenHeight);
 				}
 				else
 				{
-					RenderTeamSelect(dc);
+					RenderTeamSelect(dc,screenWidth,screenHeight);
 				}
 			}
 		}
@@ -374,100 +310,111 @@ void SceneStandby::Render()
 	
 	// 2Dデバッグ描画
 	//IMGUI描画
-	//{
-	//	
-	//	ImGui::SetNextWindowPos(ImVec2(310, 10), ImGuiCond_FirstUseEver);
-	//	ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
-	//	// beginからendまでの内容が出来る
-	//	if (ImGui::Begin("Player", nullptr, ImGuiWindowFlags_None))
-	//	{
-	//		ImGui::Text("UserID: %d", playerManager->GetMyPlayer()->GetPlayerID());
-	//		ImGui::Text("LoginDay: %d", playerManager->GetMyPlayer()->GetLoginDay());
-	//		ImGui::Text("Name: %s", playerManager->GetMyPlayer()->GetName());
-	//		
-	//		
-	//		if (playerManager->GetMyPlayer()->Getteamnumber() != 0)
-	//		{
-	//			ImGui::Text("Host: %d", playerManager->GetMyPlayer()->GetTeamHost());
-	//			ImGui::InputText("Message", input, sizeof(input));
-	//			if (ImGui::Button("Send"))
-	//			{
-	//				if (strcmp(input, "") != 0)
-	//				{
-	//					// 送信処理
-	//					connection->SendMessages(input);
-	//				}
-	//				input[0] = '\0';
-	//			}
-	//			ImGui::Text("Messeages");
-	//			for (std::string message : playerManager->Getmessages())
-	//			{
-	//				ImGui::Text(u8"%s", message.c_str());
-	//			}
-	//		}
-	//			
-	//		
-	//		//ImGui::Text("Disbanded: %d", playerManager->GetTeamDisbabded());
-	//		//ImGui::Text("GenerateCount: %d", playerManager->GetPlayersGenerateCount());
-	//		//ImGui::Text("LoginCount: %d", playerManager->GetLoginCount());
-	//		//
-	//		//ImGui::Text("PlayersSize: %d", playerManager->GetPlayers().size());
-	//		//
-	//	    //ImGui::Text("State: %d", static_cast<int>(playerManager->GetMyPlayer()->GetState()));
-	//		//if (ImGui::Button("debugGameStart"))
-	//		//{
-	//		//	debugGameStart = true;
-	//		//	
-	//		//}
-	//		//ImGui::InputInt4("TeamsID", guiteamsid);
-	//		//if (ImGui::Button("FriendList Update"))
-	//		//{
-	//		//	connection->SendSeeFriend();
-	//		//}
-	//		//
-	//		//ImGui::Text("FriendList");
-	//		//for (int i = 0; i < playerManager->myFriendList.size(); ++i)
-	//		//{
-	//		//	ImGui::Text("ID: %d", playerManager->myFriendList.at(i).ID);
-	//		//	ImGui::Text("Name: %s", playerManager->myFriendList.at(i).name);
-	//		//}
-	//	
-	//		playerManager->DebugGUI();
-	//	}
-	//	ImGui::End();
-	//	//
-	//	////if (playerManager->GetLoginCount() > 1)
-	//	////{
-	//	////	ImGui::SetNextWindowPos(ImVec2(500, 10), ImGuiCond_Once);
-	//	////	ImGui::SetNextWindowSize(ImVec2(300, 320), ImGuiCond_Once);
-	//	////	if (ImGui::Begin("Chat", nullptr, ImGuiWindowFlags_None))
-	//	//	{
-	//	//		ImGui::Text("Message");
-	//	//		ImGui::BeginChild(ImGui::GetID((void*)0), ImVec2(250, 200), ImGuiWindowFlags_NoTitleBar);
-	//	//
-	//	//		for (std::string message : playerManager->Getmessages()) {
-	//	//			ImGui::Text(u8"%s", message.c_str());
-	//	//		}
-	//	//		ImGui::EndChild();
-	//	//		ImGui::Spacing();
-	//	//
-	//	//		ImGui::InputText("Message", input, sizeof(input));
-	//	//		if (playerManager->GetMyPlayer()->Getteamnumber() != 0)
-	//	//			if (ImGui::Button("Send"))
-	//	//			{
-	//	//				if (strcmp(input, "") != 0)
-	//	//				{
-	//	//					// 送信処理
-	//	//					connection->SendMessages(input);
-	//	//				}
-	//	//				input[0] = '\0';
-	//	//			}
-	//	//	}
-	//	////	ImGui::End();
-	//	////}
+	{
+		ImGui::SetNextWindowPos(ImVec2(800, 400), ImGuiCond_FirstUseEver);
+		ImGui::SetNextWindowSize(ImVec2(150, 150), ImGuiCond_FirstUseEver);
+		if (ImGui::Begin("Startcheck", nullptr, ImGuiWindowFlags_None))
+		{
+			if (playerManager->GetMyPlayer()->Getteamsid(0) > 0)
+			{
+				ImGui::Text("HostID %d", playerManager->GetMyPlayer()->Getteamsid(0));
+			}
+			for (auto& player : playerManager->GetPlayers())
+			{
+				ImGui::Text("ID %d", player->GetPlayerID());
+				ImGui::Text("Check %s", player->GetstartCheck() ? "true" : "false");
+			}
+		}
+		ImGui::End();
 
-	//	
-	//}
+		ImGui::SetNextWindowPos(ImVec2(1000, 400), ImGuiCond_FirstUseEver);
+		ImGui::SetNextWindowSize(ImVec2(150, 150), ImGuiCond_FirstUseEver);
+		// beginからendまでの内容が出来る
+		if (ImGui::Begin("PlayerData", nullptr, ImGuiWindowFlags_None))
+		{
+			ImGui::Text("UserID: %d", playerManager->GetMyPlayer()->GetMaxID());
+			ImGui::Text("LoginDay: %d", playerManager->GetMyPlayer()->GetLoginDay());
+			ImGui::Text("Name: %s", playerManager->GetMyPlayer()->GetName());
+			
+			
+			if (playerManager->GetMyPlayer()->Getteamnumber() != 0)
+			{
+				ImGui::Text("Host: %d", playerManager->GetMyPlayer()->GetTeamHost());
+			}
+				
+			//ImGui::Text("Disbanded: %d", playerManager->GetTeamDisbabded());
+			//ImGui::Text("GenerateCount: %d", playerManager->GetPlayersGenerateCount());
+			//ImGui::Text("LoginCount: %d", playerManager->GetLoginCount());
+			//
+			//ImGui::Text("PlayersSize: %d", playerManager->GetPlayers().size());
+			//
+		    //ImGui::Text("State: %d", static_cast<int>(playerManager->GetMyPlayer()->GetState()));
+			//if (ImGui::Button("debugGameStart"))
+			//{
+			//	debugGameStart = true;
+			//	
+			//}
+			//ImGui::InputInt4("TeamsID", guiteamsid);
+			//if (ImGui::Button("FriendList Update"))
+			//{
+			//	connection->SendSeeFriend();
+			//}
+			//
+			//ImGui::Text("FriendList");
+			//for (int i = 0; i < playerManager->myFriendList.size(); ++i)
+			//{
+			//	ImGui::Text("ID: %d", playerManager->myFriendList.at(i).ID);
+			//	ImGui::Text("Name: %s", playerManager->myFriendList.at(i).name);
+			//}
+		
+			playerManager->DebugGUI();
+		}
+		ImGui::End();
+		
+		//プレイヤーやが二人以上なら
+		if (playerManager->GetLoginCount() > 1)
+		{
+			ImGui::SetNextWindowPos(ImVec2(950, 10), ImGuiCond_Once);
+			ImGui::SetNextWindowSize(ImVec2(300, 320), ImGuiCond_Once);
+			if (ImGui::Begin("Chat", nullptr, ImGuiWindowFlags_None))
+			{
+				ImGui::Text("Message");
+				ImGui::BeginChild(ImGui::GetID((void*)0), ImVec2(250, 200), ImGuiWindowFlags_NoTitleBar);
+
+				for (std::string message : playerManager->Getmessages()) {
+					ImGui::Text(u8"%s", message.c_str());
+				}
+				ImGui::EndChild();
+				ImGui::Spacing();
+
+				ImGui::InputText("Message", input, sizeof(input));
+				if (playerManager->GetMyPlayer()->Getteamnumber() != 0)
+					if (ImGui::Button("Send"))
+					{
+						if (strcmp(input, "") != 0)
+						{
+							// 送信処理
+							connection->SendMessages(input);
+						}
+						input[0] = '\0';
+					}
+				//ImGui::Text("startcheck");
+				//for (auto& player : playerManager->GetPlayers())
+				//{
+				//	//ホストは非表示
+				//	if (player->GetPlayerID() == player->Getteamsid(0))
+				//		continue;
+				//
+				//	ImGui::Text("ID %d", player->GetPlayerID());
+				//	ImGui::Text("Check %s", player->GetstartCheck() ? "true" : "false");
+				//}
+				
+			}
+			ImGui::End();
+		}
+
+		
+	}
 }
 
 void SceneStandby::OprerationSelect(ID3D11DeviceContext* dc)
@@ -671,7 +618,6 @@ void SceneStandby::RenderID(ID3D11DeviceContext* dc,
 	// ワールドからスクリーン
 	DirectX::XMVECTOR WorldPosition = DirectX::XMLoadFloat3(&worldPosition);
 
-
 	// ゲージ描画 // ワールドからスクリーン
 	DirectX::XMVECTOR ScreenPosition = DirectX::XMVector3Project(
 		WorldPosition,
@@ -705,8 +651,6 @@ void SceneStandby::RenderID(ID3D11DeviceContext* dc,
 		numDigits++;
 	}
 
-
-
 	{
 		float numberposX = scereenPosition.x - 10;
 		float numberposY = scereenPosition.y - 10;
@@ -736,8 +680,6 @@ void SceneStandby::RenderID(ID3D11DeviceContext* dc,
 
 void SceneStandby::RenderTeamNumber(ID3D11DeviceContext* dc, const DirectX::XMFLOAT4X4& view, const DirectX::XMFLOAT4X4& projection)
 {
-
-	
 	// g_SpriteManager を使ってスプライトを取得
 	Sprite* numberSprite = g_SpriteManager.GetSprite(SpriteNumber::TeamNumber);
 	// 取得したスプライトで Render メソッドを呼び出す
@@ -746,7 +688,7 @@ void SceneStandby::RenderTeamNumber(ID3D11DeviceContext* dc, const DirectX::XMFL
 	float positionY = 70;
 	numberSprite->Render(dc,
 		positionX, positionY,  //描画位置
-		200,40,                //表示サイズ
+		300,60,                //表示サイズ
 		0, 0,                  //切り取りはじめ位置
 		1214, 200,             //画像サイズ
 		0.0f,
@@ -768,10 +710,10 @@ void SceneStandby::RenderTeamNumber(ID3D11DeviceContext* dc, const DirectX::XMFL
 
 	
 	
-	float numberposX = positionX +85;
-	float numberposY = positionY+7;
+	float numberposX = positionX +130;
+	float numberposY = positionY+15;
 	int digit = 0;
-
+	DirectX::XMFLOAT2 size = { 40,40};
 	// 各桁を描画するループ
 	for (int i = numDigits - 1; i >= 0; --i)
 	{
@@ -782,27 +724,28 @@ void SceneStandby::RenderTeamNumber(ID3D11DeviceContext* dc, const DirectX::XMFL
 		Sprite* NumberSprite = g_SpriteManager.GetSprite(SpriteNumber::Number);
 		NumberSprite->Render(dc,
 			numberposX, numberposY,
-			30, 30,
+			size.x, size.y,
 			gaugeWidth * digit+ digit, 0,
 			gaugeWidth, gaugeHeight,
 			0.0f,
 			1, 1, 1, 1);
 
 		// 次の桁の位置に移動
-		numberposX += 20;
+		numberposX += 30;
 	}
 	
 	//閉じるボタン
+	DirectX::XMFLOAT2 closeSize = { 50,50 };
 	Sprite* CloseSprite = g_SpriteManager.GetSprite(SpriteNumber::Close);
 	CloseSprite->Render(dc,
-		positionX + 160, positionY, //描画位置
-		40, 40,               //表示サイズ
+		positionX + 250, positionY+10, //描画位置
+		closeSize.x, closeSize.y,               //表示サイズ
 		0, 0,                 //切り取りはじめ位置
 		100, 100,           //画像サイズ
 		0.0f,
 		1, 1, 1, 1);
 
-	if (Uiclick(positionX + 160, positionY, 40, 40))
+	if (Uiclick(positionX + 250, positionY+10, closeSize.x, closeSize.y))
 	{
 		playerManager->GetMyPlayer()->Setteamnumber(0);
 		teamcreate = false;
@@ -902,10 +845,10 @@ void SceneStandby::RenderName(ID3D11DeviceContext* dc, const DirectX::XMFLOAT4X4
 
 void SceneStandby::RenderTeam(ID3D11DeviceContext* dc)
 {
-	float positionX = 10;
-	float positionY = 10;
-	float sizeX = 100;
-	float sizeY = 30;
+	float positionX = 0;
+	float positionY = 0;
+	float sizeX = 150;
+	float sizeY = 75;
 
 	Sprite* TeamSprite = g_SpriteManager.GetSprite(SpriteNumber::Team);
 	TeamSprite->Render(dc,
@@ -922,34 +865,36 @@ void SceneStandby::RenderTeam(ID3D11DeviceContext* dc)
 	}
 }
 
-void SceneStandby::RenderTeamSelect(ID3D11DeviceContext* dc)
+void SceneStandby::RenderTeamSelect(ID3D11DeviceContext* dc, float screenWidth, float screenHeight)
 {
-	float positionX = 80;
-	float positionY = 50;
+	float positionX = screenWidth / 8;
+	float positionY = screenHeight / 16;
 	//枠組み
 	Sprite* TeamSelectSprite = g_SpriteManager.GetSprite(SpriteNumber::TeamSelect);
 	TeamSelectSprite->Render(dc,
 		positionX, positionY, //描画位置
-		600, 250,               //表示サイズ
+		900, 430,               //表示サイズ
 		0, 0,                 //切り取りはじめ位置
 		1000,400,           //画像サイズ
 		0.0f,
 		1, 1, 1, 1);
 
 
-	float sizeX = 200;
-	float sizeY = 150;
+	float sizeX = 400;
+	float sizeY = 300;
+	float addposY = 100;
+	float addposX = 40;
 	//チーム作成ボタン
 	Sprite* TeamCreate = g_SpriteManager.GetSprite(SpriteNumber::TeamCreate);
 	TeamCreate->Render(dc,
-		positionX + 70, positionY + 60, //描画位置
+		positionX + addposX, positionY + addposY, //描画位置
 		sizeX, sizeY,               //表示サイズ
 		0, 0,                 //切り取りはじめ位置
 		800, 600,           //画像サイズ
 		0.0f,
 		1, 1, 1, 1);
 
-	if (Uiclick(positionX + 70, positionY + 60, 200, 150))
+	if (Uiclick(positionX + addposX, positionY + addposY, sizeX, sizeY))
 	{
 		teamcreate = true;
 		teamRenderflag = false;
@@ -958,46 +903,49 @@ void SceneStandby::RenderTeamSelect(ID3D11DeviceContext* dc)
 	}
 
 	//チーム加入ボタン
+	addposX = 450;
 	Sprite* TeamJoinCreate = g_SpriteManager.GetSprite(SpriteNumber::TeamJoin);
 	TeamJoinCreate->Render(dc,
-		positionX+320, positionY+60, //描画位置
+		positionX+ addposX, positionY+ addposY, //描画位置
 		sizeX, sizeY,               //表示サイズ
 		0, 0,                 //切り取りはじめ位置
 		800,600,           //画像サイズ
 		0.0f,
 		1, 1, 1, 1);
 	
-		if (Uiclick(positionX + 320, positionY + 60, sizeX, sizeY))
+		if (Uiclick(positionX + addposX, positionY + addposY, sizeX, sizeY))
 		{
 			teamRenderflag = false;
 			numberinputflag = true;
 		}
 	
 	//閉じるボタン
+		addposX = 840;
+		DirectX::XMFLOAT2 closeSize = { 70,70 };
 		Sprite* CloseCreate = g_SpriteManager.GetSprite(SpriteNumber::Close);
 		CloseCreate->Render(dc,
-		positionX + 565, positionY-5, //描画位置
-		40,40,               //表示サイズ
+		positionX + addposX, positionY-5, //描画位置
+		closeSize.x, closeSize.y,               //表示サイズ
 		0, 0,                 //切り取りはじめ位置
 		100,100,           //画像サイズ
 		0.0f,
 		1, 1, 1, 1);
 
-	if (Uiclick(positionX + 565, positionY - 5, 40, 40))
+	if (Uiclick(positionX + addposX, positionY - 5, closeSize.x, closeSize.y))
 	{
 		teamRenderflag = true;
 	}
 }
 
-void SceneStandby::RenderTeamJoin(ID3D11DeviceContext* dc)
+void SceneStandby::RenderTeamJoin(ID3D11DeviceContext* dc, float screenWidth, float screenHeight)
 {
-	float positionX = 80;
-	float positionY = 30;
+	float positionX = screenWidth / 8;
+	float positionY = screenHeight / 16;
 	//枠組み
 	Sprite* TeamJoinFrameCreate = g_SpriteManager.GetSprite(SpriteNumber::TeamJoinFrame);
 	TeamJoinFrameCreate->Render(dc,
 		positionX, positionY,   //描画位置
-		600, 300,               //表示サイズ
+		900, 430,               //表示サイズ
 		0, 0,                   //切り取りはじめ位置
 		1000, 400,              //画像サイズ
 		0.0f,
@@ -1006,9 +954,12 @@ void SceneStandby::RenderTeamJoin(ID3D11DeviceContext* dc)
 	//ボタンを個数分
 	
 	int count = 0;
-	float sizeX = 90;
-	float sizeY = 30;
-	
+	float sizeX = 150;
+	float sizeY = 45;
+	float intervalX = 170.0f;
+	float intervalY = 50.0f;
+	float gapX = 180.0f;
+	float gapY = 200.0f;
 	for (float i = 0; i < 4; ++i)
 	{
 		for (float j = 0; j < 3; ++j)
@@ -1017,15 +968,15 @@ void SceneStandby::RenderTeamJoin(ID3D11DeviceContext* dc)
 
 			Sprite* TeamjoinNumberCreate = g_SpriteManager.GetSprite(SpriteNumber::TeamjoinNumber);
 			TeamjoinNumberCreate->Render(dc,
-				positionX + 130.0f + (j * 100.0f), positionY + 140.0f+(i*40.0f), //描画位置
+				positionX + gapX + (j * intervalX), positionY + gapY +(i* intervalY), //描画位置
 				sizeX, sizeY,                      //表示サイズ
 				(j * 300.0f), (i*100.0f),    //切り取りはじめ位置
 				300, 100,                    //画像サイズ
 				0.0f,
 				1, 1, 1, 1);
 
-			float posx = positionX + 130.0f + (j * 100.0f);
-			float posy = positionY + 140.0f + (i * 40.0f);
+			float posx = positionX + gapX + (j * intervalX);
+			float posy = positionY + gapY + (i * intervalY);
 			posxy[count-1][0] = posx;
 			posxy[count-1][1] = posy;
 			
@@ -1070,10 +1021,11 @@ void SceneStandby::RenderTeamJoin(ID3D11DeviceContext* dc)
 
 	// 2Dスプライト描画
 	{
-		float numberposX = positionX + 188;
-		float numberposY = positionY + 80;
+		float numberposX = positionX + 290;
+		float numberposY = positionY + 130;
 		const float gaugeWidth = 25.9f;
 		const float gaugeHeight = 33.0f;
+
 
 		// 各桁を描画するループ
 		if (numbers.size() > 0)
@@ -1085,7 +1037,7 @@ void SceneStandby::RenderTeamJoin(ID3D11DeviceContext* dc)
 				// スプライトを描画
 				Sprite* NumberCreate = g_SpriteManager.GetSprite(SpriteNumber::Number);
 				NumberCreate->Render(dc,
-					numberposX+(51*i), numberposY,
+					numberposX+(77*i), numberposY,
 					30, 30,
 					gaugeWidth * number, 0,
 					gaugeWidth, gaugeHeight,
@@ -1096,16 +1048,18 @@ void SceneStandby::RenderTeamJoin(ID3D11DeviceContext* dc)
 	}
 
 	//閉じるボタン
+	float addposX = 840;
+	DirectX::XMFLOAT2 closeSize = { 70,70 };
 	Sprite* CloseCreate = g_SpriteManager.GetSprite(SpriteNumber::Close);
 	CloseCreate->Render(dc,
-		positionX + 565, positionY - 5, //描画位置
-		40, 40,               //表示サイズ
+		positionX + addposX, positionY - 5, //描画位置
+		closeSize.x, closeSize.y,               //表示サイズ
 		0, 0,                 //切り取りはじめ位置
 		100, 100,           //画像サイズ
 		0.0f,
 		1, 1, 1, 1);
 
-	if (Uiclick(positionX + 565.0f, positionY - 5.0f, 40.0f, 40.0f))
+	if (Uiclick(positionX + addposX, positionY - 5.0f, closeSize.x, closeSize.y))
 	{
 		numberinputflag = false;
 		teamRenderflag = true;
@@ -1113,26 +1067,27 @@ void SceneStandby::RenderTeamJoin(ID3D11DeviceContext* dc)
 	}
 }
 
-void SceneStandby::RenderReady(ID3D11DeviceContext* dc, bool isready)
+void SceneStandby::RenderReady(ID3D11DeviceContext* dc, float screenHeight, bool isready)
 {
-	float positionX = 10;
-	float positionY = 300;
-
+	DirectX::XMFLOAT2 size = { 150,75 };
+	float positionX = 0;
+	float positionY = screenHeight - size.y;
 	//
 	if (!isready)
 	{
 		Sprite* ReadyCreate = g_SpriteManager.GetSprite(SpriteNumber::Ready);
 		ReadyCreate->Render(dc,
 			positionX, positionY, //描画位置
-			150, 50,               //表示サイズ
+			size.x,size.y,               //表示サイズ
 			0, 0,                 //切り取りはじめ位置
 			500,184,           //画像サイズ
 			0.0f,
 			1, 1, 1, 1);
 
-		if (Uiclick(positionX, positionY, 150.0f, 50.0f))
+		if (Uiclick(positionX, positionY, size.x, size.y))
 		{
 			playerManager->GetMyPlayer()->SetstartCheck(true);
+
 			connection->SendStartCheck(true);
 		}
 	}
@@ -1141,13 +1096,13 @@ void SceneStandby::RenderReady(ID3D11DeviceContext* dc, bool isready)
 		Sprite* ReadyzCancelCreate = g_SpriteManager.GetSprite(SpriteNumber::ReadyzCancel);
 		ReadyzCancelCreate->Render(dc,
 			positionX, positionY, //描画位置
-			150, 50,             //表示サイズ
+			size.x, size.y,             //表示サイズ
 			0, 0,                 //切り取りはじめ位置
 			500,184,           //画像サイズ
 			0.0f,
 			1, 1, 1, 1);
 
-		if (Uiclick(positionX, positionY, 150.0f, 50.0f))
+		if (Uiclick(positionX, positionY, size.x, size.y))
 		{
 			playerManager->GetMyPlayer()->SetstartCheck(false);
 			connection->SendStartCheck(false);
@@ -1155,10 +1110,11 @@ void SceneStandby::RenderReady(ID3D11DeviceContext* dc, bool isready)
 	}
 }
 
-void SceneStandby::RenderMode(ID3D11DeviceContext* dc)
+void SceneStandby::RenderMode(ID3D11DeviceContext* dc, float screenHeight)
 {
-	float positionX = 10;
-	float positionY = 200;
+	DirectX::XMFLOAT2 size = { 150,75 };
+	float positionX = 0;
+	float positionY = screenHeight- (size.y*2.5f);
 
 	//
 	if (playerManager->GetMyPlayer()->Getteamnumber() > 0)
@@ -1166,7 +1122,7 @@ void SceneStandby::RenderMode(ID3D11DeviceContext* dc)
 		Sprite* MultiCreate = g_SpriteManager.GetSprite(SpriteNumber::Multi);
 		MultiCreate->Render(dc,
 			positionX, positionY, //描画位置
-			150, 50,               //表示サイズ
+			size.x,size.y,               //表示サイズ
 			0, 0,                 //切り取りはじめ位置
 			500, 184,           //画像サイズ
 			0.0f,
@@ -1178,7 +1134,7 @@ void SceneStandby::RenderMode(ID3D11DeviceContext* dc)
 		Sprite* SoloCreate = g_SpriteManager.GetSprite(SpriteNumber::Solo);
 		SoloCreate->Render(dc,
 			positionX, positionY, //描画位置
-			150, 50,               //表示サイズ
+			size.x, size.y,               //表示サイズ
 			0, 0,                 //切り取りはじめ位置
 			500, 184,           //画像サイズ
 			0.0f,
@@ -1187,21 +1143,37 @@ void SceneStandby::RenderMode(ID3D11DeviceContext* dc)
 
 }
 
-void SceneStandby::RenderGameStart(ID3D11DeviceContext* dc)
+void SceneStandby::RenderGameStart(ID3D11DeviceContext* dc, float screenHeight)
 {
-	float positionX = 10;
-	float positionY = 300;
+	DirectX::XMFLOAT2 size = { 150,75 };
+	float positionX = 0;
+	float positionY = screenHeight-size.y;
 
 	Sprite* StartCreate = g_SpriteManager.GetSprite(SpriteNumber::Start);
 	StartCreate->Render(dc,
 		positionX, positionY, //描画位置
-		150, 50,             //表示サイズ
+		size.x,size.y,             //表示サイズ
 		0, 0,                 //切り取りはじめ位置
 		500, 184,           //画像サイズ
 		0.0f,
 		1, 1, 1, 1);
-	if (Uiclick(positionX, positionY, 150.0f, 50.0f))
+
+	if (Uiclick(positionX, positionY, size.x,size.y))
 	{
+		//チームを組んでいるか(人数を見る)
+		if (playerManager->GetPlayers().size() > 1)
+		{
+			//チーム全員のスタートチェックを確認
+			for (const auto& player : playerManager->GetPlayers())
+			{
+				//ホストはスキップ
+				if (player->GetPlayerID() == playerManager->GetMyPlayer()->Getteamsid(0))
+					continue;
+
+				if(!player->GetstartCheck())
+					return;
+			}
+		}
 		debugGameStart = true;
 	}
 }

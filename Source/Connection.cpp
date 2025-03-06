@@ -41,7 +41,7 @@ void Connection::Initialize()
 	// 接続先ポート 
 	addr.sin_port = htons(7000);
 	// 接続先IP設定
-#if 0
+#if 1
 	//自分のPC内
 	addr.sin_addr.S_un.S_un_b.s_b1 = 127;
 	addr.sin_addr.S_un.S_un_b.s_b2 = 0;
@@ -51,11 +51,11 @@ void Connection::Initialize()
 	// 接続先IP設定(ブロードキャストアドレス)
 	//学校5の
 	addr.sin_addr.S_un.S_un_b.s_b1 = 10;
-	addr.sin_addr.S_un.S_un_b.s_b2 = 200;
-	addr.sin_addr.S_un.S_un_b.s_b3 = 1;
-	addr.sin_addr.S_un.S_un_b.s_b4 = 195;
-	//10.108.0.40
-	// 10.200.1.195
+	addr.sin_addr.S_un.S_un_b.s_b2 = 108;
+	addr.sin_addr.S_un.S_un_b.s_b3 = 0;
+	addr.sin_addr.S_un.S_un_b.s_b4 = 18;
+	// 10.108.1.107
+	
 #endif
 
 	// ソケット作成
@@ -107,17 +107,17 @@ bool Connection::UDPInitialize()
 	uAddr.sin_family = AF_INET;
 	uAddr.sin_port = htons(8000);
 	// 接続先IP設定
-#if 0
+#if 1
 	uAddr.sin_addr.S_un.S_un_b.s_b1 = 127;
 	uAddr.sin_addr.S_un.S_un_b.s_b2 = 0;
 	uAddr.sin_addr.S_un.S_un_b.s_b3 = 0;
 	uAddr.sin_addr.S_un.S_un_b.s_b4 = 1;
 #else
 	uAddr.sin_addr.S_un.S_un_b.s_b1 = 10;
-	uAddr.sin_addr.S_un.S_un_b.s_b2 = 200;
-	uAddr.sin_addr.S_un.S_un_b.s_b3 = 1;
-	uAddr.sin_addr.S_un.S_un_b.s_b4 = 195;
-
+	uAddr.sin_addr.S_un.S_un_b.s_b2 = 108;
+	uAddr.sin_addr.S_un.S_un_b.s_b3 = 0;
+	uAddr.sin_addr.S_un.S_un_b.s_b4 = 18;
+	//10.108.1.107
 #endif
 
 	// socket作成
@@ -205,14 +205,16 @@ void Connection::ConnectionCheck(ID3D11DeviceContext* dc)
 	if (isConectionError)
 	{
 		Graphics& graphics = Graphics::Instance();
+		float screenWidth = static_cast<float>(graphics.GetScreenWidth());
+		float screenHeight = static_cast<float>(graphics.GetScreenHeight());
 
-		float positionX = 50;
+		float positionX = 0;
 		float positionY = 0;
 		//枠組み
 		Sprite* ConnectionError = g_SpriteManager.GetSprite(SpriteNumber::ConnectionError);
 		ConnectionError->Render(dc,
 			positionX, positionY, //描画位置
-			600, 350,               //表示サイズ
+			screenWidth, screenHeight,  //表示サイズ
 			0, 0,                 //切り取りはじめ位置
 			750, 500,           //画像サイズ
 			0.0f,
@@ -599,11 +601,13 @@ void Connection::TcpRecvThread()
 				{
 					StartCheck startcheck;
 					memcpy_s(&startcheck, sizeof(startcheck), buffer, sizeof(StartCheck));
-					playerManager->GetMyPlayer()->SetstartCheck(startcheck.check);
+					playerManager->GetPlayer(startcheck.id)->SetstartCheck(startcheck.check);
+					//playerManager->GetMyPlayer()->SetstartCheck(startcheck.check);
 				}
 				break;
 				case TcpTag::Gamestart:
 				{
+
 					//ゲーム開始許可が下りた
 					playerManager->SetGameStart(true);
 				}

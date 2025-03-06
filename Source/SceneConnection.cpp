@@ -154,6 +154,8 @@ void SceneConnection::Update(float elapsedTime)
         //自分のプレイヤーに受信したIDを乗せる
         playerManager->GetMyPlayer()->SetPlayerID(ID);
         playerManager->SetMyPlayerID(ID);
+        playerManager->GetMyPlayer()->SetMaxMyID(maxID);
+
         //ログイン数を加算
         playerManager->AddLoginCount();
         SceneManager::Instance().ChangeScene(new SceneLoading(new SceneStandby));
@@ -176,6 +178,8 @@ void SceneConnection::Render()
     dc->ClearDepthStencilView(dsv, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
     dc->OMSetRenderTargets(1, &rtv, dsv);
 
+    float screenWidth = static_cast<float>(graphics.GetScreenWidth());
+    float screenHeight = static_cast<float>(graphics.GetScreenHeight());
     // 2Dスプライト描画
     if (!connection->GetIsConectionError())
     {
@@ -185,13 +189,13 @@ void SceneConnection::Render()
         //接続できなかったら
         if (!connection->isConnection)
         {
-            RenderNetError(dc);
+            RenderNetError(dc,screenWidth, screenHeight);
         }
 
         //ログインの種類
         if (connection->isConnection && !isSignin && !isSignup)
         {
-            RenderLogin(dc);
+            RenderLogin(dc, screenWidth, screenHeight);
         }
         
     }
@@ -448,7 +452,7 @@ bool SceneConnection::httpSignin()
     addrinfo hints = {}, * addrInfo = nullptr;
 
     if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-        std::cerr << "WSA初期化失敗" << std::endl;
+        Logger::Print("WSA初期化失敗");
         return false;
     }
 
@@ -457,21 +461,21 @@ bool SceneConnection::httpSignin()
     hints.ai_protocol = IPPROTO_TCP;
 
     if (getaddrinfo(hostname.c_str(), port.c_str(), &hints, &addrInfo) != 0) {
-        std::cerr << "ドメインからアドレス取得に失敗しました" << std::endl;
+        Logger::Print("ドメインからアドレス取得に失敗しました");
         WSACleanup();
         return false;
     }
 
     sock = socket(addrInfo->ai_family, addrInfo->ai_socktype, addrInfo->ai_protocol);
     if (sock == INVALID_SOCKET) {
-        std::cerr << "ソケットの生成に失敗しました" << std::endl;
+        Logger::Print("ソケットの生成に失敗しました");
         freeaddrinfo(addrInfo);
         WSACleanup();
         return false;
     }
 
     if (connect(sock, addrInfo->ai_addr, static_cast<int>(addrInfo->ai_addrlen)) == SOCKET_ERROR) {
-        std::cerr << "connectに失敗しました" << std::endl;
+        Logger::Print("connectに失敗しました");
         closesocket(sock);
         freeaddrinfo(addrInfo);
         WSACleanup();
@@ -485,7 +489,7 @@ bool SceneConnection::httpSignin()
 
     // リクエストの送信
     if (send(sock, request.c_str(), static_cast<int>(request.length()), 0) == SOCKET_ERROR) {
-        std::cerr << "リクエストの送信に失敗しました" << std::endl;
+        Logger::Print("リクエストの送信に失敗しました");
         closesocket(sock);
         freeaddrinfo(addrInfo);
         WSACleanup();
@@ -503,7 +507,7 @@ bool SceneConnection::httpSignin()
     }
 
     if (size < 0) {
-        std::cerr << "受信エラー" << std::endl;
+        Logger::Print("受信エラー");
         closesocket(sock);
         freeaddrinfo(addrInfo);
         WSACleanup();
@@ -540,7 +544,7 @@ bool SceneConnection::httpSignin()
     if (file.is_open()) {
         file << response_body;
         file.close();
-        std::cout << "レスポンスが'signindata.json'に保存されました。" << std::endl;
+        Logger::Print("レスポンスが'signindata.json'に保存されました。");
     }
     else {
         throw std::runtime_error("ファイルを開けませんでした");
@@ -913,6 +917,7 @@ bool SceneConnection::httpSignup()
 
     Logger::Print("UserID %s", userIdNumber);
     Logger::Print("SignUp成功");
+    maxID = std::stoi(userId);
     ID = std::stoi(userIdNumber);
 
     return true;
@@ -944,7 +949,7 @@ int SceneConnection::GetDataJson()
     else {
         Logger::Print("userIdが見つかりません");
     }
-
+    Logger::Print("userIdがが見つかった");
     return userId;
 
 }
@@ -1226,31 +1231,33 @@ bool SceneConnection::httpPngDownload()
 
 
 
-void SceneConnection::RenderNetError(ID3D11DeviceContext* dc)
+void SceneConnection::RenderNetError(ID3D11DeviceContext* dc, float screenWidth, float screenHeight)
 {
-    float positionX = 50;
-    float positionY = 0;
     Sprite* NetErrorSprite = g_SpriteManager.GetSprite(SpriteNumber::NetError);
+    float size = screenWidth / 6;
     //枠組み
     NetErrorSprite->Render(dc,
-        positionX, positionY, //描画位置
-        600, 350,               //表示サイズ
-        0, 0,                 //切り取りはじめ位置
-        750, 500,           //画像サイズ
+        size,0,                       //描画位置
+        screenWidth - size*2, screenHeight,//表示サイズ
+        0, 0,                     //切り取りはじめ位置
+        750, 500,                 //画像サイズ
         0.0f,
         1, 1, 1, 1);
 
+    DirectX::XMFLOAT2 okSize = { 150,75 };
+    float positionX = screenWidth / 2 - okSize.x+30;
+    float positionY = screenHeight - 150;
     //OKボタン
     Sprite* OKSprite = g_SpriteManager.GetSprite(SpriteNumber::OK);
     OKSprite->Render(dc,
-        positionX + 190, positionY + 250, //描画位置
-        150, 50,               //表示サイズ
+        positionX, positionY, //描画位置
+        okSize.x, okSize.y,               //表示サイズ
         0, 0,                 //切り取りはじめ位置
         400, 200,           //画像サイズ
         0.0f,
         1, 1, 1, 1);
 
-    if (UiClick(positionX + 190, positionY + 250, 150, 50))
+    if (UiClick(positionX, positionY, okSize.x, okSize.y))
     {
        
        if (!connection->isConnection)
@@ -1272,11 +1279,11 @@ void SceneConnection::RenderNetError(ID3D11DeviceContext* dc)
     }
 }
 
-void SceneConnection::RenderLogin(ID3D11DeviceContext* dc)
+void SceneConnection::RenderLogin(ID3D11DeviceContext* dc, float screenWidth, float screenHeight)
 {
     Mouse& mouse = Input::Instance().GetMouse();
-    float positionX = 20;
-    float positionY = 150;
+    float positionX = screenWidth/5.0f;
+    float positionY = screenHeight/2.5f;
 
     float sizeX = 200;
     float sizeY = 100;

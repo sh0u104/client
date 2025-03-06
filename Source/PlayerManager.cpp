@@ -18,7 +18,6 @@ void PlayerManager::Update(float elapsedTime)
 	{
 		if (player != nullptr)
 		if(player->GetReady())
-		//if (!GetLogging_in())
 		player->Update(elapsedTime);
 	}
 }
@@ -29,7 +28,6 @@ void PlayerManager::Render(ID3D11DeviceContext* dc, Shader* shader)
 	{
 		if (player != nullptr)
 		if (player->GetReady())
-		//if (!GetLogging_in())
 		player->Render(dc, shader);
 	}
 }

@@ -7,8 +7,8 @@
 
 #include "Framework.h"
 
-const LONG SCREEN_WIDTH = 800;
-const LONG SCREEN_HEIGHT = 360;
+const LONG SCREEN_WIDTH = 1200;
+const LONG SCREEN_HEIGHT = 500;
 
 LRESULT CALLBACK fnWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {

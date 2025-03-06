@@ -63,6 +63,8 @@ private:
 		const DirectX::XMFLOAT4X4& view,
 		const DirectX::XMFLOAT4X4& projection);
 
+	void RenderGameClear(ID3D11DeviceContext* dc,float screenWidth,float screenHeight);
+
 private:
 	Player* player = nullptr;
 	CameraController* cameraController = nullptr;
@@ -94,8 +96,6 @@ private:
 	DirectX::XMFLOAT3 guiRecvVelocity = {};
 	DirectX::XMFLOAT3 guiAngle = {};
 
-
-	bool  sendFlag = true;
 	int guiId = 0;
 
 	enum class State
@@ -120,4 +120,8 @@ private:
 	int enemyCount = 0;
 
 	float pingTimer = 0.0f;
+
+	int sendIntervalCount = 60;      // ユーザーが指定する 1秒間の送信回数 (1～60)
+	float elapsedTimeSum = 0.0f;// 経過時間の合計
+	float sendInterval = 0;  // 送信間隔
 };

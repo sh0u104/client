@@ -71,6 +71,8 @@ void SpriteManager::LoadSprites() {
 
 	sprites[SpriteNumber::Point] = std::make_unique<Sprite>("Data/Sprite/Point.png");
 
+	sprites[SpriteNumber::Gameclear] = std::make_unique<Sprite>("Data/Sprite/gameclear.png");
+
 }
 
 Sprite* SpriteManager::GetSprite(SpriteNumber number) {

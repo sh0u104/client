@@ -34,33 +34,6 @@ public:
 
     bool isSetting = false;
 private:
-   //enum class Spritenumber : int
-   //{
-   //    Number,
-   //    Flag,
-   //    Team,
-   //    TeamSelect,
-   //    TeamCreate,
-   //    TeamJoin,
-   //    TeamJoinFrame,
-   //    TeamjoinNumber,
-   //    TeamNumber,
-   //    Close,
-   //    Ready,
-   //    ReadyzCancel,
-   //    Solo,
-   //    Multi,
-   //    Start,
-   //    Name,
-   //    Logout,
-   //    WASD,
-   //    SelectEdge,
-   //    Setting,
-   //    Mouse,
-   //  //ModeSelect,
-   //    Max
-   //};
-    //std::unique_ptr<Sprite> sprites[static_cast<int>(Spritenumber::Max)] = {};
 
     CameraController* cameraController = nullptr;
 
@@ -95,12 +68,13 @@ private:
         const DirectX::XMFLOAT4X4& view,
         const DirectX::XMFLOAT4X4& projection);
 
+
     void RenderTeam(ID3D11DeviceContext* dc);
-    void RenderTeamSelect(ID3D11DeviceContext* dc);
-    void RenderTeamJoin(ID3D11DeviceContext* dc);
-    void RenderReady(ID3D11DeviceContext* dc,bool isready);
-    void RenderMode(ID3D11DeviceContext* dc);
-    void RenderGameStart(ID3D11DeviceContext* dc);
+    void RenderTeamSelect(ID3D11DeviceContext* dc, float screenWidth, float screenHeight);
+    void RenderTeamJoin(ID3D11DeviceContext* dc, float screenWidth, float screenHeight);
+    void RenderReady(ID3D11DeviceContext* dc,float screenHeight,bool isready);
+    void RenderMode(ID3D11DeviceContext* dc,float screenHeight);
+    void RenderGameStart(ID3D11DeviceContext* dc, float screenHeight);
     char input[32] = {};
 
     bool Uiclick(float posX,float posY,float sizeX,float size);
