@@ -46,9 +46,9 @@ EnemySlime::~EnemySlime()
 // 更新処理
 void EnemySlime::Update(float elapsedTime)
 {
+    //ホストの敵を基準に動かす
     if (SceneManager::Instance().GetPlayerManager()->GetMyPlayer()->GetTeamHost())
     {
-       
         if(stateMachine)
         stateMachine->Update(elapsedTime);
 
@@ -56,10 +56,27 @@ void EnemySlime::Update(float elapsedTime)
         UpdateVelocity(elapsedTime);
     }
     //  ゲストの敵のDeathのExecuteを呼ぶため（消滅したを送受信しなくて済むため）
-    else if (State::Death == state)
+    else if (State::Death == state|| State::Attack == state)
     {
         stateMachine->Update(elapsedTime);
     }
+    else
+    {
+        
+       // if (GetModel()->IsPlayAnimation())
+       // {
+       //     GetStateMachine()->ChangeState(static_cast<int>(EnemySlime::State::IdleBattle));
+       // }
+       // // 任意のアニメーション再生区間でのみ衝突判定処理をする
+       // float animationTime = GetModel()->GetCurrentANimationSeconds();
+       // if (animationTime >= 0.2f && animationTime <= 0.35f)
+       // {
+       //     // 目玉ノードとプレイヤーの衝突処理
+       //     CollisitionNodeVsPlayer("EyeBall", 0.2f);
+       // }
+    }
+
+
         // 無敵時間更新
         UpdateInbincibleTimer(elapsedTime);
         // オブジェクト行列を更新
@@ -190,18 +207,19 @@ void EnemySlime::CollisitionNodeVsPlayer(const char* nodeName, float nodeRadius)
         );
 
         // プレイヤーと当たり判定
-        Player& player = Player::Instance();
+        //Player& player = Player::Instance();
+        Player* player = SceneManager::Instance().GetPlayerManager()->GetMyPlayer();
         DirectX::XMFLOAT3 outPosition;
         if (Collision::IntersectSphereVsCylinder(
             nodePosition,
             nodeRadius,
-            player.GetPosition(),
-            player.GetRadius(),
-            player.GetHeight(),
+            player->GetPosition(),
+            player->GetRadius(),
+            player->GetHeight(),
             outPosition))
         {
             // ダメージを与える
-            if (player.ApplyDamage(1, 0.5f))
+            if (player->ApplyDamage(1, 0.5f))
             {
                 // 敵を吹っ飛ばすベクトルを算出
                 DirectX::XMFLOAT3 vec;
@@ -219,7 +237,7 @@ void EnemySlime::CollisitionNodeVsPlayer(const char* nodeName, float nodeRadius)
                 vec.y = 5.0f;
 
                 // 吹っ飛ばす
-                //player.AddImpulse(vec);
+                player->AddImpulse(vec);
             }
         }
     }

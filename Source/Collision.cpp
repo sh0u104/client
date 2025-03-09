@@ -121,8 +121,8 @@
         vx /= distXZ;
         vz /= distXZ;
         outCylinderPosition.x = spherePosition.x + (vx * range);
-        outCylinderPosition.x = cylinderPosition.y;
-        outCylinderPosition.x = spherePosition.z + (vz * range);
+        outCylinderPosition.y = cylinderPosition.y;
+        outCylinderPosition.z = spherePosition.z + (vz * range);
 
 
         // ‰~’Œ‚Ì’ê–Ê‚ğŠÜ‚Ş•½–Ê‚Æ‹…‚ÌŒğ·‚É‚Æ‚Á‚Äo—ˆƒ‹B

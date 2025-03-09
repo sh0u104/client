@@ -19,11 +19,11 @@
 
 static Player* instance = nullptr;
 
-// インスタンス取得
-Player& Player::Instance()
-{
-    return *instance;
-}
+//// インスタンス取得
+//Player& Player::Instance()
+//{
+//    return *instance;
+//}
 
 // コンストラクタ
 Player::Player()

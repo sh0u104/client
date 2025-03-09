@@ -32,7 +32,7 @@ public:
     ~Player() override;
 
     // インスタンス取得
-    static Player& Instance();
+    //static Player& Instance();
 
     enum  Animation
     {

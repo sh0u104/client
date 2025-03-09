@@ -111,6 +111,7 @@ void SceneConnection::Update(float elapsedTime)
         if (httpSignup())
         {
             Logger::Print("サインアップhttp成功");
+            playerManager->GetMyPlayer()->SetName(name);
         }
         else
         {
@@ -206,59 +207,59 @@ void SceneConnection::Render()
     }
 
     //Imgui
-    //{
-    //    ImGui::SetNextWindowPos(ImVec2(500, -10), ImGuiCond_FirstUseEver);
-    //    ImGui::SetNextWindowSize(ImVec2(300, 500), ImGuiCond_FirstUseEver);
-    //    // beginからendまでの内容が出来る
-    //    if (ImGui::Begin("login", nullptr, ImGuiWindowFlags_None))
-    //    {
-    //        if (ImGui::Button("Getfile"))
-    //        {
-    //            Getfile = true;
-    //        }
-    //        //ImGui::Text("name: % s", name);
-    //        //ImGui::Text("userId: %d", ID);
-    //        //ImGui::Text("userDay: %d", loginDay);
-    //        //ImGui::InputText("Name", name, sizeof(name));
-    //        //ImGui::InputText("password", pass, sizeof(pass));
-    //        //isname = true;
-    //        // if(ImGui::InputInt("ID",playerManager->get))
-    //        //if (isNewLogin)
-    //        //{
-    //        //    ImGui::Text("login");
-    //        //    ImGui::InputText("Name", name, sizeof(name));
-    //        //    ImGui::InputText("password", pass, sizeof(pass));
-    //        //    if (strcmp(name, "") != 0 && strcmp(pass, "") != 0)
-    //        //        if (ImGui::Button("Decision"))
-    //        //        {
-    //        //            connection->SendSignUp(name, pass);
-    //        //        }
-    //        //}
-    //         //if (isLogin)
-    //         //{
-    //         //    ImGui::Text("Newlogin");
-    //         //    ImGui::InputText("Name", name, sizeof(name));
-    //         //    ImGui::InputText("password", pass, sizeof(pass));
-    //         //    if (strcmp(pass, "") != 0)
-    //         //    {
-    //         //        if (ImGui::Button("Decision"))
-    //         //            connection->SendSignIn(name, pass);
-    //         //    }
-    //         //}
-    //         //
-    //        // if (isSignin || isSignup)
-    //        // {
-    //        //     if (ImGui::Button("back"))
-    //        //     {
-    //        //         memset(name, 0, sizeof(name));
-    //        //         memset(pass, 0, sizeof(pass));
-    //        //         isSignin = false;
-    //        //         isSignup = false;
-    //        //     }
-    //        // }
-    //        ImGui::End();
-    //    }
-    //}
+    {
+        ImGui::SetNextWindowPos(ImVec2(500, -10), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(300, 500), ImGuiCond_FirstUseEver);
+        // beginからendまでの内容が出来る
+        if (ImGui::Begin("login", nullptr, ImGuiWindowFlags_None))
+        {
+            //if (ImGui::Button("Getfile"))
+            //{
+            //    Getfile = true;
+            //}
+            //ImGui::Text("name: % s", name);
+            //ImGui::Text("userId: %d", ID);
+            //ImGui::Text("userDay: %d", loginDay);
+            //ImGui::InputText("Name", name, sizeof(name));
+            //ImGui::InputText("password", pass, sizeof(pass));
+            //isname = true;
+            // if(ImGui::InputInt("ID",playerManager->get))
+            //if (isNewLogin)
+            //{
+            //    ImGui::Text("login");
+            //    ImGui::InputText("Name", name, sizeof(name));
+            //    ImGui::InputText("password", pass, sizeof(pass));
+            //    if (strcmp(name, "") != 0 && strcmp(pass, "") != 0)
+            //        if (ImGui::Button("Decision"))
+            //        {
+            //            connection->SendSignUp(name, pass);
+            //        }
+            //}
+             //if (isLogin)
+             //{
+             //    ImGui::Text("Newlogin");
+                 ImGui::InputText("Name", name, sizeof(name));
+             //    ImGui::InputText("password", pass, sizeof(pass));
+             //    if (strcmp(pass, "") != 0)
+             //    {
+             //        if (ImGui::Button("Decision"))
+             //            connection->SendSignIn(name, pass);
+             //    }
+             //}
+             //
+            // if (isSignin || isSignup)
+            // {
+            //     if (ImGui::Button("back"))
+            //     {
+            //         memset(name, 0, sizeof(name));
+            //         memset(pass, 0, sizeof(pass));
+            //         isSignin = false;
+            //         isSignup = false;
+            //     }
+            // }
+            ImGui::End();
+        }
+    }
 
 }
 
@@ -771,10 +772,13 @@ void SceneConnection::Signup()
 
 bool SceneConnection::httpSignup()
 {
+    std::string Name = name;
     //std::string hostname = "localhost";
     //std::string hostname = "10.200.1.195"; // サーバーのIPアドレスに変更
     std::string port = "5000";
-    std::string path = "/Registry/Registration";
+    std::string path = "/Registry/Registration?name=" + Name;
+
+   
 
     WSADATA wsaData;
     SOCKET sock = INVALID_SOCKET;

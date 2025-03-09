@@ -143,6 +143,7 @@ void SceneGame::Update(float elapsedTime)
 	}
 
 	elapsedTimeSum += elapsedTime;
+	//送信間隔
 	sendInterval = 1.0f / sendIntervalCount;
 	//プレイヤーが存在してたら
 	if (connection && playerManager->GetPlayers().size() > 0)

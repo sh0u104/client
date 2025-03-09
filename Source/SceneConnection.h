@@ -46,7 +46,7 @@ private:
     bool isGuest = false;
     bool isSignin = false;
     bool isSignup = false;
-    char name[10] = {};
+    char name[10] = {"Name"};
     char pass[10] = {};
 
     int maxID = 0;
