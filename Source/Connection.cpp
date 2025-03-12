@@ -260,6 +260,7 @@ void Connection::SendEnemy(Enemy* enemy)
 	enemyData.position = enemy->GetPosition();
 	enemyData.angle = enemy->GetAngle();
 	enemyData.state = enemy->GetState();
+	
 
 	char buffer[sizeof(EnemyData)];
 	memcpy_s(buffer, sizeof(buffer), &enemyData, sizeof(EnemyData));
@@ -750,6 +751,7 @@ void Connection::SendGeustLogin()
 void Connection::SendMove(DirectX::XMFLOAT3 velocity, DirectX::XMFLOAT3 position,
 	Player::State state, DirectX::XMFLOAT3 angle)
 {
+	++playerSendCount;
 	PlayerInput input;
 	input.cmd = UdpTag::Move;
 	input.id = playerManager->GetMyPlayerID();
@@ -757,11 +759,17 @@ void Connection::SendMove(DirectX::XMFLOAT3 velocity, DirectX::XMFLOAT3 position
 	input.position = position;
 	input.state = state;
 	input.angle = angle;
+	input.sendCount = playerSendCount;
 
 	char buffer[sizeof(PlayerInput)];
 	memcpy_s(buffer, sizeof(buffer), &input, sizeof(PlayerInput));
 	//int s = send(sock, buffer, sizeof(buffer), 0);
 	sendto(uSock, buffer, sizeof(buffer), 0, (struct sockaddr*)&uAddr, sizeof(struct sockaddr_in));
+}
+
+void Connection::SendPlayerDamage(int id)
+{
+
 }
 
 void Connection::SendSync(DirectX::XMFLOAT3 position)
@@ -864,24 +872,22 @@ void Connection::SendGameEnd(int teamnumber)
 	int s = send(sock, buffer, sizeof(buffer), 0);
 }
 
+//過去のフレンドリスト
 
-
-
-
-void Connection::SendIdSearch(short id)
-{
-	//IdSearch idSearch;
-	//
-	//idSearch.cmd = NetworkTag::IdSearch;
-	//idSearch.id = id;
-	//
-	//char buffer[sizeof(IdSearch)];
-	//memcpy_s(buffer, sizeof(IdSearch), &idSearch, sizeof(IdSearch));
-	//int s = send(sock, buffer, sizeof(buffer), 0);
-}
-
-void Connection::SendFriendRequest(short requestid)
-{
+//void Connection::SendIdSearch(short id)
+//{
+//	IdSearch idSearch;
+//	
+//	idSearch.cmd = NetworkTag::IdSearch;
+//	idSearch.id = id;
+//	
+//	char buffer[sizeof(IdSearch)];
+//	memcpy_s(buffer, sizeof(IdSearch), &idSearch, sizeof(IdSearch));
+//	int s = send(sock, buffer, sizeof(buffer), 0);
+//}
+//
+//void Connection::SendFriendRequest(short requestid)
+//{
 //	FriendRequest friendRequest;
 //
 //	friendRequest.cmd = NetworkTag::FriendRequest;
@@ -892,35 +898,33 @@ void Connection::SendFriendRequest(short requestid)
 //	char buffer[sizeof(FriendRequest)];
 //	memcpy_s(buffer, sizeof(FriendRequest), &friendRequest, sizeof(FriendRequest));
 //	int s = send(sock, buffer, sizeof(buffer), 0);
-}
-
-void Connection::SendFriendApproval(short youid, short myid, char myname[10], char youname[10])
-{
-	//FriendApproval friendApproval;
-	//friendApproval.cmd = NetworkTag::FriendApproval;
-	//friendApproval.myid = myid;
-	//friendApproval.youid = youid;
-	//strcpy_s(friendApproval.myname, myname);
-	//strcpy_s(friendApproval.youname, youname);
-	//
-	//char buffer[sizeof(FriendApproval)];
-	//memcpy_s(buffer, sizeof(FriendApproval), &friendApproval, sizeof(FriendApproval));
-	//int s = send(sock, buffer, sizeof(buffer), 0);
-
-}
-
-void Connection::SendSeeFriend()
-{
-	//SeeFriend seeFriend;
-	//seeFriend.cmd = NetworkTag::SeeFriend;
-	//seeFriend.myid = playerManager->GetMyPlayerID();
-	//
-	//char buffer[sizeof(SeeFriend)];
-	//memcpy_s(buffer, sizeof(SeeFriend), &seeFriend, sizeof(SeeFriend));
-	//int s = send(sock, buffer, sizeof(buffer), 0);
-
-
-}
+//}
+//
+//void Connection::SendFriendApproval(short youid, short myid, char myname[10], char youname[10])
+//{
+//	FriendApproval friendApproval;
+//	friendApproval.cmd = NetworkTag::FriendApproval;
+//	friendApproval.myid = myid;
+//	friendApproval.youid = youid;
+//	strcpy_s(friendApproval.myname, myname);
+//	strcpy_s(friendApproval.youname, youname);
+//	
+//	char buffer[sizeof(FriendApproval)];
+//	memcpy_s(buffer, sizeof(FriendApproval), &friendApproval, sizeof(FriendApproval));
+//	int s = send(sock, buffer, sizeof(buffer), 0);
+//
+//}
+//
+//void Connection::SendSeeFriend()
+//{
+//	SeeFriend seeFriend;
+//	seeFriend.cmd = NetworkTag::SeeFriend;
+//	seeFriend.myid = playerManager->GetMyPlayerID();
+//	
+//	char buffer[sizeof(SeeFriend)];
+//	memcpy_s(buffer, sizeof(SeeFriend), &seeFriend, sizeof(SeeFriend));
+//	int s = send(sock, buffer, sizeof(buffer), 0);
+//}
 
 void Connection::SendUdpAddr()
 {

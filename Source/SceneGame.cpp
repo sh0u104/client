@@ -413,31 +413,35 @@ void SceneGame::Render()
 	//{
 		//IMGUI描画
 		ImGui::SetNextWindowPos(ImVec2(500, 10), ImGuiCond_FirstUseEver);
-		ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
+		ImGui::SetNextWindowSize(ImVec2(300, 100), ImGuiCond_FirstUseEver);
 		// beginからendまでの内容が出来る
 		EnemyManager& enemyManager = EnemyManager::Instance();
 		std::vector<Enemy*> enemys = enemyManager.GetEnemys();
+		std::vector<Player*> players = SceneManager::Instance().GetPlayerManager()->GetPlayers();
+
 		if (ImGui::Begin("Player", nullptr, ImGuiWindowFlags_None))
 		{
 			ImGui::SliderInt("sendInterval", &sendIntervalCount, 1, 60);
+			for (Player* player : players)
+			{
+				//ImGui::Text("PlayerName: %s, PlayerHP: %d", player->GetName(), player->GetHealth());
+				ImGui::Text("PlayerName: %s", player->GetName());
+			}
 
-			ImGui::Text("ms: %f", playerManager->GetMyPlayer()->GetPing());
-			ImGui::Text("UdpRecvID: %d", playerManager->GetudpRecvId());
+			//ImGui::Text("ms: %f", playerManager->GetMyPlayer()->GetPing());
+			//ImGui::Text("UdpRecvID: %d", playerManager->GetudpRecvId());
 			//ImGui::Text("UdpRecvSize: %d", playerManager->GetRecvSize());
 		
 			//ImGui::Text("Disbanded: %d", playerManager->GetTeamDisbabded());
 			//ImGui::Text("LoginCount: %d", playerManager->GetLoginCount());
-			ImGui::Text("PlayersSize: %d", playerManager->GetPlayers().size());
+			//ImGui::Text("PlayersSize: %d", playerManager->GetPlayers().size());
 			for (Enemy* enemy : enemys)
 			{
-				ImGui::Text("EnemyHP: %d", enemy->GetHealth());
-				ImGui::Text("EnemyState: %d", enemy->GetState());
-		
+				ImGui::Text("EnemyHP: %d, EnemyState: %d", enemy->GetHealth(), enemy->GetState());
 			}
-			ImGui::Text("Host: %d", playerManager->GetMyPlayer()->GetTeamHost());
+			ImGui::Text("Host: %s", playerManager->GetMyPlayer()->GetTeamHost() ? "true" : "false");
 			
-			ImGui::Text("State: %d", static_cast<int>(playerManager->GetMyPlayer()->GetState()));
-		
+			//ImGui::Text("State: %d", static_cast<int>(playerManager->GetMyPlayer()->GetState()));
 			 //トランスフォーム
 			//if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
 			//{
@@ -464,6 +468,7 @@ void SceneGame::Render()
 			//}
 		}
 		ImGui::End();
+
 	//	// 2Dスプライト描画
 	//	{
 	//		if (playerManager->GetPlayers().size() > 0)

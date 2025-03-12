@@ -42,6 +42,8 @@ public:
 	void SendMove(DirectX::XMFLOAT3 velocity, DirectX::XMFLOAT3 position,
 		Player::State state, DirectX::XMFLOAT3 angle);
 
+	void SendPlayerDamage(int id);
+
 	void SendSync(DirectX::XMFLOAT3 position);
 
 	void SendTeamcreate();
@@ -58,13 +60,10 @@ public:
 
 	void SendGameEnd(int teamnumber);
 
-	void SendIdSearch(short id);
-
-	void SendFriendRequest(short id);
-
-	void SendFriendApproval(short youid,short myid, char myname[10],char youname[10]);
-
-	void SendSeeFriend();
+	//void SendIdSearch(short id);
+	//void SendFriendRequest(short id);
+	//void SendFriendApproval(short youid,short myid, char myname[10],char youname[10]);
+	//void SendSeeFriend();
 
 	void SendUdpAddr();
 
@@ -154,6 +153,13 @@ public:
 		DirectX::XMFLOAT3 position;
 		Player::State state;
 		DirectX::XMFLOAT3 angle;
+		short sendCount;
+	};
+
+	struct PlayerDamage
+	{
+		TcpTag cmd;
+		int id;
 	};
 	
 	struct PlayerLogin
@@ -309,5 +315,8 @@ private:
 	std::thread udpTh;
 
 	bool isConectionError = false;
+
+	short playerSendCount = 0;
+
 };
 
