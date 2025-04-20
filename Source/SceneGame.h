@@ -65,6 +65,8 @@ private:
 
 	void RenderGameClear(ID3D11DeviceContext* dc,float screenWidth,float screenHeight);
 
+	void PlayerOverheadPos(ID3D11DeviceContext* dc, const DirectX::XMFLOAT4X4& view,
+		const DirectX::XMFLOAT4X4& projection, DirectX::XMFLOAT3& scereenPosition);
 private:
 	Player* player = nullptr;
 	CameraController* cameraController = nullptr;

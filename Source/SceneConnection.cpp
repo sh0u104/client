@@ -79,13 +79,251 @@ void SceneConnection::Initialize()
 void SceneConnection::Finalize()
 {
 }
+
+bool SceneConnection::HttpRequest(std::string path,std::vector<char> &data)
+{
+    WSADATA wsaData;
+    SOCKET sock = INVALID_SOCKET;
+    addrinfo hints = {}, * addrInfo = nullptr;
+
+    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+        Logger::Print("WSA初期化失敗");
+        return false;
+    }
+
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+
+    if (getaddrinfo(hostname.c_str(), port.c_str(), &hints, &addrInfo) != 0) {
+        Logger::Print("ドメインからアドレス取得に失敗しました");
+        WSACleanup();
+        return false;
+    }
+
+    sock = socket(addrInfo->ai_family, addrInfo->ai_socktype, addrInfo->ai_protocol);
+    if (sock == INVALID_SOCKET) {
+        Logger::Print("ソケットの生成に失敗しました");
+        freeaddrinfo(addrInfo);
+        WSACleanup();
+        return false;
+    }
+
+    if (connect(sock, addrInfo->ai_addr, static_cast<int>(addrInfo->ai_addrlen)) == SOCKET_ERROR) {
+        Logger::Print("connectに失敗しました");
+        closesocket(sock);
+        freeaddrinfo(addrInfo);
+        WSACleanup();
+        return false;
+    }
+    // HTTPリクエストの生成
+    std::string request = "GET " + path + " HTTP/1.1\r\n"
+        "Host: " + hostname + ":" + port + "\r\n"
+        "Connection: Close\r\n\r\n";
+
+    // リクエストの送信
+    if (send(sock, request.c_str(), static_cast<int>(request.length()), 0) == SOCKET_ERROR) {
+        Logger::Print("リクエストの送信に失敗しました");
+        closesocket(sock);
+        freeaddrinfo(addrInfo);
+        WSACleanup();
+        return false;
+    }
+
+    // レスポンスの受信
+    //std::vector<char> data;
+    data.reserve(4096);
+    char buf[1024];
+    int size = 0;
+
+    while ((size = recv(sock, buf, sizeof(buf), 0)) > 0) {
+        data.insert(data.end(), buf, buf + size);
+    }
+
+    if (size < 0) {
+        Logger::Print("受信エラー");
+        closesocket(sock);
+        freeaddrinfo(addrInfo);
+        WSACleanup();
+        return false;
+    }
+
+    closesocket(sock);
+    freeaddrinfo(addrInfo);
+    WSACleanup();
+    return true;
+}
+bool SceneConnection::HttpsRequest(std::string path, std::vector<char>& data)
+{
+    OPENSSL_init_ssl(0, nullptr);
+
+    WSADATA wsaData;
+    SOCKET sock = INVALID_SOCKET;
+    addrinfo hints = {}, * addrInfo = nullptr;
+
+    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+        Logger::Print("WSA初期化失敗");
+        return false;
+    }
+
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+
+    if (getaddrinfo(hostname.c_str(), port.c_str(), &hints, &addrInfo) != 0) {
+        Logger::Print("ドメインからアドレス取得に失敗しました");
+        WSACleanup();
+        return false;
+    }
+
+    sock = socket(addrInfo->ai_family, addrInfo->ai_socktype, addrInfo->ai_protocol);
+    if (sock == INVALID_SOCKET) {
+        Logger::Print("ソケットの生成に失敗しました");
+        freeaddrinfo(addrInfo);
+        WSACleanup();
+        return false;
+    }
+
+    if (connect(sock, addrInfo->ai_addr, static_cast<int>(addrInfo->ai_addrlen)) == SOCKET_ERROR) {
+        Logger::Print("connectに失敗しました");
+        closesocket(sock);
+        freeaddrinfo(addrInfo);
+        WSACleanup();
+        return false;
+    }
+
+    SSL_CTX* ctx = SSL_CTX_new(TLS_client_method());
+    if (!ctx) {
+        Logger::Print("SSL_CTXの生成に失敗しました");
+        closesocket(sock);
+        WSACleanup();
+        return false;
+    }
+
+    SSL* ssl = SSL_new(ctx);
+    if (!ssl) {
+        Logger::Print("SSLの生成に失敗しました");
+        SSL_CTX_free(ctx);
+        closesocket(sock);
+        WSACleanup();
+        return false;
+    }
+
+    if (SSL_set_fd(ssl, static_cast<int>(sock)) == 0) {
+        Logger::Print("ソケットとSSLの関連付けに失敗しました");
+        SSL_free(ssl);
+        SSL_CTX_free(ctx);
+        closesocket(sock);
+        WSACleanup();
+        return false;
+    }
+
+    if (SSL_connect(ssl) <= 0) {
+        // SSL接続に失敗した場合、OpenSSLのエラースタックからエラーを取得
+        unsigned long err_code = ERR_get_error();
+        if (err_code != 0) {
+            // エラーコードを文字列に変換
+            const char* error_string = ERR_error_string(err_code, nullptr);
+
+            // Logger::Printでエラーメッセージを表示
+            Logger::Print("SSL接続に失敗しました: %s", error_string);
+        }
+        else {
+            // エラーコードが取得できない場合
+            Logger::Print("SSL接続に失敗しました: 不明なエラー");
+        }
+
+        SSL_free(ssl);
+        SSL_CTX_free(ctx);
+        closesocket(sock);
+        WSACleanup();
+        return false;
+    }
+
+    std::string request = "GET " + path + " HTTP/1.1\r\n"
+        "Host: " + hostname + ":" + port + "\r\n"
+        "Connection: Close\r\n\r\n";
+
+    if (SSL_write(ssl, request.c_str(), static_cast<int>(request.length())) <= 0) {
+        Logger::Print("リクエストの送信に失敗しました");
+        SSL_shutdown(ssl);
+        SSL_free(ssl);
+        SSL_CTX_free(ctx);
+        closesocket(sock);
+        WSACleanup();
+        return false;
+    }
+
+    data.reserve(4096);
+    char buf[1024];
+    int size = 0;
+
+    while ((size = SSL_read(ssl, buf, sizeof(buf))) > 0) {
+        data.insert(data.end(), buf, buf + size);
+    }
+
+    if (size < 0) {
+        Logger::Print("受信エラー");
+        SSL_shutdown(ssl);
+        SSL_free(ssl);
+        SSL_CTX_free(ctx);
+        closesocket(sock);
+        WSACleanup();
+        return false;
+    }
+
+    SSL_shutdown(ssl);
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
+    closesocket(sock);
+    WSACleanup();
+    return true;
+}
+
+bool SceneConnection::HeaderSearch(std::string& response_body, std::vector<char> data)
+{
+    auto headerEnd = std::search(data.begin(), data.end(), "\r\n\r\n", "\r\n\r\n" + 4);
+
+    if (headerEnd != data.end()) {
+        // ヘッダーの後のポインタを取得してボディ部分を設定
+        response_body = std::string(headerEnd + 4, data.end());
+
+        // チャンクサイズを削除する処理
+        std::string cleaned_body;
+        size_t pos = 0;
+
+        while (pos < response_body.size()) {
+            // チャンクサイズ（16進数表記）の取得
+            size_t chunkEnd = response_body.find("\r\n", pos);
+            if (chunkEnd == std::string::npos) break;
+
+            // チャンクサイズを16進数から数値に変換
+            std::string chunkSizeHex = response_body.substr(pos, chunkEnd - pos);
+            size_t chunkSize = std::stoi(chunkSizeHex, nullptr, 16);
+            pos = chunkEnd + 2; // チャンクサイズの後の `\r\n` をスキップ
+
+            // チャンクデータの取得
+            cleaned_body += response_body.substr(pos, chunkSize);
+            pos += chunkSize + 2; // チャンクデータの後の `\r\n` をスキップ
+        }
+
+        response_body = cleaned_body;  // チャンクを削除したボディを保持
+    }
+
+    else {
+        // ヘッダーが見つからなければエラーハンドリング
+        std::cerr << "ヘッダー部分が見つかりませんでした" << std::endl;
+        return false;
+    }
+
+    return true;
+}
 // 更新処理
 void SceneConnection::Update(float elapsedTime)
 { 
 
    
-    //接続成功
-    //サインインサインアップで受け取りが終わったらに変更する
+    //接続成功しID設定が終わっていたらシーン移動
     if (connection->isConnection && playerManager->GetMyPlayerID()>0)
     {
         SceneManager::Instance().ChangeScene(new SceneLoading(new SceneStandby));
@@ -106,7 +344,7 @@ void SceneConnection::Update(float elapsedTime)
 
     if (isSignup)
     {
-        //Signup();
+        isSignup = false;
         //ID取得
         if (httpSignup())
         {
@@ -117,14 +355,13 @@ void SceneConnection::Update(float elapsedTime)
         {
             Logger::Print("サインアップhttp接続失敗");
             ID = GetDataJson();
+            playerManager->GetMyPlayer()->SetName(name);
         }
-       
-        isSignup = false;
     }
+
     if (isSignin)
     {
-        //Signin();
-        
+        isSignin = false;
         //jsonで書きだしたIDを取得
         ID = GetDataJson();
         //名前取得
@@ -143,16 +380,14 @@ void SceneConnection::Update(float elapsedTime)
             {
                 Logger::Print("ネーム取得失敗");
             }
-        }
-       
-        isSignin = false;
-       
+        } 
         playerManager->GetMyPlayer()->SetName(Name);
     }
 
+    //サインイン、サインアップ時用
     if (ID > 0 && playerManager->GetMyPlayerID() == 0)
     {
-        //自分のプレイヤーに受信したIDを乗せる
+        //自分のプレイヤーに受信したIDを設定
         playerManager->GetMyPlayer()->SetPlayerID(ID);
         playerManager->SetMyPlayerID(ID);
         playerManager->GetMyPlayer()->SetMaxMyID(maxID);
@@ -162,8 +397,6 @@ void SceneConnection::Update(float elapsedTime)
         SceneManager::Instance().ChangeScene(new SceneLoading(new SceneStandby));
     }
 
-   
-   
 }
 // 描画処理
 void SceneConnection::Render()
@@ -208,8 +441,8 @@ void SceneConnection::Render()
 
     //Imgui
     {
-        ImGui::SetNextWindowPos(ImVec2(500, -10), ImGuiCond_FirstUseEver);
-        ImGui::SetNextWindowSize(ImVec2(300, 500), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowPos(ImVec2(900, 0), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(300, 100), ImGuiCond_FirstUseEver);
         // beginからendまでの内容が出来る
         if (ImGui::Begin("login", nullptr, ImGuiWindowFlags_None))
         {
@@ -224,17 +457,7 @@ void SceneConnection::Render()
             //ImGui::InputText("password", pass, sizeof(pass));
             //isname = true;
             // if(ImGui::InputInt("ID",playerManager->get))
-            //if (isNewLogin)
-            //{
-            //    ImGui::Text("login");
-            //    ImGui::InputText("Name", name, sizeof(name));
-            //    ImGui::InputText("password", pass, sizeof(pass));
-            //    if (strcmp(name, "") != 0 && strcmp(pass, "") != 0)
-            //        if (ImGui::Button("Decision"))
-            //        {
-            //            connection->SendSignUp(name, pass);
-            //        }
-            //}
+           
              //if (isLogin)
              //{
              //    ImGui::Text("Newlogin");
@@ -263,283 +486,28 @@ void SceneConnection::Render()
 
 }
 
-void SceneConnection::Signin()
-{
 
-    //std::string hostname = "localhost";
-    //std::string hostname = "10.200.1.195"; // サーバーのIPアドレスに変更
-    std::string port = "5000";
-    std::string path = "/Login/Login?userId=" + std::to_string(maxID);
-
-    OPENSSL_init_ssl(0, nullptr);
-
-    WSADATA wsaData;
-    SOCKET sock = INVALID_SOCKET;
-    addrinfo hints = {}, * addrInfo = nullptr;
-
-    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-        std::cerr << "WSA初期化失敗" << std::endl;
-        return ;
-    }
-
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_protocol = IPPROTO_TCP;
-
-    if (getaddrinfo(hostname.c_str(), port.c_str(), &hints, &addrInfo) != 0) {
-        std::cerr << "ドメインからアドレス取得に失敗しました" << std::endl;
-        WSACleanup();
-        return ;
-    }
-
-    sock = socket(addrInfo->ai_family, addrInfo->ai_socktype, addrInfo->ai_protocol);
-    if (sock == INVALID_SOCKET) {
-        std::cerr << "ソケットの生成に失敗しました" << std::endl;
-        freeaddrinfo(addrInfo);
-        WSACleanup();
-        return ;
-    }
-
-    if (connect(sock, addrInfo->ai_addr, static_cast<int>(addrInfo->ai_addrlen)) == SOCKET_ERROR) {
-        std::cerr << "connectに失敗しました" << std::endl;
-        closesocket(sock);
-        freeaddrinfo(addrInfo);
-        WSACleanup();
-        return ;
-    }
-
-    SSL_CTX* ctx = SSL_CTX_new(TLS_client_method());
-    if (!ctx) {
-        std::cerr << "SSL_CTXの生成に失敗しました" << std::endl;
-        closesocket(sock);
-        WSACleanup();
-        return ;
-    }
-
-    SSL* ssl = SSL_new(ctx);
-    if (!ssl) {
-        std::cerr << "SSLの生成に失敗しました" << std::endl;
-        SSL_CTX_free(ctx);
-        closesocket(sock);
-        WSACleanup();
-        return ;
-    }
-
-    if (SSL_set_fd(ssl, static_cast<int>(sock)) == 0) {
-        std::cerr << "ソケットとSSLの関連付けに失敗しました" << std::endl;
-        SSL_free(ssl);
-        SSL_CTX_free(ctx);
-        closesocket(sock);
-        WSACleanup();
-        return ;
-    }
-
-    if (SSL_connect(ssl) <= 0) {
-        std::cerr << "SSL接続に失敗しました" << std::endl;
-        SSL_free(ssl);
-        SSL_CTX_free(ctx);
-        closesocket(sock);
-        WSACleanup();
-        return ;
-    }
-
-    std::string request = "GET " + path + " HTTP/1.1\r\n"
-        "Host: " + hostname + ":" + port + "\r\n"
-        "Connection: Close\r\n\r\n";
-
-    if (SSL_write(ssl, request.c_str(), static_cast<int>(request.length())) <= 0) {
-        std::cerr << "リクエストの送信に失敗しました" << std::endl;
-        SSL_shutdown(ssl);
-        SSL_free(ssl);
-        SSL_CTX_free(ctx);
-        closesocket(sock);
-        WSACleanup();
-        return ;
-    }
-
-    std::vector<char> data;
-    data.reserve(4096);
-    char buf[1024];
-    int size = 0;
-
-    while ((size = SSL_read(ssl, buf, sizeof(buf))) > 0) {
-        data.insert(data.end(), buf, buf + size);
-    }
-
-    if (size < 0) {
-        std::cerr << "受信エラー" << std::endl;
-        SSL_shutdown(ssl);
-        SSL_free(ssl);
-        SSL_CTX_free(ctx);
-        closesocket(sock);
-        WSACleanup();
-        return ;
-    }
-
-    // HTTPヘッダーを削除してJSON部分のみ抽出
-    auto headerEnd = std::search(data.begin(), data.end(), "\r\n\r\n", "\r\n\r\n" + 4);
-    std::string response_body;
-    if (headerEnd != data.end()) {
-        // ヘッダーの後のポインタを取得してボディ部分を設定
-        response_body = std::string(headerEnd + 4, data.end());
-
-        // チャンクサイズを削除する処理
-        std::string cleaned_body;
-        size_t pos = 0;
-
-        while (pos < response_body.size()) {
-            // チャンクサイズ（16進数表記）の取得
-            size_t chunkEnd = response_body.find("\r\n", pos);
-            if (chunkEnd == std::string::npos) break;
-
-            // チャンクサイズを16進数から数値に変換
-            std::string chunkSizeHex = response_body.substr(pos, chunkEnd - pos);
-            size_t chunkSize = std::stoi(chunkSizeHex, nullptr, 16);
-            pos = chunkEnd + 2; // チャンクサイズの後の `\r\n` をスキップ
-
-            // チャンクデータの取得
-            cleaned_body += response_body.substr(pos, chunkSize);
-            pos += chunkSize + 2; // チャンクデータの後の `\r\n` をスキップ
-        }
-
-        response_body = cleaned_body;
-    }
-
-    std::ofstream file("signindata.json"); // 拡張子を .json に変更
-    if (file.is_open()) {
-        file << response_body; // JSON文字列としてそのまま書き込む
-        file.close();
-        std::cout << "レスポンスが'response.json'に保存されました。" << std::endl;
-    }
-    else {
-        throw std::runtime_error("ファイルを開けませんでした");
-    }
-
-    
-
-    // JSONの内容を出力して確認
-    std::cout << "Response Body (after header removal): " << response_body << std::endl;
-
-    // JSONのパース
-    nlohmann::json json = nlohmann::json::parse(response_body, nullptr, false);
-    if (json.is_discarded() || !json.contains("user_profile") || !json["user_profile"].contains("userId")) {
-        std::cerr << "JSONのパースに失敗またはuserIdが見つかりません" << std::endl;
-        
-        return;
-    }
-
-    std::string userName = json["user_profile"]["userName"];
-
-    strcpy_s(Name, sizeof(Name), userName.c_str());
-
-    SSL_shutdown(ssl);
-    SSL_free(ssl);
-    SSL_CTX_free(ctx);
-    closesocket(sock);
-    WSACleanup();
-  
-    isSignup = false;
-}
 
 bool SceneConnection::httpSignin()
 {
-    //std::string hostname = "localhost";
-    //std::string hostname = "10.200.1.195"; // サーバーのIPアドレスに変更
-    std::string port = "5000";
+    //std::string port = "5000";
     std::string path = "/Login/Login?userId=" + std::to_string(maxID);
-
-    WSADATA wsaData;
-    SOCKET sock = INVALID_SOCKET;
-    addrinfo hints = {}, * addrInfo = nullptr;
-
-    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-        Logger::Print("WSA初期化失敗");
-        return false;
-    }
-
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_protocol = IPPROTO_TCP;
-
-    if (getaddrinfo(hostname.c_str(), port.c_str(), &hints, &addrInfo) != 0) {
-        Logger::Print("ドメインからアドレス取得に失敗しました");
-        WSACleanup();
-        return false;
-    }
-
-    sock = socket(addrInfo->ai_family, addrInfo->ai_socktype, addrInfo->ai_protocol);
-    if (sock == INVALID_SOCKET) {
-        Logger::Print("ソケットの生成に失敗しました");
-        freeaddrinfo(addrInfo);
-        WSACleanup();
-        return false;
-    }
-
-    if (connect(sock, addrInfo->ai_addr, static_cast<int>(addrInfo->ai_addrlen)) == SOCKET_ERROR) {
-        Logger::Print("connectに失敗しました");
-        closesocket(sock);
-        freeaddrinfo(addrInfo);
-        WSACleanup();
-        return false;
-    }
-
-    // HTTPリクエストの生成
-    std::string request = "GET " + path + " HTTP/1.1\r\n"
-        "Host: " + hostname + ":" + port + "\r\n"
-        "Connection: Close\r\n\r\n";
-
-    // リクエストの送信
-    if (send(sock, request.c_str(), static_cast<int>(request.length()), 0) == SOCKET_ERROR) {
-        Logger::Print("リクエストの送信に失敗しました");
-        closesocket(sock);
-        freeaddrinfo(addrInfo);
-        WSACleanup();
-        return false;
-    }
-
-    // レスポンスの受信
     std::vector<char> data;
-    data.reserve(4096);
-    char buf[1024];
-    int size = 0;
 
-    while ((size = recv(sock, buf, sizeof(buf), 0)) > 0) {
-        data.insert(data.end(), buf, buf + size);
-    }
-
-    if (size < 0) {
-        Logger::Print("受信エラー");
-        closesocket(sock);
-        freeaddrinfo(addrInfo);
-        WSACleanup();
+    if (!HttpRequest(path, data))
+    {
         return false;
     }
 
     // HTTPレスポンスの解析
-    auto headerEnd = std::search(data.begin(), data.end(), "\r\n\r\n", "\r\n\r\n" + 4);
     std::string response_body;
-    if (headerEnd != data.end()) {
-        response_body = std::string(headerEnd + 4, data.end());
 
-        // チャンクデータの処理
-        std::string cleaned_body;
-        size_t pos = 0;
-
-        while (pos < response_body.size()) {
-            size_t chunkEnd = response_body.find("\r\n", pos);
-            if (chunkEnd == std::string::npos) break;
-
-            std::string chunkSizeHex = response_body.substr(pos, chunkEnd - pos);
-            size_t chunkSize = std::stoi(chunkSizeHex, nullptr, 16);
-            pos = chunkEnd + 2;
-
-            cleaned_body += response_body.substr(pos, chunkSize);
-            pos += chunkSize + 2;
-        }
-
-        response_body = cleaned_body;
+    //いらないチャンクサイズを消去
+    if (!HeaderSearch(response_body, data))
+    {
+        return false;
     }
-        
+
 
     std::ofstream file("signindata.json");
     if (file.is_open()) {
@@ -569,323 +537,30 @@ bool SceneConnection::httpSignin()
 
     playerManager->GetMyPlayer()->SetLoginDay(loginDay);
 
-    closesocket(sock);
-    freeaddrinfo(addrInfo);
-    WSACleanup();
-
     isSignup = false;
 
     return true;
 }
 
-void SceneConnection::Signup()
-{
-    std::string hostname = "localhost";
-    std::string port = "7189";
-    std::string path = "/Registry/Registration";
-
-    OPENSSL_init_ssl(0, nullptr);
-
-    WSADATA wsaData;
-    SOCKET sock = INVALID_SOCKET;
-    addrinfo hints = {}, * addrInfo = nullptr;
-
-    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-        Logger::Print("WSA初期化失敗");
-        return;
-    }
-
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_protocol = IPPROTO_TCP;
-
-    if (getaddrinfo(hostname.c_str(), port.c_str(), &hints, &addrInfo) != 0) {
-        Logger::Print("ドメインからアドレス取得に失敗しました");
-        WSACleanup();
-        return;
-    }
-
-    sock = socket(addrInfo->ai_family, addrInfo->ai_socktype, addrInfo->ai_protocol);
-    if (sock == INVALID_SOCKET) {
-        Logger::Print("ソケットの生成に失敗しました");
-        freeaddrinfo(addrInfo);
-        WSACleanup();
-        return;
-    }
-
-    if (connect(sock, addrInfo->ai_addr, static_cast<int>(addrInfo->ai_addrlen)) == SOCKET_ERROR) {
-        Logger::Print("connectに失敗しました");
-        closesocket(sock);
-        freeaddrinfo(addrInfo);
-        WSACleanup();
-        return;
-    }
-
-    SSL_CTX* ctx = SSL_CTX_new(TLS_client_method());
-    if (!ctx) {
-        Logger::Print("SSL_CTXの生成に失敗しました");
-        closesocket(sock);
-        WSACleanup();
-        return;
-    }
-
-    SSL* ssl = SSL_new(ctx);
-    if (!ssl) {
-        Logger::Print("SSLの生成に失敗しました");
-        SSL_CTX_free(ctx);
-        closesocket(sock);
-        WSACleanup();
-        return;
-    }
-
-    if (SSL_set_fd(ssl, static_cast<int>(sock)) == 0) {
-        Logger::Print("ソケットとSSLの関連付けに失敗しました");
-        SSL_free(ssl);
-        SSL_CTX_free(ctx);
-        closesocket(sock);
-        WSACleanup();
-        return;
-    }
-
-    if (SSL_connect(ssl) <= 0) {
-        // SSL接続に失敗した場合、OpenSSLのエラースタックからエラーを取得
-        unsigned long err_code = ERR_get_error();
-        if (err_code != 0) {
-            // エラーコードを文字列に変換
-            const char* error_string = ERR_error_string(err_code, nullptr);
-
-            // Logger::Printでエラーメッセージを表示
-            Logger::Print("SSL接続に失敗しました: %s", error_string);
-        }
-        else {
-            // エラーコードが取得できない場合
-            Logger::Print("SSL接続に失敗しました: 不明なエラー");
-        }
-
-        SSL_free(ssl);
-        SSL_CTX_free(ctx);
-        closesocket(sock);
-        WSACleanup();
-        return;
-    }
-
-    std::string request = "GET " + path + " HTTP/1.1\r\n"
-        "Host: " + hostname + ":" + port + "\r\n"
-        "Connection: Close\r\n\r\n";
-
-    if (SSL_write(ssl, request.c_str(), static_cast<int>(request.length())) <= 0) {
-        Logger::Print("リクエストの送信に失敗しました");
-        SSL_shutdown(ssl);
-        SSL_free(ssl);
-        SSL_CTX_free(ctx);
-        closesocket(sock);
-        WSACleanup();
-        return;
-    }
-
-    std::vector<char> data;
-    data.reserve(4096);
-    char buf[1024];
-    int size = 0;
-
-    while ((size = SSL_read(ssl, buf, sizeof(buf))) > 0) {
-        data.insert(data.end(), buf, buf + size);
-    }
-
-    if (size < 0) {
-        Logger::Print("受信エラー");
-        SSL_shutdown(ssl);
-        SSL_free(ssl);
-        SSL_CTX_free(ctx);
-        closesocket(sock);
-        WSACleanup();
-        return;
-    }
-
-    // HTTPヘッダーを削除してJSON部分のみ抽出
-    auto headerEnd = std::search(data.begin(), data.end(), "\r\n\r\n", "\r\n\r\n" + 4);
-    std::string response_body;
-    if (headerEnd != data.end()) {
-        // ヘッダーの後のポインタを取得してボディ部分を設定
-        response_body = std::string(headerEnd + 4, data.end());
-
-        // チャンクサイズを削除する処理
-        std::string cleaned_body;
-        size_t pos = 0;
-
-        while (pos < response_body.size()) {
-            // チャンクサイズ（16進数表記）の取得
-            size_t chunkEnd = response_body.find("\r\n", pos);
-            if (chunkEnd == std::string::npos) break;
-
-            // チャンクサイズを16進数から数値に変換
-            std::string chunkSizeHex = response_body.substr(pos, chunkEnd - pos);
-            size_t chunkSize = std::stoi(chunkSizeHex, nullptr, 16);
-            pos = chunkEnd + 2; // チャンクサイズの後の `\r\n` をスキップ
-
-            // チャンクデータの取得
-            cleaned_body += response_body.substr(pos, chunkSize);
-            pos += chunkSize + 2; // チャンクデータの後の `\r\n` をスキップ
-        }
-
-        response_body = cleaned_body;
-    }
-
-    std::ofstream file("response.json"); // 拡張子を .json に変更
-    if (file.is_open()) {
-        file << response_body; // JSON文字列としてそのまま書き込む
-        file.close();
-        Logger::Print("レスポンスが'response.json'に保存されました。");
-    }
-    else {
-        Logger::Print("ファイルを開けませんでした");
-    }
-
-
-
-    // JSONの内容を出力して確認
-    std::cout << "Response Body (after header removal): " << response_body << std::endl;
-
-    // JSONのパース
-    nlohmann::json json = nlohmann::json::parse(response_body, nullptr, false);
-    if (json.is_discarded() || !json.contains("user_profile") || !json["user_profile"].contains("userId")) {
-        Logger::Print("JSONのパースに失敗またはuserIdが見つかりません");
-        return;
-    }
-
-    std::string userId = json["user_profile"]["userId"];
-    std::string userIdNumber = userId.substr(3);
-
-    std::cout << "User ID Number: " << userIdNumber << std::endl;
-    Logger::Print("UserID %d", userIdNumber);
-    //playerManager->GetMyPlayer()->SetLoginDay(json["user_login"]["loginDay"]);
-    Logger::Print("Sinup成功");
-    SSL_shutdown(ssl);
-    SSL_free(ssl);
-    SSL_CTX_free(ctx);
-    closesocket(sock);
-    WSACleanup();
-
-    isSignup = false;
-}
-
-
 bool SceneConnection::httpSignup()
 {
     std::string Name = name;
-    //std::string hostname = "localhost";
-    //std::string hostname = "10.200.1.195"; // サーバーのIPアドレスに変更
-    std::string port = "5000";
     std::string path = "/Registry/Registration?name=" + Name;
 
-   
-
-    WSADATA wsaData;
-    SOCKET sock = INVALID_SOCKET;
-    addrinfo hints = {}, * addrInfo = nullptr;
-
-    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-        Logger::Print("WSA初期化失敗");
-        return false;
-    }
-
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_protocol = IPPROTO_TCP;
-
-    if (getaddrinfo(hostname.c_str(), port.c_str(), &hints, &addrInfo) != 0) {
-        Logger::Print("ドメインからアドレス取得に失敗しました");
-        WSACleanup();
-        return false;
-    }
-
-    sock = socket(addrInfo->ai_family, addrInfo->ai_socktype, addrInfo->ai_protocol);
-    if (sock == INVALID_SOCKET) {
-        Logger::Print("ソケットの生成に失敗しました");
-        freeaddrinfo(addrInfo);
-        WSACleanup();
-        return false;
-    }
-
-    if (connect(sock, addrInfo->ai_addr, static_cast<int>(addrInfo->ai_addrlen)) == SOCKET_ERROR) {
-        Logger::Print("connectに失敗しました");
-        Logger::Print("エラーコード: %d", WSAGetLastError());
-        closesocket(sock);
-        freeaddrinfo(addrInfo);
-        WSACleanup();
-        return false;
-    }
-
-    std::string request = "GET " + path + " HTTP/1.1\r\n"
-        "Host: " + hostname + ":" + port + "\r\n"
-        "Connection: Close\r\n\r\n";
-
-    if (send(sock, request.c_str(), static_cast<int>(request.length()), 0) == SOCKET_ERROR) {
-        Logger::Print("リクエストの送信に失敗しました");
-        closesocket(sock);
-        freeaddrinfo(addrInfo);
-        WSACleanup();
-        return false;
-    }
-
     std::vector<char> data;
-    data.reserve(4096);
-    char buf[1024];
-    int size = 0;
-
-    while ((size = recv(sock, buf, sizeof(buf), 0)) > 0) {
-        data.insert(data.end(), buf, buf + size);
-    }
-
-    if (size < 0) {
-        Logger::Print("受信エラー");
-        closesocket(sock);
-        freeaddrinfo(addrInfo);
-        WSACleanup();
+    if (!HttpRequest(path, data))
+    {
         return false;
     }
-
-    closesocket(sock);
-    freeaddrinfo(addrInfo);
-    WSACleanup();
 
     std::string response_body;
     //いらないチャンクサイズを消去
+    if (!HeaderSearch(response_body, data))
     {
-        auto headerEnd = std::search(data.begin(), data.end(), "\r\n\r\n", "\r\n\r\n" + 4);
-
-        if (headerEnd != data.end()) {
-            // ヘッダーの後のポインタを取得してボディ部分を設定
-            response_body = std::string(headerEnd + 4, data.end());
-
-            // チャンクサイズを削除する処理
-            std::string cleaned_body;
-            size_t pos = 0;
-
-            while (pos < response_body.size()) {
-                // チャンクサイズ（16進数表記）の取得
-                size_t chunkEnd = response_body.find("\r\n", pos);
-                if (chunkEnd == std::string::npos) break;
-
-                // チャンクサイズを16進数から数値に変換
-                std::string chunkSizeHex = response_body.substr(pos, chunkEnd - pos);
-                size_t chunkSize = std::stoi(chunkSizeHex, nullptr, 16);
-                pos = chunkEnd + 2; // チャンクサイズの後の `\r\n` をスキップ
-
-                // チャンクデータの取得
-                cleaned_body += response_body.substr(pos, chunkSize);
-                pos += chunkSize + 2; // チャンクデータの後の `\r\n` をスキップ
-            }
-
-            response_body = cleaned_body;  // チャンクを削除したボディを保持
-        }
-
-        else {
-            // ヘッダーが見つからなければエラーハンドリング
-            std::cerr << "ヘッダー部分が見つかりませんでした" << std::endl;
-            return false;
-        }
+        return false;
     }
+        
+    
 
     // JSONの保存
     std::ofstream file("response.json");
@@ -986,233 +661,28 @@ bool SceneConnection::NameJson()
     return true;
 }
 
-
-void SceneConnection::pngDownload()
-{
-    //std::string hostname = "localhost";
-    std::string hostname = "10.200.1.195";
-    std::string port = "5000";
-    const std::string path = "/File/DownloadPng";
-    const std::string outputFile = "login.png";
-    OPENSSL_init_ssl(0, nullptr);
-
-    WSADATA wsaData;
-    SOCKET sock = INVALID_SOCKET;
-    addrinfo hints = {}, * addrInfo = nullptr;
-
-    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-        Logger::Print("WSA初期化失敗");
-        return;
-    }
-
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_protocol = IPPROTO_TCP;
-
-    if (getaddrinfo(hostname.c_str(), port.c_str(), &hints, &addrInfo) != 0) {
-        Logger::Print("ドメインからアドレス取得に失敗しました");
-        WSACleanup();
-        return;
-    }
-
-    sock = socket(addrInfo->ai_family, addrInfo->ai_socktype, addrInfo->ai_protocol);
-    if (sock == INVALID_SOCKET) {
-        Logger::Print("ソケットの生成に失敗しました");
-        freeaddrinfo(addrInfo);
-        WSACleanup();
-        return;
-    }
-
-    if (connect(sock, addrInfo->ai_addr, static_cast<int>(addrInfo->ai_addrlen)) == SOCKET_ERROR) {
-        Logger::Print("connectに失敗しました");
-        closesocket(sock);
-        freeaddrinfo(addrInfo);
-        WSACleanup();
-        return;
-    }
-
-    SSL_CTX* ctx = SSL_CTX_new(TLS_client_method());
-    if (!ctx) {
-        Logger::Print("SSL_CTXの生成に失敗しました");
-        closesocket(sock);
-        WSACleanup();
-        return;
-    }
-
-    SSL* ssl = SSL_new(ctx);
-    if (!ssl) {
-        Logger::Print("SSLの生成に失敗しました");
-        SSL_CTX_free(ctx);
-        closesocket(sock);
-        WSACleanup();
-        return;
-    }
-
-    if (SSL_set_fd(ssl, static_cast<int>(sock)) == 0) {
-        Logger::Print("ソケットとSSLの関連付けに失敗しました");
-        SSL_free(ssl);
-        SSL_CTX_free(ctx);
-        closesocket(sock);
-        WSACleanup();
-        return;
-    }
-
-    if (SSL_connect(ssl) <= 0) {
-        Logger::Print("SSL接続に失敗しました");
-        SSL_free(ssl);
-        SSL_CTX_free(ctx);
-        closesocket(sock);
-        WSACleanup();
-        return;
-    }
-
-    std::string request = "GET " + path + " HTTP/1.1\r\n"
-        "Host: " + hostname + ":" + port + "\r\n"
-        "Connection: Close\r\n\r\n";
-
-    if (SSL_write(ssl, request.c_str(), static_cast<int>(request.length())) <= 0) {
-        Logger::Print("リクエストの送信に失敗しました");
-        SSL_shutdown(ssl);
-        SSL_free(ssl);
-        SSL_CTX_free(ctx);
-        closesocket(sock);
-        WSACleanup();
-        return;
-    }
-
-    std::vector<char> data;
-    data.reserve(4096);
-    char buf[1024];
-    int size = 0;
-
-    while ((size = SSL_read(ssl, buf, sizeof(buf))) > 0) {
-        data.insert(data.end(), buf, buf + size);
-    }
-
-    if (size < 0) {
-        Logger::Print("受信エラー");
-        SSL_shutdown(ssl);
-        SSL_free(ssl);
-        SSL_CTX_free(ctx);
-        closesocket(sock);
-        WSACleanup();
-        return;
-    }
-
-  auto headerEnd = std::search(data.begin(), data.end(), "\r\n\r\n", "\r\n\r\n" + 4);
-  if (headerEnd != data.end()) {
-      data.erase(data.begin(), headerEnd + 4);
-  }
-  else {
-      Logger::Print("HTTPレスポンスヘッダーが見つかりません");
-      return;
-  }
-    // ファイル書き出し
-    std::ofstream writingFile("response_debug.txt", std::ios::out);
-    if (!writingFile) {
-        Logger::Print("ファイルのオープンに失敗しました");
-    }
-    writingFile.write(data.data(), data.size());
-
-
-    std::ofstream WritingFile("login.png", std::ios::binary);
-    if (!WritingFile) {
-        Logger::Print("ファイルのオープンに失敗しました");
-    }
-    WritingFile.write(data.data(), data.size());
-
-    SSL_shutdown(ssl);
-    SSL_free(ssl);
-    SSL_CTX_free(ctx);
-    closesocket(sock);
-    WSACleanup();
-}
-
 bool SceneConnection::httpPngDownload()
 {
     //std::string hostname = "localhost";
-    std::string hostname = "10.200.1.195"; // サーバーのIPアドレスに変更
-    std::string port = "5000";
     const std::string path = "/File/DownloadPng";
     const std::string outputFile = "login.png";
 
-    WSADATA wsaData;
-    SOCKET sock = INVALID_SOCKET;
-    addrinfo hints = {}, * addrInfo = nullptr;
-
-    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-        Logger::Print("WSA初期化失敗");
-        return false;
-    }
-
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_protocol = IPPROTO_TCP;
-
-    if (getaddrinfo(hostname.c_str(), port.c_str(), &hints, &addrInfo) != 0) {
-        Logger::Print("ドメインからアドレス取得に失敗しました");
-        WSACleanup();
-        return false;
-    }
-
-    sock = socket(addrInfo->ai_family, addrInfo->ai_socktype, addrInfo->ai_protocol);
-    if (sock == INVALID_SOCKET) {
-        Logger::Print("ソケットの生成に失敗しました");
-        freeaddrinfo(addrInfo);
-        WSACleanup();
-        return false;
-    }
-
-    if (connect(sock, addrInfo->ai_addr, static_cast<int>(addrInfo->ai_addrlen)) == SOCKET_ERROR) {
-        Logger::Print("connectに失敗しました");
-        closesocket(sock);
-        freeaddrinfo(addrInfo);
-        WSACleanup();
-        return false;
-    }
-
-    // HTTPリクエストの作成
-    std::string request = "GET " + path + " HTTP/1.1\r\n"
-        "Host: " + hostname + ":" + port + "\r\n"
-        "Connection: Close\r\n\r\n";
-
-    if (send(sock, request.c_str(), static_cast<int>(request.length()), 0) == SOCKET_ERROR) {
-        Logger::Print("リクエストの送信に失敗しました");
-        closesocket(sock);
-        freeaddrinfo(addrInfo);
-        WSACleanup();
-        return false;
-    }
-
-    // レスポンス受信
     std::vector<char> data;
-    data.reserve(4096);
-    char buf[1024];
-    int size = 0;
 
-    while ((size = recv(sock, buf, sizeof(buf), 0)) > 0) {
-        data.insert(data.end(), buf, buf + size);
-    }
-
-    if (size < 0) {
-        Logger::Print("受信エラー");
-        closesocket(sock);
-        freeaddrinfo(addrInfo);
-        WSACleanup();
+    if (!HttpRequest(path, data))
+    {
         return false;
     }
-
+    
     auto headerEnd = std::search(data.begin(), data.end(), "\r\n\r\n", "\r\n\r\n" + 4);
     if (headerEnd != data.end()) {
         data.erase(data.begin(), headerEnd + 4);
     }
     else {
         Logger::Print("HTTPレスポンスヘッダーが見つかりません");
-        closesocket(sock);
-        freeaddrinfo(addrInfo);
-        WSACleanup();
         return false;
     }
+
 
     // ファイル書き出し
     std::ofstream writingFile("response_debug.txt", std::ios::out);
@@ -1227,9 +697,7 @@ bool SceneConnection::httpPngDownload()
     }
     WritingFile.write(data.data(), data.size());
 
-    closesocket(sock);
-    freeaddrinfo(addrInfo);
-    WSACleanup();
+   
     return true;
 }
 

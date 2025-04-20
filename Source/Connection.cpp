@@ -176,14 +176,7 @@ void Connection::Finalize()
 			}
 			SendLogout();
 		}
-		//ログイン処理がまだなら
-		//else
-		//{
-		//	logout.id = -1;
-		//}
-
-		//int s = send(sock, reinterpret_cast<char*>(&logout), sizeof(PlayerLogout), 0);
-
+		
 		// ソケット終了処理
 		int c = closesocket(sock);
 		c = closesocket(uSock);
@@ -235,6 +228,7 @@ void Connection::ConnectionCheck(ID3D11DeviceContext* dc)
 
 bool Connection::UdpIdCheck(int Id)
 {
+
 	playerManager->SetudpRecvId(Id);
 	for (int i = 0; i < 4; ++i)
 	{
@@ -341,6 +335,7 @@ void Connection::UdpRecvThread()
 						//自分じゃなかったら
 						if (playerManager->GetMyPlayerID() != input.id)
 						{
+							//内容が多いのは確認用
 							player->SetAngle(input.angle);
 							player->SetPosition(input.position);
 							player->SetVelovity(input.velocity);

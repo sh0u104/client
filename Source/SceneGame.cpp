@@ -412,7 +412,7 @@ void SceneGame::Render()
 	// 3Dデバッグ描画
 	//{
 		//IMGUI描画
-		ImGui::SetNextWindowPos(ImVec2(500, 10), ImGuiCond_FirstUseEver);
+		ImGui::SetNextWindowPos(ImVec2(900, 10), ImGuiCond_FirstUseEver);
 		ImGui::SetNextWindowSize(ImVec2(300, 100), ImGuiCond_FirstUseEver);
 		// beginからendまでの内容が出来る
 		EnemyManager& enemyManager = EnemyManager::Instance();
@@ -425,7 +425,7 @@ void SceneGame::Render()
 			for (Player* player : players)
 			{
 				//ImGui::Text("PlayerName: %s, PlayerHP: %d", player->GetName(), player->GetHealth());
-				ImGui::Text("PlayerName: %s", player->GetName());
+				//ImGui::Text("PlayerName: %s", player->GetName());
 			}
 
 			//ImGui::Text("ms: %f", playerManager->GetMyPlayer()->GetPing());
@@ -817,47 +817,9 @@ void SceneGame::RenderNumber(ID3D11DeviceContext* dc,
 	const DirectX::XMFLOAT4X4& projection
 )
 {
-	// ビューポート 画面のサイズ等
-	// ビューポートとは2Dの画面に描画範囲の指定(クリッピング指定も出来る)位置を指定
-	D3D11_VIEWPORT viewport;
-	UINT numViewports = 1;
-	// ラスタライザーステートにバインドされているビューポート配列を取得
-	dc->RSGetViewports(&numViewports, &viewport);
-
-	// 変換行列
-	DirectX::XMMATRIX View = DirectX::XMLoadFloat4x4(&view);
-	DirectX::XMMATRIX Projection = DirectX::XMLoadFloat4x4(&projection);
-	// ローカルからワールドに行くときにいる奴相手のポジションを渡す。
-	DirectX::XMMATRIX World = DirectX::XMMatrixIdentity();
-	DirectX::XMVECTOR world = {};
-	DirectX::XMVector3Transform(world, World);
-
-	//プレイヤーの頭上
-	DirectX::XMFLOAT3 worldPosition = playerManager->GetMyPlayer()->GetPosition();
-	worldPosition.y += playerManager->GetMyPlayer()->GetHeight();
-
-	// ワールドからスクリーン
-	DirectX::XMVECTOR WorldPosition = DirectX::XMLoadFloat3(&worldPosition);
-
-
-	// ゲージ描画 // ワールドからスクリーン
-	DirectX::XMVECTOR ScreenPosition = DirectX::XMVector3Project(
-		WorldPosition,
-		viewport.TopLeftX,
-		viewport.TopLeftY,
-		viewport.Width,
-		viewport.Height,
-		viewport.MinDepth,
-		viewport.MaxDepth,
-		Projection,
-		View,
-		World
-
-	);
 	// スクリーン座標
 	DirectX::XMFLOAT3 scereenPosition;
-	DirectX::XMStoreFloat3(&scereenPosition, ScreenPosition);
-
+	PlayerOverheadPos(dc, view, projection, scereenPosition);
 
 	// 画像の長さ
 	const float gaugeWidth = 25.0f;
@@ -946,48 +908,10 @@ void SceneGame::RenderTimer(ID3D11DeviceContext* dc, int timer)
 
 void SceneGame::RenderName(ID3D11DeviceContext* dc, const DirectX::XMFLOAT4X4& view, const DirectX::XMFLOAT4X4& projection)
 {
-	// ビューポート 画面のサイズ等
-	// ビューポートとは2Dの画面に描画範囲の指定(クリッピング指定も出来る)位置を指定
-	D3D11_VIEWPORT viewport;
-	UINT numViewports = 1;
-	// ラスタライザーステートにバインドされているビューポート配列を取得
-	dc->RSGetViewports(&numViewports, &viewport);
-
-	// 変換行列
-	DirectX::XMMATRIX View = DirectX::XMLoadFloat4x4(&view);
-	DirectX::XMMATRIX Projection = DirectX::XMLoadFloat4x4(&projection);
-	// ローカルからワールドに行くときにいる奴相手のポジションを渡す。
-	DirectX::XMMATRIX World = DirectX::XMMatrixIdentity();
-	DirectX::XMVECTOR world = {};
-	DirectX::XMVector3Transform(world, World);
-
-	//プレイヤーの頭上
-	DirectX::XMFLOAT3 worldPosition = playerManager->GetMyPlayer()->GetPosition();
-	worldPosition.y += playerManager->GetMyPlayer()->GetHeight();
-
-	// ワールドからスクリーン
-	DirectX::XMVECTOR WorldPosition = DirectX::XMLoadFloat3(&worldPosition);
-
-
-	// ゲージ描画 // ワールドからスクリーン
-	DirectX::XMVECTOR ScreenPosition = DirectX::XMVector3Project(
-		WorldPosition,
-		viewport.TopLeftX,
-		viewport.TopLeftY,
-		viewport.Width,
-		viewport.Height,
-		viewport.MinDepth,
-		viewport.MaxDepth,
-		Projection,
-		View,
-		World
-
-	);
+	
 	// スクリーン座標
 	DirectX::XMFLOAT3 scereenPosition;
-	DirectX::XMStoreFloat3(&scereenPosition, ScreenPosition);
-
-
+	PlayerOverheadPos(dc, view, projection, scereenPosition);
 
 
 	float positionX = scereenPosition.x - 30;
@@ -1059,6 +983,49 @@ void SceneGame::RenderGameClear(ID3D11DeviceContext* dc, float screenWidth, floa
 	{
 		SceneManager::Instance().ChangeScene(new SceneLoading(new SceneStandby));
 	}
+}
+
+void SceneGame::PlayerOverheadPos(ID3D11DeviceContext* dc, const DirectX::XMFLOAT4X4& view, const DirectX::XMFLOAT4X4& projection, DirectX::XMFLOAT3& scereenPosition)
+{
+	// ビューポート 画面のサイズ等
+	// ビューポートとは2Dの画面に描画範囲の指定(クリッピング指定も出来る)位置を指定
+	D3D11_VIEWPORT viewport;
+	UINT numViewports = 1;
+	// ラスタライザーステートにバインドされているビューポート配列を取得
+	dc->RSGetViewports(&numViewports, &viewport);
+
+	// 変換行列
+	DirectX::XMMATRIX View = DirectX::XMLoadFloat4x4(&view);
+	DirectX::XMMATRIX Projection = DirectX::XMLoadFloat4x4(&projection);
+	// ローカルからワールドに行くときにいる奴相手のポジションを渡す。
+	DirectX::XMMATRIX World = DirectX::XMMatrixIdentity();
+	DirectX::XMVECTOR world = {};
+	DirectX::XMVector3Transform(world, World);
+
+	//プレイヤーの頭上
+	DirectX::XMFLOAT3 worldPosition = playerManager->GetMyPlayer()->GetPosition();
+	worldPosition.y += playerManager->GetMyPlayer()->GetHeight();
+
+	// ワールドからスクリーン
+	DirectX::XMVECTOR WorldPosition = DirectX::XMLoadFloat3(&worldPosition);
+
+
+	// ゲージ描画 // ワールドからスクリーン
+	DirectX::XMVECTOR ScreenPosition = DirectX::XMVector3Project(
+		WorldPosition,
+		viewport.TopLeftX,
+		viewport.TopLeftY,
+		viewport.Width,
+		viewport.Height,
+		viewport.MinDepth,
+		viewport.MaxDepth,
+		Projection,
+		View,
+		World
+
+	);
+	// スクリーン座標
+	DirectX::XMStoreFloat3(&scereenPosition, ScreenPosition);
 }
 
 

@@ -14,21 +14,23 @@ public:
 
     // I—¹‰»
     void Finalize() override;
+
+    bool HttpRequest(std::string path,std::vector<char> &data);
+    bool HttpsRequest(std::string path, std::vector<char>& data);
+    bool HeaderSearch(std::string& response_body, std::vector<char> data);
+
     // XVˆ—
     void Update(float elapsedTime)override;
     // •`‰æˆ—
     void Render() override;
 
-    void Signin();
     bool httpSignin();
-
-    void Signup();
     bool httpSignup();
 
     int GetDataJson();
     bool NameJson();
-    void pngDownload();
     bool httpPngDownload();
+
 
 
     bool UiClick(float posX, float posY, float sizeX, float sizeY);
@@ -60,5 +62,6 @@ private:
 
    //std::string hostname = "10.108.0.18";
    std::string hostname = "localhost";
+   std::string port = "5000";
 };
 
