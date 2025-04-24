@@ -83,7 +83,7 @@ void LandState::Exit()
 
 void JumpState::Enter()
 {
-    owner->GetModel()->PlayAnimation(static_cast<int>(Animation::Anim_Jump), true);
+    //owner->GetModel()->PlayAnimation(static_cast<int>(Animation::Anim_Jump), true);
     owner->SetState(Player::State::Jump);
 }
 
