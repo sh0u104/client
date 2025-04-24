@@ -4,11 +4,12 @@
 StageMain::StageMain()
 {
     // ステージモデルを読み込み
-    model = new Model("Data/Model/ExampleStage/ExampleStage.mdl");
-    //model = new Model("Data/Model/Cube/Cube.mdl");
+    //model = new Model("Data/Model/ExampleStage/ExampleStage.mdl");
+    model = new Model("Data/Model/Cube/Cube.mdl");
 
-    //scale.x = scale.z = 100.0f;
-    //scale.y = 0.5f;
+    scale.x = scale.z = 30.0f;
+    scale.y = 0.1f;
+    position.y = -0.5f;
 }
 
 StageMain::~StageMain()
@@ -20,19 +21,14 @@ StageMain::~StageMain()
 // 更新処理
 void StageMain::Update(float elasedTime)
 {
-   //UpdateTransform();
-   //// レイキャスト用にもでる空間行列にするため単位行列を渡す
-   //const DirectX::XMFLOAT4X4 transformIdentity = { 1,0,0,0 ,0,1,0,0, 0,0,1,0, 0,0,0,1 };
+   UpdateTransform();
    //// ローカル用の初期値０を送る。
-   //model->UpdateTransform(transformIdentity);
+   model->UpdateTransform(transform);
 }
 
 // 描画処理
 void StageMain::Render(ID3D11DeviceContext* dc, Shader* shader)
 {
-    // 表示用のためワールド行列に更新する
-    //model->UpdateTransform(transform);
-
     shader->Draw(dc, model);
 }
 
@@ -44,10 +40,10 @@ bool StageMain::RayCast(const DirectX::XMFLOAT3& start, const DirectX::XMFLOAT3&
 
 void StageMain::UpdateTransform()
 {
-    //DirectX::XMMATRIX S = DirectX::XMMatrixScaling(scale.x, scale.y, scale.z);
-    //
-    //DirectX::XMMATRIX R = DirectX::XMMatrixRotationRollPitchYaw(angle.x, angle.y, angle.z);
-    //DirectX::XMMATRIX T = DirectX::XMMatrixTranslation(position.x, position.y, position.z);
-    //DirectX::XMMATRIX W = S * R * T;
-    //DirectX::XMStoreFloat4x4(&transform, W);
+    DirectX::XMMATRIX S = DirectX::XMMatrixScaling(scale.x, scale.y, scale.z);
+    
+    DirectX::XMMATRIX R = DirectX::XMMatrixRotationRollPitchYaw(angle.x, angle.y, angle.z);
+    DirectX::XMMATRIX T = DirectX::XMMatrixTranslation(position.x, position.y, position.z);
+    DirectX::XMMATRIX W = S * R * T;
+    DirectX::XMStoreFloat4x4(&transform, W);
 }

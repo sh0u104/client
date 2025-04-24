@@ -298,6 +298,9 @@ public:
 
 	bool isConnection = false;
 	bool GetIsConectionError() { return isConectionError; }
+
+	enum class LogLevel { Info, Warn, Error, Debug };
+	void WriteLog(LogLevel level, const std::string& message);
 private:
 	PlayerManager* playerManager = nullptr;
 

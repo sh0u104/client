@@ -33,6 +33,7 @@ Player::Player()
 
     //model = new Model("Data/Model/Mr.Incredible/Mr.Incredible.mdl");
     model = new Model("Data/Model/Jammo/Jammo.mdl");
+    //model = new Model("Data/Model/DogPBR (1).mdl");
     /*model->PlayAnimation(0);*/
 
     // モデルがおおきいのでスケーリング

@@ -35,6 +35,7 @@ EnemySlime::EnemySlime()
 
     // 徘徊ステートへ遷移
     //TransitionWanderState();
+    
 }
 
 // デストラクタ

@@ -11,6 +11,12 @@
 
 #include "Input/Input.h"
 #include "Logger.h"
+
+//ログ用
+#include <fstream>
+#include <string>
+#include <ctime>
+#include <iomanip>
 #pragma comment(lib, "ws2_32.lib")
 
 #include <chrono>
@@ -84,8 +90,10 @@ void Connection::Initialize()
 		isConnection = false;
 		closesocket(sock);
 		WSACleanup();
+		WriteLog(LogLevel::Error, "TCPサーバーへの接続に失敗しました");
 		return;
 	}
+	WriteLog(LogLevel::Info, "TCPサーバーに接続しました");
 
 	//失敗したらtrueがくる
 	if (!UDPInitialize())
@@ -97,8 +105,10 @@ void Connection::Initialize()
 		closesocket(sock);
 		closesocket(uSock);
 		WSACleanup();
+		WriteLog(LogLevel::Error, "UDPサーバーへの接続に失敗しました");
 		return;
 	}
+	WriteLog(LogLevel::Info, "UDPサーバーに接続しました");
 }
 
 bool Connection::UDPInitialize()
@@ -190,6 +200,8 @@ void Connection::Finalize()
 
 		// WSA終了処理
 		int wsaCleanup = WSACleanup();
+
+		WriteLog(LogLevel::Info, "サーバーから切断しました");
 	}
 }
 
@@ -270,7 +282,6 @@ void Connection::SendEnemyDamage(int enemuID)
 	memcpy_s(buffer, sizeof(buffer), &enemyDamage, sizeof(EnemyDamage));
 	int s = send(sock, buffer, sizeof(buffer), 0);
 }
-
 void Connection::SendPing()
 {
 	Ping ping;
@@ -302,10 +313,12 @@ void Connection::UdpRecvThread()
 				else {
 					// 他のエラーの場合、ループを終了
 					Logger::Print("recvfrom error:%d",error);
+					WriteLog(LogLevel::Error, "recvfrom エラー（コード: " + std::to_string(error) + "）");
 					if (error == WSAECONNRESET)
 					{
 						//サーバーとの接続切れ
 						isConectionError = true;
+						WriteLog(LogLevel::Error, "サーバーとのUDP接続が切断されました（WSAECONNRESET）");
 					}
 					break;
 				}
@@ -313,8 +326,8 @@ void Connection::UdpRecvThread()
 			else if (size == 0)
 			{
 				// クライアントが接続を閉じた場合の処理
-				//std::cout << "接続を閉じた" << std::endl;
 				Logger::Print("UDP接続を閉じた");
+				WriteLog(LogLevel::Info, "クライアントがUDP接続を閉じました");
 				break;
 			}
 			
@@ -386,7 +399,6 @@ void Connection::UdpRecvThread()
 
 }
 
-
 void Connection::TcpRecvThread()
 {
 	do {
@@ -398,6 +410,7 @@ void Connection::TcpRecvThread()
 			if (r == -1)
 			{
 				int error = WSAGetLastError();
+
 				if (error == WSAEWOULDBLOCK) {
 					// データがまだ来ていない場合、処理をスキップして次のループへ
 					continue;
@@ -405,9 +418,11 @@ void Connection::TcpRecvThread()
 				else {
 					// 他のエラーの場合、ループを終了
 					Logger::Print("recv error:%d", error);
+					WriteLog(LogLevel::Error, "recv エラー（コード: " + std::to_string(error) + "）");
 					if (error == WSAECONNRESET)
 					{
 						isConectionError = true;
+						WriteLog(LogLevel::Error, "クライアントとのTCP接続が切断されました（WSAECONNRESET）");
 					}
 					break;
 				}
@@ -416,6 +431,8 @@ void Connection::TcpRecvThread()
 			{
 				// クライアントが接続を閉じた場合の処理
 				Logger::Print("TCP接続を閉じた");
+				WriteLog(LogLevel::Info, "クライアントがTCP接続を閉じました");
+				break;
 			}
 			else
 			{
@@ -464,10 +481,12 @@ void Connection::TcpRecvThread()
 						playerManager->GetPlayer(teamcreate.id)->Setteamnumber(teamcreate.number);
 						playerManager->GetMyPlayer()->Setteamsid(0, teamcreate.id);
 						playerManager->GetMyPlayer()->SetTeamHost(true);
+						WriteLog(LogLevel::Info, "ID: " + std::to_string(teamcreate.id) + " がチームを作成しました (チームID: " + std::to_string(teamcreate.number) + ")");
 					}
 					else
 					{
 						//チームを作れなかったら
+						WriteLog(LogLevel::Info, "ID: " + std::to_string(teamcreate.id) + " がチームを作成失敗");
 					}
 
 				}
@@ -480,6 +499,7 @@ void Connection::TcpRecvThread()
 					//本人が加入失敗
 					if (teamjoin.number == -1)
 					{
+						WriteLog(LogLevel::Info, "ID: " + std::to_string(teamjoin.id) + " がチームID: "+ std::to_string(teamjoin.number)+ "に加入失敗");
 						break;
 					}
 
@@ -487,6 +507,7 @@ void Connection::TcpRecvThread()
 					if (teamjoin.id == playerManager->GetMyPlayerID())
 					{
 						playerManager->GetMyPlayer()->Setteamnumber(teamjoin.number);
+						WriteLog(LogLevel::Info, "ID: " + std::to_string(teamjoin.id) + " がチームID: " + std::to_string(teamjoin.number) + "に加入成功");
 						break;
 					}
 					//本人以外がチームに入って来たら
@@ -505,9 +526,11 @@ void Connection::TcpRecvThread()
 								playerManager->GetMyPlayer()->Setteamsid(i, teamjoin.id);
 								//ログイン数を加算
 								playerManager->AddLoginCount();
+								WriteLog(LogLevel::Info, "チームID: " + std::to_string(teamjoin.number) + "に新たにID: " + std::to_string(teamjoin.id)+"が加入");
 								break;
 							}
 						}
+						
 
 					}
 				}
@@ -524,6 +547,7 @@ void Connection::TcpRecvThread()
 						//ホストの時
 						if (teamLeave.isHost)
 						{
+							WriteLog(LogLevel::Info,"ホストがチームを解散させた");
 							playerManager->GetMyPlayer()->Setteamnumber(0);
 							playerManager->SetTeamDisbabded(true);
 							for (int i = 0; i < 3; ++i)
@@ -565,6 +589,7 @@ void Connection::TcpRecvThread()
 										break; // 対応が1回で十分ならループを抜ける
 									}
 								}
+								WriteLog(LogLevel::Info, "チームからID: "+ std::to_string(teamLeave.id) + "が退出した");
 							}
 						}
 					}
@@ -603,9 +628,23 @@ void Connection::TcpRecvThread()
 				break;
 				case TcpTag::Gamestart:
 				{
-
 					//ゲーム開始許可が下りた
 					playerManager->SetGameStart(true);
+					int teamID = playerManager->GetMyPlayer()->Getteamnumber();
+					
+					if (teamID > 0)
+					{
+						std::string teamComposition = "チームID: " + std::to_string(teamID) + " の構成: ";
+						for (auto& member : playerManager->GetPlayers()) {
+							teamComposition += "ID:" + std::to_string(member->GetPlayerID()) + ", ";
+						}
+						WriteLog(LogLevel::Info, teamComposition);
+						WriteLog(LogLevel::Info, "チームID: " + std::to_string(teamID) + " ゲームスタート");
+					}
+					else
+					{
+						WriteLog(LogLevel::Info, "ID: "+ std::to_string(playerManager->GetMyPlayerID())+ " ソロでゲームスタート");
+					}
 				}
 				break;
 				case TcpTag::Login:
@@ -638,32 +677,6 @@ void Connection::TcpRecvThread()
 					Logger::Print("UDPアドレスをサーバーに保存した");
 				}
 				break;
-				/*case NetworkTag::Sync:
-				{
-					PlayerSync sync;
-					memcpy_s(&sync, sizeof(sync), buffer, sizeof(PlayerSync));
-					std::cout << " cmd sync " << std::endl;
-					std::cout << " id " << sync.id << std::endl;
-
-					std::vector<Player*> players = playerManager->GetPlayers();
-					for (Player* player : players)
-					{
-						if (sync.id == player->GetPlayerID())
-						{
-							player->SetPosition(sync.position);
-							player->SetRecvVelocity(sync.velocity);
-						}
-					}
-					Player* player = new Player();
-					player->SetPlayerID(sync.id);
-					player->SetPosition(sync.position);
-					player->Setoperation(false);
-					player->SetAngle(sync.angle);
-					playerManager->AddPlayer(player);
-					playerManager->GetPlayer(sync.id)->SetReady(true);
-
-					std::cout << "syncプレイヤー生成 " << std::endl;
-				}*/
 				case TcpTag::Move:
 				{
 					PlayerInput input;
@@ -672,7 +685,6 @@ void Connection::TcpRecvThread()
 					player->SetAngle(input.angle);
 					if (playerManager->GetMyPlayerID() != input.id)
 					{
-						//player->SetPosition(input.position);
 						player->SetPosition(input.position);
 						//アニメーションにいれる
 						if (player->GetState() != input.state)
@@ -708,6 +720,39 @@ void Connection::TcpRecvThread()
 		}
 
 	} while (loop);
+}
+
+void Connection::WriteLog(LogLevel level, const std::string& message)
+{
+	// ログファイルを追記モードで開く
+	std::ofstream logFile("client.log", std::ios::app);  // 追記モード
+	if (!logFile.is_open()) {
+		std::cout << "ログファイルのオープンに失敗しました。" << std::endl;
+		return;
+	}
+
+	// 現在の時刻を取得
+	time_t now = time(nullptr);
+	tm localTime;  // tm 構造体をスタックに定義
+	localtime_s(&localTime, &now);  // localtime_s は第二引数に tm のポインタを取る
+
+	// ログレベルを文字列に変換
+	std::string levelStr;
+	switch (level) {
+	case LogLevel::Info:  levelStr = "INFO"; break;
+	case LogLevel::Warn:  levelStr = "WARN"; break;
+	case LogLevel::Error: levelStr = "ERROR"; break;
+	case LogLevel::Debug: levelStr = "DEBUG"; break;
+	default: levelStr = "UNKNOWN"; break;
+	}
+
+	// ログの書き込み
+	logFile << "[" << std::put_time(&localTime, "%Y-%m-%d %H:%M:%S")  // 時刻
+		<< "][" << levelStr << "] "  // ログレベル
+		<< message << "\n";  // メッセージ
+
+// ファイルを閉じる
+	logFile.close();
 }
 
 
@@ -827,6 +872,8 @@ void Connection::SendGamestart(int teamnumber)
 	char buffer[sizeof(GameStart)];
 	memcpy_s(buffer, sizeof(buffer), &gamestart, sizeof(GameStart));
 	int s = send(sock, buffer, sizeof(buffer), 0);
+
+	WriteLog(LogLevel::Info, "ゲームスタート送信しました");
 }
 
 void Connection::SendMessages(char input[32])
@@ -865,6 +912,8 @@ void Connection::SendGameEnd(int teamnumber)
 	char buffer[sizeof(GameEnd)];
 	memcpy_s(buffer, sizeof(buffer), &gameend, sizeof(GameEnd));
 	int s = send(sock, buffer, sizeof(buffer), 0);
+
+	WriteLog(LogLevel::Info, "サーバーにチームID:" + std::to_string(teamnumber) + " ゲームクリア送信");
 }
 
 //過去のフレンドリスト

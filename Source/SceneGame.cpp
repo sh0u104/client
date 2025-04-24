@@ -70,7 +70,7 @@ void SceneGame::Initialize()
 	for (int i = 0; i < 1; ++i)
 	{
 		EnemySlime* slime = new EnemySlime();
-		slime->SetPosition(DirectX::XMFLOAT3(i * 2.0f, 0, 12));
+		slime->SetPosition(DirectX::XMFLOAT3(i * 2.0f, 1, 3));
 		// 縄張り
 		slime->SetTerritory(slime->GetPosition(), 10.0f);
 		slime->IsEnemy();
@@ -350,18 +350,24 @@ void SceneGame::Render()
 	
 	// 3Dモデル描画
 	{
+		Shader* stageShader = graphics.GetStageShader();
+		stageShader->Begin(dc, rc);
+		// ステージ描画
+		StageManager::instance().Render(dc, stageShader);
+		stageShader->End(dc);
+
 		Shader* shader = graphics.GetShader();
 		// シェーダーに必要な情報を書く
 		shader->Begin(dc, rc);// シェーダーにカメラの情報を渡す
-		// ステージ描画
-		StageManager::instance().Render(dc, shader);
-	// プレイヤー描画
-		//player->Render(dc, shader);
+
+	    // プレイヤー描画
 		playerManager->Render(dc, shader);
 		// エネミー描画
 		EnemyManager::Instance().Render(dc, shader);
 
 		shader->End(dc);
+
+		
 	}
 	//2D
 	RenderPing(dc);

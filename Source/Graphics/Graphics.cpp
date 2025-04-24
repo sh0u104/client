@@ -131,6 +131,7 @@ Graphics::Graphics(HWND hWnd)
 	// シェーダー
 	{
 		shader = std::make_unique<LambertShader>(device.Get());
+		stageShader = std::make_unique<StageUVShader>(device.Get());
 	}
 
 	// レンダラ
